@@ -1,0 +1,32 @@
+---
+title: "daseon.ai"
+description: "이 사이트. 이중언어 블로그 + 드래프트/배포용 비공개 어드민 대시보드."
+date: "2026-05-25"
+language: "ko"
+translationKey: "daseon-ai"
+status: "active"
+featured: false
+url: "https://daeseon.ai"
+repo: "https://github.com/daseon/daseon-blog"
+tags: ["site", "personal"]
+stack: ["Next.js 15", "TypeScript", "Tailwind", "MDX", "Vercel"]
+role: "Solo"
+---
+
+지금 보고 있는 이 블로그. 제약(글 톤, 어드민 기능, 배포)을 템플릿이 아니라 내가 정하려고 처음부터 직접 만들었다.
+
+## 무엇을 하는가
+
+- 이중언어 글 (EN 기본, KO는 `/ko`), `translationKey`로 교차 링크.
+- MDX + Format A(4톤 다중 등록) + Format B(프로젝트 회고) 글쓰기 규약이 에디터에 박혀있음.
+- 비공개 어드민(`/admin`) — 비밀번호 게이트, JWT 세션 쿠키, GitHub에 commit하는 글 에디터.
+- 언어별 RSS, hreflang 사이트맵, 어드민 경로는 robots 차단.
+
+## 왜
+
+몇 년 동안 개인 문서에만 글을 쓰고 공개하지 않았다. 이 사이트가 그 루프를 끊기 위한 장치다.
+
+## 아직 안 되는 것
+
+- 실 글별 분석 (트래픽 의미 있을 때까지 보류).
+- 크로스포스팅 연결 — webhook slot은 있고, 실제 도구는 별개 `crosspost-bot` 프로젝트.

@@ -1,0 +1,32 @@
+---
+title: "daseon.ai"
+description: "This site. Bilingual blog + private admin dashboard for drafts and distribution."
+date: "2026-05-25"
+language: "en"
+translationKey: "daseon-ai"
+status: "active"
+featured: false
+url: "https://daeseon.ai"
+repo: "https://github.com/daseon/daseon-blog"
+tags: ["site", "personal"]
+stack: ["Next.js 15", "TypeScript", "Tailwind", "MDX", "Vercel"]
+role: "Solo"
+---
+
+The blog you&apos;re on. Built from scratch so the constraints (writing tone, admin features, distribution) are mine, not a template&apos;s.
+
+## What it does
+
+- Bilingual posts (EN default, KO at `/ko`) with `translationKey` cross-linking.
+- MDX with Format A (multi-register) and Format B (project recap) writing conventions baked into the editor.
+- Private admin (`/admin`) with password gate, JWT session cookie, post editor that commits to GitHub.
+- RSS per language, hreflang sitemap, robots-blocked admin routes.
+
+## Why
+
+I&apos;ve been writing in private docs for years and not shipping any of it. This site exists to break that loop.
+
+## What&apos;s still missing
+
+- Real per-post view analytics (deferred until there&apos;s traffic to look at).
+- Crosspost wiring — webhook slot exists, target tool is the separate `crosspost-bot` project.

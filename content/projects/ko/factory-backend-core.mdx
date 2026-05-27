@@ -1,0 +1,32 @@
+---
+title: "Daeseon AI Factory · Backend Core"
+description: "SaaS와 AI 제품을 위한 재사용 가능한 Java/Spring 백엔드 플랫폼."
+date: "2026-01-15"
+language: "ko"
+translationKey: "factory-backend-core"
+status: "active"
+featured: true
+repo: "https://github.com/Daeseon-AI-Factory"
+tags: ["backend", "java", "spring", "platform"]
+stack: ["Java", "Spring Boot", "PostgreSQL", "Docker"]
+role: "Solo · 기획 + 개발"
+---
+
+다음에 만들 SaaS나 AI 제품에 그대로 가져다 쓸 수 있는 Java/Spring 백엔드 토대. 인증, 멀티테넌시, 영속화, 운영을 매번 다시 풀지 않으려고 한 번 만들어둠.
+
+## 왜 만드는가
+
+5년 넘게 엔터프라이즈 백엔드를 만들면서 같은 프리미티브를 매번 다시 구현했다. 특히 AI 제품에서는 화려하지 않은 백엔드 영역(eval 로깅, agent state, rate limit, 결제, audit)에서 팀이 막히는 일이 가장 많다 — 그래서 한 번에 떼어둠.
+
+## 들어있는 것
+
+- 기본 제공: Auth + RBAC + audit 로깅.
+- 멀티테넌트 준비됨 (쿼리 단계에서 tenant 경계 강제).
+- PostgreSQL + 합리적인 마이그레이션 패턴.
+- 컨테이너 우선; Docker Compose로 로컬 한 줄 부팅.
+- 합리적인 Spring 컨벤션 — package-by-feature, anemic-domain 안티패턴 회피.
+
+## 상태
+
+- 핵심 스켈레톤 완료. AI Core와 Service & Product Factory를 같이 돌리면서 추상화를 검증 중.
+- 아직 버전 cut 안 함 — 내부 사용으로 추상화가 굳을 때까지 락 안 검.

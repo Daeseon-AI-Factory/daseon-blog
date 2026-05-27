@@ -1,0 +1,34 @@
+---
+title: "Embeddings, in four registers"
+description: "The same idea — vectors that put similar things near each other — explained four ways."
+date: "2026-05-20"
+language: "en"
+translationKey: "embeddings"
+tags: ["llm", "concepts"]
+status: "published"
+format: "multi-register"
+---
+
+<ToneLabel>Raw</ToneLabel>
+
+An embedding is a function: text in, fixed-length float vector out. For `text-embedding-3-small` that&apos;s 1536 floats. The vectors live in a space where cosine similarity between two vectors roughly tracks how related the source texts are.
+
+The thing that confused me at first: the dimensions don&apos;t mean anything individually. There is no "dimension 47 = whether the text is about cats." The meaning is in the geometry — distances and directions — not in any single axis. You can&apos;t read an embedding the way you read a feature vector in classical ML.
+
+What I actually use them for at work: chunk a document, embed each chunk, store the vectors in pgvector with the chunk text alongside. At query time, embed the question, fetch the top-k nearest chunks, stuff them into the prompt. That&apos;s it. No clever retraining of the embedding model, no learned re-ranker for v1 — just nearest neighbors and a prompt.
+
+What didn&apos;t work: assuming a single embedding per "document" was enough. Long documents (30+ pages) embed to a vector that&apos;s an average of too many things; the retrieval becomes noise. We had to chunk to ~500 tokens with ~50-token overlap before recall got usable. Also: HyDE (embed a hypothetical answer instead of the question) improved recall in our eval set by ~12% but added latency we couldn&apos;t justify for the interactive case.
+
+<ToneLabel>Marketing</ToneLabel>
+
+Embeddings are unlocking the next wave of AI applications. By converting any text — documents, queries, conversations — into a unified semantic space, we can build systems that understand meaning, not just keywords. This is a game-changer for search, recommendations, and retrieval-augmented generation. The future of knowledge work is being built on top of this single primitive. What are you building with embeddings? 🚀
+
+<ToneLabel>Professional</ToneLabel>
+
+An embedding model is a learned function mapping a token sequence to a dense vector in R^d, trained so that semantically related inputs map to nearby vectors under cosine similarity. In production RAG, the relevant trade-offs are: dimension (cost / memory vs. discriminative power), chunk strategy (granularity vs. context loss), and re-ranking (recall vs. latency). The system is read-heavy, so we index once and query many times — but stale embeddings on updated content are a silent correctness bug, so a re-embed-on-write hook is non-negotiable.
+
+<ToneLabel>Big picture</ToneLabel>
+
+This is the same pattern as locality-sensitive hashing (LSH) and, more generally, any system that converts "asking for similar things" into "asking for geometrically nearby things." Once you accept the conversion, search becomes a nearest-neighbor problem and you inherit decades of work on spatial indices. The interesting design surface is the embedding function itself — what notion of "similar" it bakes in.
+
+The pattern shows up beyond text. Face recognition (FaceNet, ArcFace) does the same thing for images. Recommendation systems do it for users and items. Whenever you see "we projected X into a latent space and used nearest neighbors," you&apos;re looking at this same primitive wearing a different costume.
