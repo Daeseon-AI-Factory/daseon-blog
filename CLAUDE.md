@@ -228,6 +228,13 @@ These serve different audiences. Don't skip one. The Stop hook in `.claude/setti
 
 **What doesn't** (skip both): routine renames, lint fixes, typo fixes, dependency bumps without behavior change, formatting commits.
 
+**The Stop hook blocks the turn until handled.** It compares the latest commit hash against the contents of `docs/troubleshooting.md` and `content/logs/`. Options to satisfy it:
+
+1. **Non-trivial commit** → write the full dual-write entry, then commit the docs change. The next Stop sees the hash and lets the turn end.
+2. **Routine commit** → either (a) include `[no-log]` or `[skip-log]` in the commit message and the hook auto-records a skipped marker, or (b) manually append `<!-- skipped: <hash> <subject> -->` to `docs/troubleshooting.md` and commit.
+
+Do not add the hash to a random file just to silence the hook. The whole point is to record real history.
+
 ### Anti-hallucination rules
 
 When writing log entries, never fabricate. Concrete rules:

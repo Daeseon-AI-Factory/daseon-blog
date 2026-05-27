@@ -41,3 +41,12 @@ DON'T LOG: routine renames, lint fixes, typo fixes, dependency bumps with no beh
 - Everything else → `public`
 
 Override per entry in frontmatter.
+
+### Skip rule for routine commits
+
+The Stop hook blocks the turn until the most recent commit is either logged OR explicitly marked routine. To skip without writing an entry:
+
+- Option A — put `[no-log]` (or `[skip-log]`) anywhere in the commit message. The hook auto-appends a `<!-- skipped: <hash> <subject> -->` line to `docs/troubleshooting.md` so it stops firing.
+- Option B — append the same `<!-- skipped: <hash> <subject> -->` line yourself, then commit. Same effect.
+
+Routine = typo fix, lint fix, formatting commit, dep bump without behavior change, file rename. Anything else: write the entry.
