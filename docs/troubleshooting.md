@@ -111,3 +111,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: Coerce `fm.date` at parse time in `lib/logs.ts:readLogFile` and `lib/projects.ts:readProjectFile` — `Date` → `toISOString().slice(0, 10)`, string passes through, anything else rejects the entry. Made `formatDate` accept `Date | string | unknown` and always return a string. Also normalized trailing slash/whitespace in `lib/source.ts:repoConfig` so `logSourceRepo: "owner/name/"` resolves correctly.
 - **Commit**: c3517f5
 - **Pattern**: YAML's auto-typing (`!!timestamp` for ISO date literals) surfaces only when external content sources adopt the spec. Library code that reads frontmatter should coerce types, not trust them. Same caution applies to numbers (`123` vs `"123"`) and booleans (`yes`/`no`/`on`/`off`).
+
+<!-- skipped: 9e192c6 Log c3517f5 (YAML date coercion fix) — dual-write per CLAUDE.md rules -->
