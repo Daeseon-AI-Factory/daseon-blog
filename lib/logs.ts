@@ -3,32 +3,10 @@ import readingTime from "reading-time";
 import type { Locale } from "./i18n";
 import { listDirs, listFiles, readText } from "./source";
 import type { Visibility } from "./posts";
+import { type LogKind, LOG_KINDS, LOG_KIND_LABELS } from "./log-kinds";
 
-export type LogKind =
-  | "update"
-  | "troubleshoot"
-  | "tech-retro"
-  | "business"
-  | "monetization"
-  | "ux-retro";
-
-export const LOG_KINDS: LogKind[] = [
-  "update",
-  "troubleshoot",
-  "tech-retro",
-  "business",
-  "monetization",
-  "ux-retro",
-];
-
-export const LOG_KIND_LABELS: Record<LogKind, { en: string; ko: string }> = {
-  update: { en: "Update", ko: "업데이트" },
-  troubleshoot: { en: "Troubleshoot", ko: "트러블슈팅" },
-  "tech-retro": { en: "Tech retro", ko: "기술 회고" },
-  business: { en: "Business", ko: "비즈니스" },
-  monetization: { en: "Monetization", ko: "수익화" },
-  "ux-retro": { en: "UX retro", ko: "사용성 회고" },
-};
+export { LOG_KINDS, LOG_KIND_LABELS };
+export type { LogKind };
 
 export type LogFrontmatter = {
   title: string;
