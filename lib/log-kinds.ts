@@ -1,4 +1,30 @@
-// Client-safe constants for log kinds. No fs imports.
+// Client-safe constants AND types for the log system.
+// MUST NOT import from lib/source, lib/storage, lib/posts, or anything else
+// that touches node:fs / node:path. This file is the boundary.
+
+import type { Locale } from "./i18n";
+
+export type LogVisibility = "public" | "unlisted" | "private";
+
+export type LogFrontmatter = {
+  title: string;
+  date: string;
+  language: Locale;
+  project: string;
+  kind: LogKind;
+  visibility: LogVisibility;
+  summary?: string;
+  tags?: string[];
+};
+
+export type LogEntry = {
+  project: string;
+  slug: string;
+  kind: LogKind;
+  frontmatter: LogFrontmatter;
+  content: string;
+  readingMinutes: number;
+};
 
 export type LogKind =
   | "update"

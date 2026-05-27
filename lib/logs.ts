@@ -2,31 +2,19 @@ import matter from "gray-matter";
 import readingTime from "reading-time";
 import type { Locale } from "./i18n";
 import { listDirs, listFiles, readText } from "./source";
-import type { Visibility } from "./posts";
-import { type LogKind, LOG_KINDS, LOG_KIND_LABELS } from "./log-kinds";
+import {
+  type LogKind,
+  type LogEntry,
+  type LogFrontmatter,
+  type LogVisibility,
+  LOG_KINDS,
+  LOG_KIND_LABELS,
+} from "./log-kinds";
 
 export { LOG_KINDS, LOG_KIND_LABELS };
-export type { LogKind };
+export type { LogKind, LogEntry, LogFrontmatter, LogVisibility };
 
-export type LogFrontmatter = {
-  title: string;
-  date: string;
-  language: Locale;
-  project: string;
-  kind: LogKind;
-  visibility: Visibility;
-  summary?: string;
-  tags?: string[];
-};
-
-export type LogEntry = {
-  project: string;
-  slug: string;
-  kind: LogKind;
-  frontmatter: LogFrontmatter;
-  content: string;
-  readingMinutes: number;
-};
+type Visibility = LogVisibility;
 
 const LOG_ROOT = "content/logs";
 

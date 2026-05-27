@@ -53,8 +53,9 @@ When you hit a new issue, append an entry at the bottom. The `.claude/settings.j
 - **Symptom**: Vercel build (and local `next build`) failed with `You may need an additional plugin to handle "node:" URIs. Import trace: node:path → ./lib/source.ts → ./lib/logs.ts → ./components/LogTimeline.tsx`.
 - **Cause**: `LogTimeline.tsx` is a `"use client"` component but imported a value from `lib/logs.ts`. That module re-exports server-only `lib/source.ts` (which imports `node:fs`/`node:path`). Webpack pulls the whole module graph into the client bundle and can't resolve `node:` schemes for the browser.
 - **Fix**: Split client-safe constants into `lib/log-kinds.ts` (LogKind union, label dict — zero fs imports). `lib/logs.ts` re-exports them so server code is unchanged. `LogTimeline` imports from `lib/log-kinds` only.
-- **Commit**: `413a853`.
-- **Pattern**: Any module imported from a `"use client"` file is part of the client bundle, *transitively*. Keep `lib/source.ts` and other fs-touching code out of the import graph of client components. When in doubt, put shared constants in their own file with no infra imports.
+- **Commit**: `413a853` (incomplete) + follow-up.
+- **Follow-up**: First fix split constants but `LogTimeline` still had `import type { LogEntry } from "@/lib/logs"`. Webpack walks the module graph during static analysis even for type-only imports in some pipelines, dragging `lib/source.ts` along. Moved `LogEntry` / `LogFrontmatter` / `LogVisibility` types into `lib/log-kinds.ts` and switched LogTimeline to a single import from there. Verified with a clean local `next build`.
+- **Pattern**: Any module imported from a `"use client"` file is part of the client bundle, *transitively*. `import type` is not a safe escape hatch — move the type itself into a fs-free file. Keep `lib/source.ts` and other fs-touching code out of the import graph of client components entirely. When in doubt, put shared constants AND types in their own file with no infra imports.
 
 ---
 

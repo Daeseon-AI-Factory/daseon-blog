@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { LogEntry } from "@/lib/logs";
-import { type LogKind, LOG_KINDS, LOG_KIND_LABELS } from "@/lib/log-kinds";
+import { type LogEntry, type LogKind, LOG_KINDS, LOG_KIND_LABELS } from "@/lib/log-kinds";
 import { type Locale, localizedPath } from "@/lib/i18n";
 import { formatDate } from "@/lib/format";
 
