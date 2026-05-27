@@ -1,0 +1,45 @@
+---
+title: "Domain typo: daseon.ai vs daeseon.ai"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "Project was bootstrapped with daseon.ai (one letter short). The real registered domain is daeseon.ai. Found at Vercel domain connection time."
+tags: ["domain", "deploy"]
+---
+
+## Symptom
+
+Vercel Domains dashboard showed `daeseon.ai` and `www.daeseon.ai` (the real registered names) with "Invalid Configuration". The codebase referenced `daseon.ai` in several places. Two different spellings, one project.
+
+## Cause
+
+CLAUDE.md was created with `daseon.ai` at project start — a shorthand of "Daeseon" that I'd been writing in slack threads. The real domain I'd actually bought on Cloudflare was `daeseon.ai` (full English spelling of my name, matching the resume and LinkedIn handle).
+
+So:
+- ✓ `lib/site.ts` — already had `daeseon.ai` (caught early)
+- ✗ 6 places in `content/projects/` had `daseon.ai` and `daseon-ai`
+- ✗ Memory files referenced `daseon.ai`
+- ✗ Two MDX files were named `daseon-ai.mdx`
+
+## Fix
+
+```bash
+git mv content/projects/en/daseon-ai.mdx content/projects/en/daeseon-ai.mdx
+git mv content/projects/ko/daseon-ai.mdx content/projects/ko/daeseon-ai.mdx
+# + Edit all `daseon.ai` → `daeseon.ai` in those files
+# + Memory MEMORY.md and cross-posting-vision.md
+```
+
+Left alone:
+- `daseon` strings in cookie names (`daseon_admin_session`) and localStorage keys (`daseon_distribution_v1`). Internal, no external surface, no value in changing.
+- The X handle `daseon` in `site.json` — that's an actual handle on a different platform, not the domain.
+
+Commit: `3f12935`.
+
+## Why this was avoidable
+
+Domain was bought before the codebase was started. A one-line check at project init — "what name did I register?" — would have prevented everything downstream. Instead I treated CLAUDE.md as authoritative without verifying.
+
+**Pattern lesson**: external identifiers (domain, handle, repo name) should be confirmed against the source-of-truth registry before being baked into config. CLAUDE.md is not the source of truth — Cloudflare/GitHub is.

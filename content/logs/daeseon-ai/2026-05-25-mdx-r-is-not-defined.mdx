@@ -1,0 +1,52 @@
+---
+title: "MDX broke on `$\\mathbb{R}^d$` with `R is not defined`"
+date: "2026-05-25"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "Curly braces in math notation are JSX expressions to MDX. The build crashed on a sample embeddings post."
+tags: ["mdx", "build"]
+---
+
+## Symptom
+
+`npm run build` during prerender of `/ko/posts/embeddings`:
+
+```
+ReferenceError: R is not defined
+  at stringify (<anonymous>)
+```
+
+## Cause
+
+The sample post had `$\mathbb{R}^d$` in the "professional tone" section. MDX 3 treats `{ ... }` as **JSX expressions**, not literal text. So MDX saw `\mathbb{R}^d` and parsed `{R}` as a reference to a JavaScript variable named `R`. There is no `R` in scope → ReferenceError → build dies.
+
+## Fix
+
+Removed the LaTeX-style notation:
+
+```diff
+- dense vector in $\mathbb{R}^d$, trained so that...
++ dense vector in R^d, trained so that...
+```
+
+Two-line change in both `content/posts/en/embeddings.mdx` and `content/posts/ko/embeddings.mdx`. Build green.
+
+## Why I'm not adding KaTeX
+
+I considered `remark-math` + `rehype-katex` to render real math. Cost:
+
+- Extra ~150KB JS for KaTeX.
+- One more remark/rehype plugin to keep current.
+- Decisions about inline vs display math syntax.
+
+I write ~zero math notation. Cost > benefit. If I ever want one symbol, I'll inline an SVG or use a Unicode character.
+
+## Pattern to remember
+
+Curly braces in MDX are always JSX. If raw prose contains `{`, escape it (`\{`) or rewrite the sentence. Common offenders: math, set notation, regex, programming language syntax in headings.
+
+## Commit
+
+Caught pre-`0dcac9a` (before the initial site commit was even formed).

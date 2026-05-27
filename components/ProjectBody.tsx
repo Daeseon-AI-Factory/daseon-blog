@@ -2,6 +2,8 @@ import { renderMdx } from "@/lib/mdx";
 import { formatDate } from "@/lib/format";
 import { type Locale, localizedPath } from "@/lib/i18n";
 import type { Project } from "@/lib/projects";
+import { listProjectLogs } from "@/lib/logs";
+import { LogTimeline } from "@/components/LogTimeline";
 import Link from "next/link";
 
 const STATUS_COPY = {
@@ -20,6 +22,8 @@ export async function ProjectBody({
 }) {
   const rendered = await renderMdx(project.content);
   const fm = project.frontmatter;
+  const allLogs = await listProjectLogs(project.slug);
+  const publicLogs = allLogs.filter((e) => e.frontmatter.visibility === "public");
   return (
     <article className="mx-auto max-w-3xl px-5 py-12">
       <header className="mb-10">
@@ -78,6 +82,22 @@ export async function ProjectBody({
         ) : null}
       </header>
       <div className="prose">{rendered}</div>
+
+      {publicLogs.length > 0 ? (
+        <section className="mt-16 border-t border-paper-line pt-10">
+          <header className="mb-6">
+            <h2 className="text-xl font-medium tracking-tight">
+              {locale === "ko" ? "프로젝트 로그" : "Project log"}
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              {locale === "ko"
+                ? "이 프로젝트를 만들면서 남긴 트러블슈팅 · 회고 · 업데이트의 시간순 기록."
+                : "Chronological record of troubleshooting, retros, and updates while building this."}
+            </p>
+          </header>
+          <LogTimeline project={project.slug} entries={publicLogs} locale={locale} />
+        </section>
+      ) : null}
     </article>
   );
 }

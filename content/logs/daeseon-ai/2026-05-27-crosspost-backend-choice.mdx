@@ -1,0 +1,50 @@
+---
+title: "Crosspost bot: backend choice + cost frame"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "monetization"
+visibility: "private"
+language: "en"
+summary: "Cross-posting can't live in Vercel functions (timeout, scheduling). Comparing Railway / Cloudflare Workers / GitHub Actions for the spoke runner."
+tags: ["crosspost", "infra", "cost"]
+---
+
+The hub side (this blog) is done. The spoke side (`crosspost-bot`) needs its own runtime — Vercel functions can't host it. This entry is the decision log.
+
+## Why not on Vercel
+
+- Hobby function timeout: **10s**. Pro: **60s**. A multi-step LLM agent (RAG fetch → re-style per platform → call platform API → log) routinely needs 30–90s.
+- No native cron with arbitrary delays. We want stagger ("LinkedIn at +12h, Reddit at +24h, Dev.to at +48h").
+- Per-platform OAuth tokens are stateful — they refresh, need encrypted storage, etc. Vercel functions can do it via KV but it's not where they shine.
+
+## Options
+
+| Option | Cost (solo) | LLM agent fit | Cron | OAuth storage | Setup time |
+|---|---|---|---|---|---|
+| **Railway** | $5–10/mo | ✓ (full Node/Python) | ✓ built-in | Postgres included | 30 min |
+| **Cloudflare Workers + Queues + D1** | free | ✗ (CPU time limits, edge constraints) | ✓ cron triggers | ✓ D1 | 1–2h |
+| **Fly.io** | $5–10/mo | ✓ (Docker) | external | external (Postgres app) | 2–3h |
+| **GitHub Actions cron** | free | ✓ (any runner) | ✓ 5-min minimum | Actions secrets | 10 min |
+
+## Likely pick
+
+**GitHub Actions cron** for v0, **Railway** when v0 outgrows it.
+
+Why Actions for v0:
+- $0. I'm not monetizing anything yet — paying for infra before there's traffic is wrong.
+- Cron is fine — 5-min minimum granularity is plenty (we stagger in hours).
+- Code already lives in GitHub anyway. Action reads `crosspost-bot/` directory, no separate deploy.
+- OAuth tokens as encrypted Actions secrets. Fine for solo use; doesn't scale to a team.
+
+Why Railway when it grows:
+- If staggers need to be more responsive than 5 min, or if we want a long-running consumer with a queue.
+- If multiple projects (not just blog → spokes, but spokes → analytics → dashboard) share the runner.
+- $5/mo is well under "the cost of switching infra under load."
+
+## What I'm not doing
+
+Building a paid product yet. The crosspost bot is for *my own brand distribution* first. If other engineers ask to use it later, that's a different conversation with a different revenue model. Until then: free-tier all the way.
+
+## Why this is private
+
+It's a strategy memo with cost numbers. Useful for future-me. No reason to share infrastructure plans publicly — every competitor read of "I'm picking Cloudflare Workers because…" is a free hint about my architecture.

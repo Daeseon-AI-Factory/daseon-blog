@@ -91,3 +91,34 @@ export async function listFiles(repoRelativeDir: string): Promise<string[]> {
     throw e;
   }
 }
+
+export async function listDirs(repoRelativeDir: string): Promise<string[]> {
+  const cfg = repoConfig();
+  if (cfg) {
+    const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${repoRelativeDir}?ref=${cfg.branch}`;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `token ${cfg.token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
+    if (res.status === 404) return [];
+    if (!res.ok) {
+      throw new Error(`GitHub contents fetch failed: ${res.status} ${url}`);
+    }
+    const data = (await res.json()) as Array<{ name: string; type: string }> | unknown;
+    if (!Array.isArray(data)) return [];
+    return data.filter((d) => d.type === "dir").map((d) => d.name);
+  }
+
+  try {
+    const entries = await fs.readdir(localAbsPath(repoRelativeDir), { withFileTypes: true });
+    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code === "ENOENT") return [];
+    throw e;
+  }
+}

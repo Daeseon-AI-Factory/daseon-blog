@@ -1,0 +1,52 @@
+---
+title: "Hub-and-spokes: the actual goal of this site"
+date: "2026-05-25"
+project: "daeseon-ai"
+kind: "business"
+visibility: "private"
+language: "en"
+summary: "Why daeseon.ai is the canonical hub and LinkedIn/X/Reddit/Dev.to are syndicated spokes. Private — strategy."
+tags: ["strategy", "brand"]
+---
+
+This isn't really a blog. It's the hub of a personal-brand distribution graph.
+
+## The model
+
+- **Hub** = daeseon.ai. Source of truth for every piece of writing. Owns the canonical URL, the RSS, the RAG index.
+- **Spokes** = LinkedIn (long-form), X (thread), Reddit (subreddit-fit), Dev.to (canonical re-host). Auto-syndicated derivatives. Every spoke's link points back to the hub.
+- **Glue** = `crosspost-bot` (separate project). LLM-driven re-styler. Reads from the hub's RAG manifest, writes to each spoke's API on a stagger.
+
+## Why hub-and-spokes vs spoke-first
+
+Spoke-first (just post on LinkedIn) is what most engineers do. Problems:
+
+- LinkedIn owns the URL. Reach is throttled the day they change the algorithm.
+- No SEO. Recruiter googles me → finds nothing structured.
+- No RAG-able archive. My own writing isn't queryable.
+- Re-using content across platforms means manual reformat each time.
+
+Hub-and-spokes:
+- I own the URL. The content survives every platform.
+- SEO compounds on one domain. Backlinks from every spoke help the hub rank.
+- The hub doubles as my own RAG index — I can ask "what did I write about X" against my own work.
+- Re-styling is one LLM call per spoke, not 30 minutes of manual rewriting.
+
+## Decision: what's already done vs what's deferred
+
+Done on the hub side:
+- Webhook slot fires on every publish (`CROSSPOST_WEBHOOK_URL` env).
+- RAG manifest API with Bearer auth — `crosspost-bot` can fetch all content.
+- Content types (post/note/knowledge/log) and visibility (public/unlisted/private) classify what fans out.
+
+Deferred (in the separate project):
+- LLM re-styler per platform.
+- Platform OAuth + token storage.
+- Stagger scheduler (e.g. LinkedIn at +12h, Reddit at +24h, Dev.to at +48h).
+- Engagement back-fill.
+
+The hub side is essentially done. Everything else lives in `crosspost-bot`.
+
+## Why this is private
+
+Not embarrassing — just strategy. No reason to telegraph distribution mechanics to platforms that throttle obvious syndication. The hub being open about it doesn't help me; the spokes being subtle does.

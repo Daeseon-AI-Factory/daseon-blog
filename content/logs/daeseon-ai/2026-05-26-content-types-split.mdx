@@ -1,0 +1,53 @@
+---
+title: "Why I split content into post / note / knowledge / log"
+date: "2026-05-26"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "One bucket for everything fails three different audiences. Four content types with different visibility defaults each."
+tags: ["content-model", "architecture"]
+---
+
+A single "Post" entity, like most blogs ship with, breaks down the moment the site is also a Notion replacement and a RAG index.
+
+## Three different audiences
+
+- **Public readers** — recruiters, dev community. Want polished writeups.
+- **Future-me** — going to query my own writing via RAG. Wants everything in the index, including private memos.
+- **Notion replacement** — daily working memory. Drafts, links to remember, half-formed thoughts. Most of these never get published.
+
+A single bucket can't serve all three. The blog frontmatter becomes a `status: draft | published | private-note | reference-card | …` and ends up worse than a real type system.
+
+## The four types
+
+| Type | Default visibility | Default surface | Used for |
+|---|---|---|---|
+| **post** | public | `/posts`, sitemap, RSS | Polished writeups for readers |
+| **note** | private | none (admin only) | Working memory, Notion-style |
+| **knowledge** | unlisted | direct URL only, RAG | Atomic factual reference cards |
+| **log** | public (per-kind) | `/projects/<slug>` timeline | Project journal (this entry) |
+
+Each type lives in its own directory:
+
+```
+/content/posts/{en,ko}/...
+/content/notes/{en,ko}/...
+/content/knowledge/{en,ko}/...
+/content/logs/<project>/...
+```
+
+## Why visibility defaults differ
+
+- Notes default to **private** because the cost of accidentally publishing a half-formed memo is high. Override to publish.
+- Knowledge defaults to **unlisted** — reachable by direct URL (good for sharing one card with someone), not in /posts list. RAG picks them up.
+- Posts default to **public** — that's the whole point.
+- Logs default to **public** for most kinds; `business` and `monetization` kinds flip to **private** automatically because strategy memos shouldn't ship by accident.
+
+## What the RAG manifest sees
+
+All four types. Visibility doesn't gate the manifest — RAG is for me, not the public. The `visibility` field is metadata the retrieval layer can filter on.
+
+## Trade-off
+
+Four buckets is more cognitive surface than one. The admin editor has to support type selection and show different default visibility per type. Worth it because the alternative — one bucket with a tangled status field — is the same complexity hidden in a worse place.

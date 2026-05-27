@@ -1,0 +1,65 @@
+---
+title: "EROFS on every Vercel publish — production fs is read-only"
+date: "2026-05-26"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "Admin publish crashed with EROFS. Cause: I wrote to disk first, then committed to GitHub. Production fs is read-only."
+tags: ["vercel", "serverless", "storage"]
+---
+
+## Symptom
+
+First real publish attempt from the admin on the live site:
+
+```
+EROFS: read-only file system,
+open '/var/task/content/posts/en/qqf.mdx'
+```
+
+The GitHub commit never ran. The admin UI showed an error and the post vanished.
+
+## Cause
+
+`lib/storage.ts:savePost` was written as:
+
+```ts
+await fs.writeFile(abs, content, "utf-8");   // ← crashed here
+if (githubConfigured()) {
+  await commitFile({ path, content, message });
+}
+```
+
+This works in dev. It also works in production *until* the function tries to write — at which point Vercel's serverless filesystem (`/var/task/`) refuses, because that path is read-only by design. The function bundle is sealed at build time.
+
+Same bug existed in `saveBinaryAsset`, `deletePost`, and `saveSiteConfig`. All four wrote to disk first.
+
+## Fix
+
+Skip the local fs write entirely when GitHub is configured:
+
+```ts
+if (githubConfigured()) {
+  const result = await commitFile({ path, content, message });
+  return { path, via: "github", commitUrl: result.commitUrl };
+}
+// Dev-only fallback below
+await fs.mkdir(path.dirname(abs), { recursive: true });
+await fs.writeFile(abs, content, "utf-8");
+return { path, via: "local" };
+```
+
+In dev (no `GITHUB_TOKEN`), local fs still works because dev fs is writable. In production, the local fs branch is unreachable.
+
+Commit: `559da07`.
+
+## Why I didn't catch this in local dev
+
+Local `next dev` runs on a writable filesystem. The first branch (commit) was never exercised in local testing because I didn't set `GITHUB_TOKEN` locally — the path that hits GitHub in production was hidden behind a config flag.
+
+**Pattern lesson**: code paths gated by env-set-only-in-prod are effectively untested. Either set the env locally and exercise the prod path, or write a unit test that mocks the commit.
+
+## Reading after this
+
+`docs/architecture.md` now explains the build-snapshot fs model in depth. The next troubleshoot entry (`fs-vs-github-raw`) is about the *other half* of the same bug — even after publishing worked, the post didn't appear on the live site for 60s, for a related but different reason.

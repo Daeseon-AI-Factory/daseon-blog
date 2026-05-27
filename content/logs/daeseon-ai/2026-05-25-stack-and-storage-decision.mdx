@@ -1,0 +1,41 @@
+---
+title: "Stack and storage: Next.js 15 + GitHub commit-as-database"
+date: "2026-05-25"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Why I picked Next.js 15 + Vercel + GitHub Contents API for storage instead of a database."
+tags: ["architecture", "decision"]
+---
+
+Bootstrapping the site, the first real decision was where content lives.
+
+## Options I considered
+
+| Option | Live publish latency | Backup | Infra cost | Lock-in |
+|---|---|---|---|---|
+| Postgres on Vercel/Supabase | ~1s | manual | $0–10/mo | high (export work) |
+| Vercel KV / Edge Config | ~1s | manual | $0 | high (proprietary) |
+| GitHub Contents API + MDX in repo | 3–5s | automatic (git) | $0 | low (just .mdx files) |
+
+## What I picked
+
+GitHub Contents API. Posts are `.mdx` files in this repo. Admin publishing → `POST /api/admin/posts` → Octokit commit → Vercel auto-rebuild → live.
+
+## Why
+
+- **Backup is free.** Every post is a git commit. Lose Vercel? Clone the repo. Lose me? My next employer can read the repo.
+- **Portability.** `.mdx` works anywhere. Future Astro, Hugo, or plain-static migration is a `cp -r content/`.
+- **Cost.** Zero, even at any reasonable solo traffic.
+- **It maps to my brand.** Hub-and-spokes — `daeseon.ai` is canonical, cross-posts are derivatives. Everything starts from one MDX file.
+
+## What I gave up
+
+- Instant publish. 3–5s instead of 1s. Fine for a writing pace; would not work for a chat app.
+- Editor concurrency. If two admin sessions write at once, the second one races. Not a concern at N=1 writer.
+- Per-post analytics in the same DB as content. Now needs a separate store. Acceptable — analytics are read-mostly anyway.
+
+## Verdict so far
+
+Holds up. The two times I've hit friction (EROFS on production write, build-snapshot read staleness) were both fixable inside this architecture, not arguments against it. Notes are in other entries with `kind=troubleshoot`.

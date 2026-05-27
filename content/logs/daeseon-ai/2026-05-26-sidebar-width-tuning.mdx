@@ -1,0 +1,34 @@
+---
+title: "Sidebar width: 16rem felt empty, 13rem felt cramped, 14rem stuck"
+date: "2026-05-26"
+project: "daeseon-ai"
+kind: "ux-retro"
+visibility: "public"
+language: "en"
+summary: "The hub layout (left sticky profile / right content) needed two rounds of width tuning before it stopped looking off."
+tags: ["design", "layout"]
+---
+
+The home page uses a brittanychiang-style two-column layout: left sticky profile card, right scrolling content (About / Featured projects / Recent posts).
+
+First version: `lg:grid-cols-[16rem_1fr]` inside `max-w-5xl`. On a 2000px-wide monitor, the column rendered fine but the *whole layout* felt floaty — too much white space on either side of `max-w-5xl`, and the sidebar had ~80px of vertical air below the nav links.
+
+## Round 1: narrow the sidebar
+
+Tried `13rem`. Sidebar got tighter, but on the same wide display the visual problem was unchanged: the page was still squeezed into 1024px in the middle of a 2000px viewport. The sidebar wasn't the issue; the *container* was.
+
+## Round 2: widen container + sidebar
+
+Settled on `max-w-6xl` (1152px) + `lg:grid-cols-[14rem_1fr]` + `lg:gap-16`. The container takes 128px more horizontal space, so the layout feels less like a column dropped in the middle. The sidebar at 14rem (224px) is wide enough for two-word link labels without wrapping; 13rem was cutting things close.
+
+## What I learned about my own debugging
+
+I was solving the wrong axis. "Sidebar feels empty" is a per-column observation, but the actual feel came from container width relative to viewport. Once I switched from "fix the sidebar" to "fix the page's proportion," it was obvious.
+
+**Pattern lesson**: when a component feels off, check whether the issue is at that component's level or one level up. Most layout-feel issues live in the *parent's* width/gap/padding, not the component itself.
+
+## What I didn't do
+
+I considered adding content to the sidebar to fill the empty space (a "currently building" line, a tagline). Decided against — adding noise to fix a proportions bug just hides the bug. Better to leave the sidebar quiet and fix the actual proportion.
+
+This entry is `kind=ux-retro` because the lesson is a UI design heuristic, not an engineering bug.
