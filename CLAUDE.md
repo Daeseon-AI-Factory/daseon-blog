@@ -215,11 +215,36 @@ Auth approach for v1: Route middleware checks session. GitHub OAuth via NextAuth
 - When suggesting design changes in v1: refuse and suggest writing a post instead.
 - Owner's broader brand: AI engineer who learns in public, calm tone, no guru posturing.
 
-## Troubleshooting log (required)
+## Project log (required, dual-write)
 
-When you hit and fix a non-trivial issue (build failures, deploy errors, hidden coupling, surprising platform behavior), **append an entry to `docs/troubleshooting.md`** in the same turn as the fix commit. Format and examples are in that file. A Stop hook in `.claude/settings.json` reminds about this after any recent commit.
+When you fix or decide something non-trivial in this repo, write **both** of these in the same turn as the commit:
 
-Cheap heuristic: if you can imagine your future self (or another engineer) hitting the same issue and benefiting from a 60-second writeup, log it. Don't log routine refactors or one-line typo fixes.
+1. `docs/troubleshooting.md` — terse Claude-facing reference (Symptom / Cause / Fix / Commit / Pattern). Indexed by problem, not by date.
+2. `content/logs/<project-slug>/<YYYY-MM-DD>-<short-slug>.mdx` — user-facing log entry surfaced on `/projects/<slug>`. Indexed by date, grouped by kind.
+
+These serve different audiences. Don't skip one. The Stop hook in `.claude/settings.json` reminds after any recent commit.
+
+**What counts as non-trivial** (log both): build/deploy errors, hidden coupling found, dependency-version migrations, architecture decisions, infra choices, design/copy decisions made on judgment, strategy or pricing memos.
+
+**What doesn't** (skip both): routine renames, lint fixes, typo fixes, dependency bumps without behavior change, formatting commits.
+
+### Anti-hallucination rules
+
+When writing log entries, never fabricate. Concrete rules:
+
+- **Symptom**: paste literal error messages, stack traces, or describe observable behavior in present tense. Do not paraphrase, do not summarize. If pasting a long stack, paste the first 5 lines plus the "Import trace" or final line.
+- **Cause**: only state what you verified by reading the actual code, running the actual command, or checking git history. If you guessed, write `Hypothesis:` and add `Verified by:` with the evidence. If you can't verify, omit Cause and write `Suspected:` with an explicit caveat.
+- **Fix**: name the actual files/functions changed. Reference the commit hash from `git rev-parse HEAD` after committing, never before. Don't claim "I fixed X" if `git diff` doesn't show X changed.
+- **Date**: use `git log -1 --format=%cI` for the commit time, or the user's stated today's date for forward-looking entries. Don't guess.
+- **Pattern**: only if a recurring lesson is obvious from this one incident. Otherwise omit. Don't pad.
+
+### Categories (kind)
+
+`troubleshoot` · `tech-retro` · `ux-retro` · `business` · `monetization` · `update`. Definitions in `docs/project-log-spec.md` if a friend wants the system for their own repo.
+
+## Architecture reference
+
+`docs/architecture.md` explains build vs runtime, fs vs `fetch`, ISR caching, and why publish-to-live is ~3-5s even though a Vercel rebuild also runs. Read it before changing anything in `lib/source.ts`, `lib/storage.ts`, or the content read path. Hard constraint: **never `fs.writeFile` in code that runs in production** — see the EROFS entry in `troubleshooting.md`. Second hard constraint: **`lib/source.ts` and `lib/storage.ts` must NEVER appear in the import graph of a `"use client"` component** — see the node-URI entry in `troubleshooting.md`.
 
 ## Architecture reference
 

@@ -1,0 +1,49 @@
+---
+title: "Client component pulled node:fs into the browser bundle"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "Vercel build failed with `You may need an additional plugin to handle node: URIs`. LogTimeline.tsx (client) imported lib/logs.ts (server), pulling node:fs into webpack's client bundle."
+tags: ["next.js", "webpack", "client-server-boundary"]
+---
+
+## Symptom
+
+Vercel and local `next build` both failed with:
+
+```
+You may need an additional plugin to handle "node:" URIs.
+Import trace for requested module:
+node:path
+./lib/source.ts
+./lib/logs.ts
+./components/LogTimeline.tsx
+```
+
+The new project-log timeline UI never deployed.
+
+## Cause
+
+`components/LogTimeline.tsx` starts with `"use client"`. It imported `LOG_KINDS` and `LOG_KIND_LABELS` from `lib/logs.ts`. That module also exports server-only readers that internally use `lib/source.ts`, which imports `node:fs` and `node:path`.
+
+In Next.js, *any* module reachable from a client component is part of the client bundle, transitively. Webpack walked: LogTimeline → lib/logs → lib/source → node:fs/path → can't bundle for the browser → fail.
+
+The dev server didn't catch this because dev uses a different code-splitting strategy. Only the production build trips it.
+
+## Fix
+
+Split client-safe constants out of `lib/logs.ts`:
+
+- New `lib/log-kinds.ts` — `LogKind` union + `LOG_KINDS` array + `LOG_KIND_LABELS` dict. Zero infra imports.
+- `lib/logs.ts` re-exports from `log-kinds` so existing server callers don't change.
+- `LogTimeline` imports from `lib/log-kinds` only. The server-only path is no longer reachable from the client.
+
+Commit: `413a853`.
+
+## Pattern
+
+Whenever you add a `"use client"` component that imports from a `lib/` module, audit the full transitive graph for `node:fs`, `node:path`, `fs/promises`, `@octokit/*`, or anything else server-only. If a shared value (constant, type, label dict) is needed on both sides, put it in its own file with no infra imports and have both server and client import from there.
+
+Stronger rule for this repo: **`lib/source.ts` and `lib/storage.ts` are NEVER allowed in the import graph of a `"use client"` file.** If a client component needs anything from a server lib, the value gets re-exported from a `*-kinds.ts` / `*-constants.ts` neighbor.
