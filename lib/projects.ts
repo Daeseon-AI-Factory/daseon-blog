@@ -12,7 +12,7 @@ export type ProjectFrontmatter = {
   translationKey?: string;
   status: ProjectStatus;
   featured: boolean;
-  url?: string;
+  url: string; // required — live service link, shown as the primary CTA
   repo?: string;
   tags?: string[];
   stack?: string[];
@@ -37,7 +37,9 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
   if (!raw) return null;
   const { data, content } = matter(raw);
   const fm = data as Partial<ProjectFrontmatter>;
-  if (!fm.title || !fm.date || !fm.description) return null;
+  // Required: title, date, description, AND live url (Live link is non-negotiable).
+  // Repo is encouraged but optional (some projects ship before source is public).
+  if (!fm.title || !fm.date || !fm.description || !fm.url) return null;
   const frontmatter: ProjectFrontmatter = {
     title: fm.title,
     description: fm.description,
