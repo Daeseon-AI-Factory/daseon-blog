@@ -22,7 +22,8 @@ type RepoConfig = {
 
 function repoConfig(slugOverride?: string): RepoConfig | null {
   const token = process.env.GITHUB_TOKEN;
-  const slug = slugOverride ?? process.env.GITHUB_REPO;
+  const rawSlug = slugOverride ?? process.env.GITHUB_REPO;
+  const slug = rawSlug?.trim().replace(/\/+$/, "");
   const branch = process.env.GITHUB_BRANCH ?? "main";
   if (!token || !slug || !slug.includes("/")) return null;
   const [owner, repo] = slug.split("/");

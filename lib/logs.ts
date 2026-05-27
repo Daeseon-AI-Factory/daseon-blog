@@ -29,13 +29,20 @@ async function readLogFile(project: string, fileName: string, sourceRepo?: strin
   const raw = await readText(`${LOG_ROOT}/${project}/${fileName}`, sourceRepo ? { repo: sourceRepo } : undefined);
   if (!raw) return null;
   const { data, content } = matter(raw);
-  const fm = data as Partial<LogFrontmatter>;
+  const fm = data as Partial<Omit<LogFrontmatter, "date">> & { date?: unknown };
   if (!fm.title || !fm.date || !fm.kind) return null;
+  const dateStr =
+    typeof fm.date === "string"
+      ? fm.date
+      : fm.date instanceof Date
+        ? fm.date.toISOString().slice(0, 10)
+        : null;
+  if (!dateStr) return null;
   const kind = fm.kind as LogKind;
   if (!LOG_KINDS.includes(kind)) return null;
   const frontmatter: LogFrontmatter = {
     title: fm.title,
-    date: fm.date,
+    date: dateStr,
     language: (fm.language as Locale) ?? "en",
     project,
     kind,

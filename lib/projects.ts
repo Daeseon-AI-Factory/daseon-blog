@@ -42,14 +42,21 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
   const raw = await readText(`${relativeDir(locale)}/${fileName}`);
   if (!raw) return null;
   const { data, content } = matter(raw);
-  const fm = data as Partial<ProjectFrontmatter>;
+  const fm = data as Partial<Omit<ProjectFrontmatter, "date">> & { date?: unknown };
   // Required: title, date, description, AND live url (Live link is non-negotiable).
   // Repo is encouraged but optional (some projects ship before source is public).
   if (!fm.title || !fm.date || !fm.description || !fm.url) return null;
+  const dateStr =
+    typeof fm.date === "string"
+      ? fm.date
+      : fm.date instanceof Date
+        ? fm.date.toISOString().slice(0, 10)
+        : null;
+  if (!dateStr) return null;
   const frontmatter: ProjectFrontmatter = {
     title: fm.title,
     description: fm.description,
-    date: fm.date,
+    date: dateStr,
     language: (fm.language as Locale) ?? locale,
     translationKey: fm.translationKey,
     status: (fm.status as ProjectStatus) ?? "active",
