@@ -38,15 +38,17 @@ export async function savePost({
   message: string;
 }): Promise<SaveResult> {
   const rel = relativePathFor(type, locale, slug);
-  const abs = absolutePathFor(type, locale, slug);
-
-  await fs.mkdir(path.dirname(abs), { recursive: true });
-  await fs.writeFile(abs, content, "utf-8");
 
   if (githubConfigured()) {
     const result = await commitFile({ path: rel, content, message });
     return { path: rel, via: "github", commitUrl: result.commitUrl };
   }
+
+  // Local FS only when GitHub is not configured (dev mode).
+  // Vercel production is read-only — never reach here in prod.
+  const abs = absolutePathFor(type, locale, slug);
+  await fs.mkdir(path.dirname(abs), { recursive: true });
+  await fs.writeFile(abs, content, "utf-8");
   return { path: rel, via: "local" };
 }
 
@@ -62,17 +64,18 @@ export async function deletePost({
   message: string;
 }): Promise<SaveResult> {
   const rel = relativePathFor(type, locale, slug);
-  const abs = absolutePathFor(type, locale, slug);
-
-  try {
-    await fs.unlink(abs);
-  } catch {
-    /* may already be gone */
-  }
 
   if (githubConfigured()) {
     await deleteFile({ path: rel, message });
     return { path: rel, via: "github" };
+  }
+
+  // Local FS only when GitHub is not configured (dev mode).
+  const abs = absolutePathFor(type, locale, slug);
+  try {
+    await fs.unlink(abs);
+  } catch {
+    /* may already be gone */
   }
   return { path: rel, via: "local" };
 }
@@ -87,15 +90,16 @@ export async function saveBinaryAsset({
   message: string;
 }): Promise<SaveResult> {
   const rel = `public${publicPath.startsWith("/") ? "" : "/"}${publicPath}`;
-  const abs = path.join(process.cwd(), rel);
-
-  await fs.mkdir(path.dirname(abs), { recursive: true });
-  await fs.writeFile(abs, buffer);
 
   if (githubConfigured()) {
     const result = await commitBinary({ path: rel, buffer, message });
     return { path: rel, via: "github", commitUrl: result.commitUrl };
   }
+
+  // Local FS only when GitHub is not configured (dev mode).
+  const abs = path.join(process.cwd(), rel);
+  await fs.mkdir(path.dirname(abs), { recursive: true });
+  await fs.writeFile(abs, buffer);
   return { path: rel, via: "local" };
 }
 

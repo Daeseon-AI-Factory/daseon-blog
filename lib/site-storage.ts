@@ -13,7 +13,6 @@ export async function loadSiteConfig(): Promise<SiteAuthor> {
 
 export async function saveSiteConfig(next: SiteAuthor): Promise<{ via: "github" | "local"; commitUrl?: string }> {
   const content = `${JSON.stringify(next, null, 2)}\n`;
-  await fs.writeFile(ABS_PATH, content, "utf-8");
 
   if (githubConfigured()) {
     const res = await commitFile({
@@ -23,6 +22,9 @@ export async function saveSiteConfig(next: SiteAuthor): Promise<{ via: "github" 
     });
     return { via: "github", commitUrl: res.commitUrl };
   }
+
+  // Local FS only when GitHub is not configured (dev mode).
+  await fs.writeFile(ABS_PATH, content, "utf-8");
   return { via: "local" };
 }
 
