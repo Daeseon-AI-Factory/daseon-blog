@@ -7,6 +7,7 @@ import { clsx } from "clsx";
 const items = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/posts", label: "Posts" },
+  { href: "/admin/projects", label: "Projects" },
   { href: "/admin/distribution", label: "Distribution" },
   { href: "/admin/site", label: "Site" },
   { href: "/admin/analytics", label: "Analytics" },
