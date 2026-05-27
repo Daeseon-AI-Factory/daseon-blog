@@ -94,3 +94,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 
 <!-- skipped: 65420d3 Log Stop-hook upgrade (17be96a) — dual-write per CLAUDE.md rules -->
 <!-- skipped: 7b17463 Mark log-housekeeping commit 65420d3 as routine [no-log] -->
+<!-- skipped: daa6b99 Fill in commit hash 3ff7952 in cross-repo aggregation log + troubleshooting [no-log] -->
+<!-- skipped: 985b491 logs(dalkkak-ai): add project page + 6 timeline entries for Phase 1 -->
