@@ -82,3 +82,5 @@ When you fix a non-trivial issue, append this block at the bottom (the Stop hook
 ```
 
 Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essays.
+
+<!-- skipped: 65420d3 Log Stop-hook upgrade (17be96a) — dual-write per CLAUDE.md rules -->
