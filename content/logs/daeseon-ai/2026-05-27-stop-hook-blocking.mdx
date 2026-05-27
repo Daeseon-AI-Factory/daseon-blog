@@ -1,0 +1,60 @@
+---
+title: "Stop hook: from reminder to enforcement (blocking + self-terminating sentinel)"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "The original Stop hook nudged with a systemMessage, which Claude could ignore. Upgraded to decision:block + reason with a commit-hash sentinel that terminates the loop once a log entry exists."
+tags: ["claude-code", "hooks", "automation"]
+---
+
+## What was wrong
+
+The project-log system depends on Claude writing two files per non-trivial commit. The CLAUDE.md rule said so; the Stop hook printed a reminder to that effect. Neither *enforced* it. In practice, several commits shipped without a corresponding log entry — exactly the failure mode the system was supposed to prevent.
+
+The reminder was treating the symptom (Claude forgets), not the cause (the system doesn't make forgetting expensive).
+
+## The shape of the fix
+
+Stop hooks support a strong signal: returning `{ "decision": "block", "reason": "..." }` makes Claude receive the reason and keep working in the same turn, rather than ending. That's the enforcement primitive.
+
+Blocking unconditionally would create an infinite loop — Claude finishes, hook blocks, Claude finishes again, hook blocks again. The exit condition has to be machine-checkable.
+
+**The sentinel is the commit hash itself.** Once Claude writes a log entry referencing the latest commit, the next Stop invocation finds the hash via `grep -r` and exits silently. Loop terminates by *the act of doing the work the hook is asking for*.
+
+## The full hook logic
+
+```
+1. Read latest commit hash + subject from git.
+2. If no commit, or commit is older than 3 min → exit (nothing recent).
+3. grep -rq for the hash in docs/troubleshooting.md and content/logs/
+   → already logged → exit.
+4. If commit subject contains [no-log] or [skip-log]:
+   append "<!-- skipped: <hash> <subject> -->" to troubleshooting.md → exit.
+5. Otherwise: return decision:block with a reason that names the hash,
+   the two file paths to write, and the routine-skip syntax.
+```
+
+The reason text directs Claude to either write the dual-write entry OR mark routine, both of which result in the hash appearing somewhere in `docs/` or `content/logs/`. The next Stop check sees the hash and lets the turn end.
+
+## Why the sentinel is the *hash* and not a flag file
+
+Earlier sketch used a sentinel file in `/tmp/`. Two problems:
+
+- Local file means each developer machine has its own state. Doesn't survive `git pull` from a collaborator.
+- The act of writing to `/tmp/` decouples from the act of writing the actual log entry. Claude could touch the sentinel and skip the real work.
+
+Hash-in-log binds the termination signal to the work product itself. You cannot satisfy the hook without producing the artifact.
+
+## What this changes for downstream users
+
+The same hook ships in `install/settings.json`. Friends who adopted the spec get the upgrade by running the bootstrap again — or just `curl`-ing the new file. `install/claude-md-snippet.md` and the project's `CLAUDE.md` both document the skip syntax so the new blocking behavior doesn't feel arbitrary.
+
+## Pattern
+
+For a hook that should enforce, not just nudge, use `decision: "block"` with a sentinel that is *the work product itself*. Never use a side-channel flag; it can be satisfied without the work being done. The commit hash is a perfect sentinel here: it's unique, it's tied to the action that triggered the hook, and writing it into the log artifact is exactly what we want anyway.
+
+## Commit
+
+`17be96a` — Stop hook: blocking + reason replaces reminder (Pattern A).

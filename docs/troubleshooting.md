@@ -57,6 +57,14 @@ When you hit a new issue, append an entry at the bottom. The `.claude/settings.j
 - **Follow-up**: First fix split constants but `LogTimeline` still had `import type { LogEntry } from "@/lib/logs"`. Webpack walks the module graph during static analysis even for type-only imports in some pipelines, dragging `lib/source.ts` along. Moved `LogEntry` / `LogFrontmatter` / `LogVisibility` types into `lib/log-kinds.ts` and switched LogTimeline to a single import from there. Verified with a clean local `next build`.
 - **Pattern**: Any module imported from a `"use client"` file is part of the client bundle, *transitively*. `import type` is not a safe escape hatch — move the type itself into a fs-free file. Keep `lib/source.ts` and other fs-touching code out of the import graph of client components entirely. When in doubt, put shared constants AND types in their own file with no infra imports.
 
+## Stop hook only printed a reminder — Claude could ignore it
+
+- **Symptom**: Several non-trivial commits shipped without a corresponding log entry. The Stop hook fired `systemMessage` reminders but did not enforce anything; Claude was free to end the turn.
+- **Cause**: The hook used the `systemMessage` field only. That surfaces a message to the user but does not interrupt Claude. There was no mechanism to block the turn until dual-write completed.
+- **Fix**: Hook now returns `{ "decision": "block", "reason": "..." }` whenever the latest commit hash is not already present in `docs/troubleshooting.md` or `content/logs/`. Claude receives the reason in the next loop iteration and must either write the entry or append a `<!-- skipped: <hash> ... -->` marker for routine commits. The hash check on the *next* Stop event naturally terminates the loop once the entry exists. Commit messages tagged `[no-log]` / `[skip-log]` auto-write the skipped marker. Synced to `install/settings.json` for downstream users.
+- **Commit**: `17be96a`.
+- **Pattern**: For a hook that should *enforce* rather than *nudge*, return `decision: "block"` with a self-terminating sentinel. The sentinel here is the commit hash — once Claude writes a log entry referencing the hash, the next hook invocation finds it via grep and exits. Without a sentinel, blocking creates an infinite loop. `systemMessage` is the wrong tool when the goal is correctness, not awareness.
+
 ---
 
 ## How to add a new entry
