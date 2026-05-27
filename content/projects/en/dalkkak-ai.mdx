@@ -1,0 +1,42 @@
+---
+title: "DalkkakAI"
+description: "Native macOS multi-pane terminal multiplexer + Claude Code workspace for solo founders running multiple startups in parallel."
+date: "2026-05-25"
+language: "en"
+translationKey: "dalkkak-ai"
+status: "active"
+featured: true
+url: ""
+repo: "https://github.com/Daeseon-AI-Factory/ddalkkak"
+tags: ["desktop", "terminal", "claude-code"]
+stack: ["Tauri 2", "Rust", "React 19", "TypeScript", "xterm.js", "portable-pty", "tmux"]
+role: "Solo (AI-pair-programmed with Claude Code)"
+---
+
+A native macOS app that gives you multiple terminal panes across multiple "startup" workspaces, each backed by a persistent tmux session so `claude`, dev servers, and log tails survive an app restart. Built to scratch my own itch — I was running ~12 macOS desktops in parallel and burning hours on Mission Control switching.
+
+## What it does
+
+- Multi-pane terminal grid (react-mosaic + xterm.js) over per-pane PTYs.
+- Each pane is a tmux session keyed `dalkkak-<id>`, so sessions outlive the app.
+- Multi-startup sidebar with per-startup layout; `⌘1..9` / `⌘⇧[` / `⌘⇧]` navigation.
+- Layout JSON persistence in localStorage, automatic reattach on launch.
+- Two-layer observability: Claude Code hooks → `logs/*.jsonl`, Rust `tracing` → daily-rolling runtime log.
+
+## Why
+
+The product's core verb is "drive the user's local `claude` binary". A browser tab can't do that — web-only is technically incapable of solving the actual pain. Tauri (Rust backend + system WebKit) gives a ~10 MB bundle that still owns the file system and process tree. Multi-startup as a first-class citizen separates it from Warp / iTerm / BridgeMind, which all assume one project per window.
+
+## What's shipped (v0.1.0)
+
+Phase 1: multi-pane + tmux persistence + multi-startup sidebar. Bundle: 309 lines of Rust, 14 TypeScript files. Unsigned beta, macOS Apple Silicon only.
+
+## What's not
+
+Phase 2 (Claude Code output augmentation), Phase 3 (cross-startup operator layer), Phase 4 (signed release + marketplace) are roadmap only. Production users: zero. The dogfood test — replace 12 macOS desktops for one full week — hasn't been run yet.
+
+## Engineering bits worth pointing at
+
+- **Lifecycle decouple.** xterm and the PTY live in a module-level registry, outside React. Mosaic split/stack remounts don't touch them. VS Code Server's terminal-hosting pattern. ([log](/logs/dalkkak-ai/2026-05-26-lifecycle-decouple-mosaic-remount))
+- **Subprocess env hygiene.** Tauri's GUI app inherits a minimal PATH and a near-empty environment. Without explicit `TERM`, `LANG`, and PATH augmentation, `claude --resume` froze for 15 seconds and tmux silently failed to spawn. ([log 1](/logs/dalkkak-ai/2026-05-26-pty-env-claude-resume-15s), [log 2](/logs/dalkkak-ai/2026-05-26-pane-exited-tauri-gui-path))
+- **Bug-as-asset.** Every shipped bug got a six-section post-mortem (symptom / root cause / fix / instruction-blame / avoidability / lessons), enforced by `CLAUDE.md` RULE #6.
