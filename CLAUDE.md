@@ -246,10 +246,6 @@ When writing log entries, never fabricate. Concrete rules:
 
 `docs/architecture.md` explains build vs runtime, fs vs `fetch`, ISR caching, and why publish-to-live is ~3-5s even though a Vercel rebuild also runs. Read it before changing anything in `lib/source.ts`, `lib/storage.ts`, or the content read path. Hard constraint: **never `fs.writeFile` in code that runs in production** — see the EROFS entry in `troubleshooting.md`. Second hard constraint: **`lib/source.ts` and `lib/storage.ts` must NEVER appear in the import graph of a `"use client"` component** — see the node-URI entry in `troubleshooting.md`.
 
-## Architecture reference
-
-`docs/architecture.md` explains build vs runtime, fs vs `fetch`, ISR caching, and why publish-to-live is ~3-5s even though a Vercel rebuild also runs. Read it before changing anything in `lib/source.ts`, `lib/storage.ts`, or the content read path. Hard constraint: **never `fs.writeFile` in code that runs in production** — see the EROFS entry in `troubleshooting.md`.
-
 ## Project entries (required fields)
 
 Every file in `/content/projects/{en,ko}/*.mdx` MUST set `url` (live service link) in frontmatter — not just `repo`. Projects without a live URL won't render (the loader filters them out). If a project isn't shipped yet, point `url` at a coming-soon page, a Loom demo, or the project's README on GitHub. A repo link alone is not enough for visitors evaluating the work.
