@@ -1,0 +1,38 @@
+---
+title: "Hobby photos on a dev portfolio: when they help and when they don't"
+date: "2026-05-26"
+project: "daeseon-ai"
+kind: "ux-retro"
+visibility: "public"
+language: "en"
+summary: "I considered a 추억-style photo gallery on /about. Decided against. Kept a small slot for conference/maker/workspace shots only."
+tags: ["portfolio", "design", "branding"]
+---
+
+I asked whether to put personal photos (travel, family, hobbies) on `/about` to make the site feel more human. Walked through the trade-off carefully because the calm anti-LinkedIn-guru tone in `CLAUDE.md` is easy to violate accidentally.
+
+## What the typical "personal photo" choices signal
+
+- **Travel / vacation photos** → "look how interesting I am". Reads as self-promotion. Net-negative for technical hiring.
+- **Family / pet photos** → warmer, but eats real estate that should be selling technical signal. Recruiter has ~30s; pet photo doesn't help them decide.
+- **Performative "humbled to be here" style** → directly violates the writing convention. Hard no.
+
+## What does help
+
+- **Conference / talk photos** → "I show up in public, in this domain". Backs the work-in-public brand.
+- **Maker / workspace photos** → "I actually build things", especially if the work is visible (whiteboard, debug session, hardware).
+- **Single, clean headshot for the avatar** → just confirms who the human is. Already in place.
+
+## What I shipped
+
+Kept the existing **avatar dropzone** in `/admin/site` as the only mandatory photo slot. Added an *optional* "Outside of work" section at the bottom of `/about` that:
+
+- Renders only if hobby text OR at least one photo is set.
+- Renders nothing by default (the section disappears, not just empties).
+- Hint text in the admin UI says: *"Conference / maker / workspace shots work best. Skip family/vacation."*
+
+The default is "no personal photos". Adding one is a deliberate choice, not the default state.
+
+## Pattern
+
+For a calm-tone portfolio, default to negative space, not abundance. Make every personal artifact require an opt-in checkbox or non-empty field; never auto-populate from a placeholder. The structural bias should make it hard to accidentally drift toward LinkedIn-guru visuals.

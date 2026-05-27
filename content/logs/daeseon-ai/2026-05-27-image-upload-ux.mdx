@@ -1,0 +1,33 @@
+---
+title: "Image upload UX: from a tiny button to a real dropzone"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "ux-retro"
+visibility: "public"
+language: "en"
+summary: "Admin image upload worked the whole time, but I couldn't reliably find it. Fixed the discoverability instead of the mechanism."
+tags: ["admin-ux", "uploads"]
+---
+
+## What broke (or seemed to)
+
+I tried to upload an image while writing a post and reported "image upload is broken". The drag/paste/file handlers were all wired up and worked from a unit-test perspective — paste-from-clipboard inserted markdown at the cursor correctly, drag-onto-textarea uploaded, the file-picker button opened the OS dialog.
+
+The "broken" feeling came from the UX, not the code. The button was small, the dropzone (the textarea itself) had no visual affordance, and the paste flow had no status indicator.
+
+## What I changed
+
+In `components/admin/PostEditor.tsx`, replaced the inline "Attach image" link with:
+
+- An explicit **dropzone box** above the textarea — large, dashed-border, with a labeled icon and hint text ("Drag from Finder · paste from clipboard · or use the button below"). Highlights when a file drags over.
+- A prominent **"Choose from Mac…"** button using the primary action style.
+- A **recent uploads strip** showing the last 5 uploaded images with thumbnails, paths, and per-row "Insert" + "Copy MD" actions. Recovers the most common "I uploaded but it didn't appear" failure mode.
+- A status line that flips between *"Drag · paste · or attach"* and *"Uploading…"*.
+
+The textarea retains paste and drop as well, so power users don't lose the convenient path.
+
+## Pattern
+
+When a feature works but feels broken, the question isn't "what code change?" but "what affordance is missing?". An invisible feature is functionally not-shipped. The fix is usually visual, not algorithmic.
+
+Specific habit picked up: for any background operation the user can trigger (upload, save, sync), there should always be (1) a visible primary control, (2) a status indicator during the operation, and (3) a tangible artifact afterward (in this case, the recent-uploads strip). All three were missing.

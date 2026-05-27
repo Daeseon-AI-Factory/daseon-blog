@@ -1,0 +1,40 @@
+---
+title: "Vercel refused to build with next-mdx-remote@5.x (CVE)"
+date: "2026-05-26"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "First production build was blocked by Vercel's security scanner. Solved with a one-line dep bump."
+tags: ["vercel", "security", "dependencies"]
+---
+
+## Symptom
+
+First Vercel build after the initial push died with:
+
+```
+Build Failed
+Vulnerable version of next-mdx-remote detected (5.0.0).
+Please update to version 6.0.0 or later.
+```
+
+Local `next build` had been passing. The block is enforced by Vercel's build-time scanner, not by Next.js itself.
+
+## Cause
+
+`package.json` pinned `next-mdx-remote@^5.0.0`. Version 5.x has a known CVE that Vercel's scanner refuses to ship. Local CI doesn't run that scanner, so the failure only surfaced on Vercel.
+
+## Fix
+
+```bash
+npm install next-mdx-remote@latest   # → ^6.0.0
+```
+
+`compileMDX` API in `lib/mdx.ts` is backwards-compatible between 5 and 6 — no other changes needed. Local build re-verified, then pushed.
+
+Commit: `1b8123d`.
+
+## Pattern
+
+Local build passing ≠ Vercel build passing. Vercel layers a security scanner (and a few other checks) on top of `next build`. Worth keeping in mind for any major dep bump or new package install: the local result is necessary but not sufficient.

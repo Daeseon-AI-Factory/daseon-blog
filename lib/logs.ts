@@ -58,7 +58,7 @@ export async function listProjectLogs(project: string): Promise<LogEntry[]> {
   const items = await Promise.all(entries.map((f) => readLogFile(project, f)));
   return items
     .filter((e): e is LogEntry => Boolean(e))
-    .sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? 1 : -1));
+    .sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? -1 : 1));
 }
 
 export async function getProjectLog(project: string, slug: string): Promise<LogEntry | null> {

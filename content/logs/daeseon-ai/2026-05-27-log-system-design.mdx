@@ -1,0 +1,66 @@
+---
+title: "Designing the project-log system (this thing you're reading)"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Why I added a fourth content type for project logs, dual-wrote to a machine-facing reference and a human-facing timeline, and built explicit anti-hallucination rules."
+tags: ["content-model", "dogfooding", "claude-code"]
+---
+
+The blog already had `post / note / knowledge`. I added a fourth type, `log`, specifically for project journals. This is one of those entries.
+
+## Why a fourth type instead of overloading `note`
+
+Notes are private by default and don't surface anywhere — they're the Notion replacement. Project logs need:
+
+- A *public* default for most kinds (troubleshoot, tech-retro, update, ux-retro).
+- A *project-scoped surface* (timeline at `/projects/<slug>`) that notes don't get.
+- A *kind* taxonomy that doesn't make sense on notes (a private memo doesn't need to declare `kind: monetization`).
+
+Overloading note with these would mean every note carries fields that don't apply. New type is cheaper than a polluted schema.
+
+## Dual-write to two surfaces
+
+Each non-trivial event now writes:
+
+1. `docs/troubleshooting.md` — flat, problem-indexed, terse. Optimized for "I'm hitting the same thing again, grep this first."
+2. `content/logs/<project>/<date>-<slug>.mdx` — narrative, date-indexed, project-scoped. Optimized for "give me the timeline of this project" and for the RAG manifest.
+
+I tried single-source first. Both directions failed:
+
+- Date-indexed only → grep returns the same fact buried in narrative paragraphs. Slow.
+- Problem-indexed only → no timeline, no recruiter-readable artifact, no public archive of judgment calls.
+
+The duplication cost is low (the mdx is mostly a fleshed-out copy of the troubleshooting entry) and pays back the first time a bug recurs.
+
+## Anti-hallucination rules
+
+Because Claude is writing most of these entries, the rules need to be explicit. Seven rules in `docs/project-log-spec.md`:
+
+1. Symptom is **literal** — paste the actual error, no paraphrase.
+2. Cause is **verified**, or marked `Hypothesis: … Verified by: …`, or marked `Suspected:` with caveat.
+3. Fix names actual files. `git diff` is the source of truth.
+4. Commit hash from `git rev-parse HEAD` after committing, not before.
+5. Date from `git log -1 --format=%cI`, not memory.
+6. Pattern only if the recurring lesson is obvious from this one incident.
+7. Don't fabricate timing or metrics.
+
+These exist because Claude (and humans under pressure) will happily fill empty fields with plausible-sounding fiction. Plausible-sounding fiction in a problem-indexed cache is worse than the cache not existing.
+
+## Surface that exists now
+
+- `/projects/<slug>` page renders a timeline of public log entries with kind-filter chips.
+- `/projects/<slug>/log/<entry>` for individual entries (public + unlisted; private returns 404).
+- `/api/rag/manifest` includes all log entries regardless of visibility — for my own retrieval.
+
+## What's deferred
+
+- Admin editor support for creating `log` entries from the web UI. Right now logs are written by editing mdx files directly. Adequate while I'm the only author; will revisit when the muscle memory wears thin.
+- Per-kind colors in the timeline. Currently subtle — accent for troubleshoot, neutral for everything else. May want sharper differentiation later.
+- Per-project log RSS feed.
+
+## Pattern
+
+When a piece of structured content has at least two different reader/use patterns (grep vs timeline, machine vs human, this-project vs all-projects), denormalize on purpose. The cost of two surfaces is small if the canonical fact lives in one place (the mdx body) and the other surface is mostly metadata derived from it.
