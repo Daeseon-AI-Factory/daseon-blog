@@ -16,6 +16,7 @@ type CreateBody = {
   featured?: boolean;
   url?: string;
   repo?: string;
+  logSourceRepo?: string;
   tags?: string[];
   stack?: string[];
   role?: string;
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
     featured: Boolean(payload.featured),
     url: payload.url!.trim(),
     repo: payload.repo?.trim() || undefined,
+    logSourceRepo: payload.logSourceRepo?.trim() || undefined,
     tags: payload.tags?.filter(Boolean),
     stack: payload.stack?.filter(Boolean),
     role: payload.role?.trim() || undefined,

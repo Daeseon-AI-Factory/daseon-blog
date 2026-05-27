@@ -29,6 +29,7 @@ export default async function EditProjectPage({ params }: { params: Params }) {
         featured: project.frontmatter.featured,
         url: project.frontmatter.url,
         repo: project.frontmatter.repo ?? "",
+        logSourceRepo: project.frontmatter.logSourceRepo ?? "",
         tags: (project.frontmatter.tags ?? []).join(", "),
         stack: (project.frontmatter.stack ?? []).join(", "),
         role: project.frontmatter.role ?? "",

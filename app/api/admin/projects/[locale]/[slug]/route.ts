@@ -22,6 +22,7 @@ type UpdateBody = {
   featured?: boolean;
   url?: string;
   repo?: string;
+  logSourceRepo?: string;
   tags?: string[];
   stack?: string[];
   role?: string;
@@ -79,6 +80,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     featured: typeof payload.featured === "boolean" ? payload.featured : existing.frontmatter.featured,
     url,
     repo: payload.repo?.trim() ?? existing.frontmatter.repo,
+    logSourceRepo: payload.logSourceRepo?.trim() ?? existing.frontmatter.logSourceRepo,
     tags: payload.tags?.filter(Boolean) ?? existing.frontmatter.tags,
     stack: payload.stack?.filter(Boolean) ?? existing.frontmatter.stack,
     role: payload.role?.trim() ?? existing.frontmatter.role,

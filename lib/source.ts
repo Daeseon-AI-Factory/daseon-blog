@@ -20,15 +20,20 @@ type RepoConfig = {
   token: string;
 };
 
-function repoConfig(): RepoConfig | null {
+function repoConfig(slugOverride?: string): RepoConfig | null {
   const token = process.env.GITHUB_TOKEN;
-  const slug = process.env.GITHUB_REPO;
+  const slug = slugOverride ?? process.env.GITHUB_REPO;
   const branch = process.env.GITHUB_BRANCH ?? "main";
   if (!token || !slug || !slug.includes("/")) return null;
   const [owner, repo] = slug.split("/");
   if (!owner || !repo) return null;
   return { owner, repo, branch, token };
 }
+
+export type SourceOptions = {
+  /** "owner/name" — fetch from this repo instead of the current one. */
+  repo?: string;
+};
 
 export function sourceIsGithub(): boolean {
   return repoConfig() !== null;
@@ -38,8 +43,8 @@ function localAbsPath(repoRelativePath: string): string {
   return path.join(process.cwd(), repoRelativePath);
 }
 
-export async function readText(repoRelativePath: string): Promise<string | null> {
-  const cfg = repoConfig();
+export async function readText(repoRelativePath: string, opts: SourceOptions = {}): Promise<string | null> {
+  const cfg = repoConfig(opts.repo);
   if (cfg) {
     const url = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${repoRelativePath}`;
     const res = await fetch(url, {
@@ -53,6 +58,11 @@ export async function readText(repoRelativePath: string): Promise<string | null>
     return await res.text();
   }
 
+  if (opts.repo) {
+    // Cross-repo requested but no token — can't fall back to local fs (wrong repo)
+    return null;
+  }
+
   try {
     return await fs.readFile(localAbsPath(repoRelativePath), "utf-8");
   } catch (e) {
@@ -62,8 +72,8 @@ export async function readText(repoRelativePath: string): Promise<string | null>
   }
 }
 
-export async function listFiles(repoRelativeDir: string): Promise<string[]> {
-  const cfg = repoConfig();
+export async function listFiles(repoRelativeDir: string, opts: SourceOptions = {}): Promise<string[]> {
+  const cfg = repoConfig(opts.repo);
   if (cfg) {
     const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${repoRelativeDir}?ref=${cfg.branch}`;
     const res = await fetch(url, {
@@ -83,6 +93,8 @@ export async function listFiles(repoRelativeDir: string): Promise<string[]> {
     return data.filter((d) => d.type === "file").map((d) => d.name);
   }
 
+  if (opts.repo) return [];
+
   try {
     return await fs.readdir(localAbsPath(repoRelativeDir));
   } catch (e) {
@@ -92,8 +104,8 @@ export async function listFiles(repoRelativeDir: string): Promise<string[]> {
   }
 }
 
-export async function listDirs(repoRelativeDir: string): Promise<string[]> {
-  const cfg = repoConfig();
+export async function listDirs(repoRelativeDir: string, opts: SourceOptions = {}): Promise<string[]> {
+  const cfg = repoConfig(opts.repo);
   if (cfg) {
     const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${repoRelativeDir}?ref=${cfg.branch}`;
     const res = await fetch(url, {
@@ -112,6 +124,8 @@ export async function listDirs(repoRelativeDir: string): Promise<string[]> {
     if (!Array.isArray(data)) return [];
     return data.filter((d) => d.type === "dir").map((d) => d.name);
   }
+
+  if (opts.repo) return [];
 
   try {
     const entries = await fs.readdir(localAbsPath(repoRelativeDir), { withFileTypes: true });

@@ -34,6 +34,7 @@ export function serializeProjectMdx(frontmatter: ProjectFrontmatter, body: strin
     featured: frontmatter.featured,
     url: frontmatter.url,
     repo: frontmatter.repo || undefined,
+    logSourceRepo: frontmatter.logSourceRepo || undefined,
     tags: frontmatter.tags && frontmatter.tags.length > 0 ? frontmatter.tags : undefined,
     stack: frontmatter.stack && frontmatter.stack.length > 0 ? frontmatter.stack : undefined,
     role: frontmatter.role || undefined,

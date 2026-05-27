@@ -14,6 +14,12 @@ export type ProjectFrontmatter = {
   featured: boolean;
   url: string; // required — live service link, shown as the primary CTA
   repo?: string;
+  /**
+   * "owner/name" — if set, the project log timeline is fetched from this repo's
+   * content/logs/<slug>/ directory instead of this blog's. Lets each project
+   * keep its own dual-write log in its own repo while the blog aggregates.
+   */
+  logSourceRepo?: string;
   tags?: string[];
   stack?: string[];
   role?: string;
@@ -50,6 +56,7 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
     featured: Boolean(fm.featured),
     url: fm.url,
     repo: fm.repo,
+    logSourceRepo: fm.logSourceRepo,
     tags: fm.tags,
     stack: fm.stack,
     role: fm.role,

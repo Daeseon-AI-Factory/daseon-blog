@@ -57,6 +57,15 @@ When you hit a new issue, append an entry at the bottom. The `.claude/settings.j
 - **Follow-up**: First fix split constants but `LogTimeline` still had `import type { LogEntry } from "@/lib/logs"`. Webpack walks the module graph during static analysis even for type-only imports in some pipelines, dragging `lib/source.ts` along. Moved `LogEntry` / `LogFrontmatter` / `LogVisibility` types into `lib/log-kinds.ts` and switched LogTimeline to a single import from there. Verified with a clean local `next build`.
 - **Pattern**: Any module imported from a `"use client"` file is part of the client bundle, *transitively*. `import type` is not a safe escape hatch — move the type itself into a fs-free file. Keep `lib/source.ts` and other fs-touching code out of the import graph of client components entirely. When in doubt, put shared constants AND types in their own file with no infra imports.
 
+## Cross-repo log aggregation (not a bug — a feature record)
+
+- **Context**: Single-repo log assumption broke once multiple projects (crosspost-bot, AI Factory cores) needed their own repos but a unified portfolio timeline.
+- **Choice**: Pull-on-demand with `logSourceRepo` frontmatter field on each project mdx. Portfolio fetches via GitHub Contents API + 30s ISR cache.
+- **Files changed**: `lib/projects.ts` (frontmatter field), `lib/source.ts` (repo override on readText/listFiles/listDirs), `lib/logs.ts` (sourceRepo param), `components/ProjectBody.tsx`, both log entry page routes (EN+KO), admin project API + ProjectEditor (input).
+- **Trade-off**: No push/sync — source repos stay canonical. GitHub PAT needs Contents:read on each source repo. Same-owner is free; different owner needs new fine-grained PAT.
+- **Commit**: see follow-up commit hash.
+- **Pattern**: Multi-repo portfolio = pull-on-demand from source, not sync into destination. Sync adds lag + second source of truth; pull keeps source canonical and uses caching for performance.
+
 ## Stop hook only printed a reminder — Claude could ignore it
 
 - **Symptom**: Several non-trivial commits shipped without a corresponding log entry. The Stop hook fired `systemMessage` reminders but did not enforce anything; Claude was free to end the turn.
@@ -84,3 +93,4 @@ When you fix a non-trivial issue, append this block at the bottom (the Stop hook
 Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essays.
 
 <!-- skipped: 65420d3 Log Stop-hook upgrade (17be96a) — dual-write per CLAUDE.md rules -->
+<!-- skipped: 7b17463 Mark log-housekeeping commit 65420d3 as routine [no-log] -->

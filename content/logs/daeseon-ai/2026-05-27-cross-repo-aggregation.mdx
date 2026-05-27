@@ -1,0 +1,57 @@
+---
+title: "Cross-repo log aggregation: each repo keeps its own, the portfolio pulls"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Added `logSourceRepo` to project frontmatter so each project's log timeline can be fetched from its own separate repo. Pull-on-demand with 30s ISR cache, no polling."
+tags: ["architecture", "multi-repo", "github-api"]
+---
+
+## What this enables
+
+Up until this commit, the project-log system assumed all logs live in *this* repo's `content/logs/<project>/` directory. Fine for a single-repo portfolio. Not fine for the real situation: I'll have separate repos for crosspost-bot, AI Factory cores, and any other product project. Each of those repos runs its own dual-write log via the install/ spec — but the timeline still needs to surface on this portfolio.
+
+Now: each project's `content/projects/<slug>.mdx` can declare:
+
+```yaml
+logSourceRepo: "Daeseon-AI-Factory/crosspost-bot"
+```
+
+When the portfolio renders `/projects/crosspost-bot`, it fetches that repo's `content/logs/crosspost-bot/` directory through the GitHub Contents API and renders the entries inline. Identical UI to a repo-local log. The reader sees one continuous timeline; behind the curtain the source can be any repo the portfolio's PAT can read.
+
+## Design choices
+
+- **Pull, not push.** Each project repo doesn't know about the portfolio. The portfolio fetches when someone visits. Same architecture as the existing read path — `lib/source.ts` already handles GitHub Raw + Contents API for the portfolio's own files. The change was extending those helpers to accept an `{ repo: "owner/name" }` override.
+- **No polling.** Next.js `fetch` with `next: { revalidate: 30 }` does lazy caching. First visit hits GitHub, subsequent visits within 30s are cached. No cron, no background worker, no GitHub Actions.
+- **No central aggregator.** Each portfolio is single-owner. Friends adopting the spec render their *own* portfolio fetching their *own* repos. There's no shared service.
+
+## What changed in code
+
+- `lib/projects.ts` — added `logSourceRepo?: string` to `ProjectFrontmatter` + read it in `readProjectFile`.
+- `lib/source.ts` — `readText`, `listFiles`, `listDirs` now accept an optional `{ repo?: string }` second arg. When set, uses that repo's owner/name; otherwise falls back to `GITHUB_REPO` env var. Cross-repo requests with no token return null/empty (no incorrect local-fs fallback).
+- `lib/logs.ts` — `listProjectLogs(project, sourceRepo?)` and `getProjectLog(project, slug, sourceRepo?)` pass through to source.
+- `components/ProjectBody.tsx` — reads `fm.logSourceRepo` and passes to `listProjectLogs`.
+- `app/(public)/projects/[slug]/log/[entry]/page.tsx` and the KO mirror — resolve `logSourceRepo` from the project mdx before fetching the individual log entry.
+- `app/api/admin/projects/[route]/route.ts` and update route — accept `logSourceRepo` in create/update payloads.
+- `lib/project-storage.ts` — serializes `logSourceRepo` into frontmatter on save.
+- `components/admin/ProjectEditor.tsx` — input field under "Repo URL" with hint text explaining the difference.
+
+## Trade-offs accepted
+
+- **GitHub API rate limit.** PAT gets ~5000 requests/hour. With 30s ISR, a project page hit at full traffic = ~120 requests/hour per visitor. Not a constraint for solo portfolio scale. Would matter if the portfolio gets HN-front-page traffic.
+- **Cross-repo permission burden.** New repo from a different owner means new fine-grained PAT scoping. Same owner = existing PAT works.
+- **No timeline merge across repos.** The portfolio shows one project's timeline per project page. If you want all projects' troubleshoots on one screen, that's a different surface and not built.
+
+## What I'd do differently
+
+Skipped admin support for editing log entries directly. Right now mdx is hand-written. The blog post mentions backdating support (set `date` to a past date), but there's no UI for it. Will revisit when I'm tired of opening text editors.
+
+## Pattern
+
+For a multi-repo portfolio, *pull-on-demand from the source* beats *sync into the destination*. Sync introduces lag, conflict, and a second source of truth. Pull-on-demand keeps the source canonical and uses caching for performance. The cost is GitHub API quota — bounded by hourly limit — but at portfolio-scale traffic this isn't the constraint.
+
+## Commit
+
+To be filled after this commit lands. Will reference `git rev-parse HEAD` of the cross-repo aggregation commit.

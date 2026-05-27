@@ -235,6 +235,41 @@ After 5–10 entries you'll have:
 
 If you have a blog/site/portfolio, render the public entries on a project page. If you don't, the markdown alone is plenty — `cat docs/troubleshooting.md | less` works fine as a CLI lookup.
 
+## Step 7 — Aggregate multiple repos into one portfolio (optional)
+
+If you have several projects across separate repos and want one *portfolio site* (this blog) to render all of their timelines, this site supports **cross-repo aggregation**. Each project repo keeps its own logs in its own repo — no syncing, no copying.
+
+How to wire it:
+
+1. In the portfolio repo's `content/projects/<slug>.mdx`, add `logSourceRepo: "owner/name"` to the frontmatter (or use `/admin/projects` editor — the field is right under "Repo URL").
+2. The portfolio's `GITHUB_TOKEN` needs `Contents: read` access on that source repo. Same-owner repos work with the existing PAT; different owner needs a new fine-grained PAT.
+3. Visit `/projects/<slug>` on the portfolio — the timeline now lists entries fetched from the source repo's `content/logs/<slug>/` directory in real time.
+
+Notes:
+
+- It's pull-on-demand, not polling. The portfolio fetches when someone visits, with a 30-second ISR cache. No webhooks, no GitHub Actions, no scheduled jobs.
+- Source repos don't need any extra setup beyond the standard install (steps 1-4). They just need `content/logs/<slug>/*.mdx` files.
+- Visibility is per-entry. `visibility: public` shows in the timeline. `private` doesn't appear anywhere on the portfolio. `unlisted` is reachable by direct URL only.
+- Each portfolio is single-owner. Friends adopting the spec render their *own* portfolio fetching their *own* repos. There's no central aggregator.
+
+## Backdating an entry
+
+If something important happened months ago and you only just decided to log it, set the `date` frontmatter to the actual event date:
+
+```yaml
+---
+title: "PL/SQL refactor — when we hit the costing bottleneck"
+date: "2024-11-03"
+project: "manufacturing-cost-system"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Retro on cutting 7K lines to 3K. Written 18 months after the fact."
+---
+```
+
+The timeline sorts by `date` ascending, so backfilled entries slot into the right historical position. The 7-rule anti-hallucination guidance still applies — only write what you can verify (from git history, old notes, your memory of specific commit hashes). If exact details are missing, write `[unverified: <claim>]` rather than inventing them.
+
 ## FAQ
 
 **"My project isn't Next.js — does this work?"**

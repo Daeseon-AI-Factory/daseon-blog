@@ -23,10 +23,10 @@ function defaultLogVisibility(kind: LogKind): Visibility {
   return "public";
 }
 
-async function readLogFile(project: string, fileName: string): Promise<LogEntry | null> {
+async function readLogFile(project: string, fileName: string, sourceRepo?: string): Promise<LogEntry | null> {
   if (!fileName.endsWith(".mdx")) return null;
   const slug = fileName.replace(/\.mdx$/, "");
-  const raw = await readText(`${LOG_ROOT}/${project}/${fileName}`);
+  const raw = await readText(`${LOG_ROOT}/${project}/${fileName}`, sourceRepo ? { repo: sourceRepo } : undefined);
   if (!raw) return null;
   const { data, content } = matter(raw);
   const fm = data as Partial<LogFrontmatter>;
@@ -53,16 +53,16 @@ async function readLogFile(project: string, fileName: string): Promise<LogEntry 
   };
 }
 
-export async function listProjectLogs(project: string): Promise<LogEntry[]> {
-  const entries = await listFiles(`${LOG_ROOT}/${project}`);
-  const items = await Promise.all(entries.map((f) => readLogFile(project, f)));
+export async function listProjectLogs(project: string, sourceRepo?: string): Promise<LogEntry[]> {
+  const entries = await listFiles(`${LOG_ROOT}/${project}`, sourceRepo ? { repo: sourceRepo } : undefined);
+  const items = await Promise.all(entries.map((f) => readLogFile(project, f, sourceRepo)));
   return items
     .filter((e): e is LogEntry => Boolean(e))
     .sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? -1 : 1));
 }
 
-export async function getProjectLog(project: string, slug: string): Promise<LogEntry | null> {
-  return readLogFile(project, `${slug}.mdx`);
+export async function getProjectLog(project: string, slug: string, sourceRepo?: string): Promise<LogEntry | null> {
+  return readLogFile(project, `${slug}.mdx`, sourceRepo);
 }
 
 export async function listAllLogs(): Promise<LogEntry[]> {

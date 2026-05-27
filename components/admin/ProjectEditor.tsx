@@ -16,6 +16,7 @@ export type ProjectEditorShape = {
   featured: boolean;
   url: string;
   repo: string;
+  logSourceRepo: string;
   tags: string;
   stack: string;
   role: string;
@@ -73,6 +74,7 @@ export function ProjectEditor({ mode, initial, savingVia }: Props) {
       featured: project.featured,
       url: project.url,
       repo: project.repo || undefined,
+      logSourceRepo: project.logSourceRepo || undefined,
       tags,
       stack,
       role: project.role || undefined,
@@ -212,6 +214,19 @@ export function ProjectEditor({ mode, initial, savingVia }: Props) {
             placeholder="https://github.com/you/repo"
             className="rounded-md border border-paper-line bg-white px-2 py-1.5 text-sm"
           />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-ink-muted">
+          Log source repo (optional, owner/name)
+          <input
+            type="text"
+            value={project.logSourceRepo}
+            onChange={(e) => update("logSourceRepo", e.target.value)}
+            placeholder="Daeseon-AI-Factory/crosspost-bot"
+            className="rounded-md border border-paper-line bg-white px-2 py-1.5 font-mono text-sm"
+          />
+          <span className="text-[0.7rem] text-ink-subtle">
+            If set, this project&apos;s log timeline is fetched from that repo&apos;s content/logs/&lt;slug&gt;/ directory instead of this blog&apos;s.
+          </span>
         </label>
         <label className="flex flex-col gap-1 text-xs text-ink-muted">
           Stack (comma-separated)

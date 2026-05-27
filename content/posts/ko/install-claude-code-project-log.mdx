@@ -1,0 +1,256 @@
+---
+title: "Claude Code 프로젝트에 자동 작업 로그 10분 안에 깔기"
+description: "Claude가 non-trivial한 fix·결정·회고를 자동으로 기록하게 만드는 복붙 셋업. 할루시네이션 없이."
+date: "2026-05-27"
+language: "ko"
+translationKey: "install-claude-code-project-log"
+tags: ["claude-code", "tooling", "process"]
+status: "published"
+format: "note"
+summary: "Claude Code 프로젝트마다 dual-write 작업 로그(머신용 troubleshooting 레퍼런스 + 사람용 타임라인)를 설치하는 단계별 가이드. 7개 anti-hallucination 룰 + Stop hook 리마인더 포함."
+---
+
+Claude Code 세션은 휘발된다. 세션이 끝나면 채팅이 스크롤로 사라지고, 3주 뒤엔 *왜* 그 라이브러리를 골랐는지, 그 에러 메시지가 실제로 뭐였는지, 어떤 commit이 프로덕션 버그를 잡았는지 재구성 못 함. 트랜스크립트는 기술적으로 저장되지만 아무도 트랜스크립트를 grep하지 않는다.
+
+해결은 작다: non-trivial한 일이 생길 때마다 Claude가 *두 파일에 동시에* 구조화된 로그 항목을 쓰게 한다 — fabrication을 막는 룰과 함께. 아래는 정확한 셋업. 복붙, 생각 필요 없음. 0에서 작동까지 약 10분.
+
+이 시스템은 이 사이트가 그대로 쓴다. 이 도메인의 `/projects/daeseon-ai` 페이지는 라이브 데모 — 그 페이지의 모든 항목은 이 룰 하에서 Claude가 작성했고, 시스템 설계 자체에 대한 메타 항목도 포함된다.
+
+## 끝났을 때 갖게 되는 것
+
+non-trivial한 사건마다 Claude가 fix commit과 같은 turn에 작성하는 두 파일:
+
+1. **`docs/troubleshooting.md`** — 평평한, 문제 인덱스, 간결. 같은 버그를 다시 만났을 때 grep할 곳. Symptom / Cause / Fix / Commit / Pattern.
+2. **`content/logs/<project-slug>/<YYYY-MM-DD>-<short-slug>.mdx`** — 서사적, 날짜 인덱스, 프로젝트 범위. `kind` (troubleshoot / tech-retro / ux-retro / business / monetization / update) × `visibility` (public / unlisted / private) 가짐.
+
+추가로 commit 후 리마인더를 출력하는 Stop hook — Claude가 조용히 로그를 빼먹지 않도록.
+
+## 사전 준비
+
+```
+- Claude Code 설치 + 프로젝트에서 실행 중
+- git repo (어떤 호스트든)
+- PATH에 jq (macOS는 기본 설치; Linux는 `apt install jq`)
+```
+
+끝. Next.js / Rails / FastAPI / Go 뭐든 상관없음.
+
+## 가장 빠른 길 (한 줄)
+
+스크립트를 믿는다면 (먼저 `less`로 같은 URL 읽고) 1, 2, 4단계를 한 번에 처리한다. `CLAUDE.md`는 *건드리지 않음* — 그건 유일한 수동 단계.
+
+```bash
+cd /path/to/your/repo
+curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/setup.sh | bash
+```
+
+스크립트가 하는 일:
+
+- `docs/`, `.claude/`, `content/logs/<your-repo-name>/` 생성
+- `docs/troubleshooting.md` (시드 파일) 다운로드
+- `.claude/settings.json` (Stop hook) 다운로드
+- `CLAUDE.md` 스니펫을 *콘솔에 출력* — 너가 읽고 직접 paste
+- 기존 파일은 덮어쓰지 않음 (idempotent)
+
+각 단계를 명시적으로 보고 싶으면 아래 계속.
+
+## 1단계 — 디렉터리 만들기
+
+repo 루트에서:
+
+```bash
+mkdir -p docs content/logs/$(basename $PWD) .claude
+```
+
+`$(basename $PWD)`는 현재 폴더 이름을 프로젝트 slug로 씀. 원하는 슬러그로 교체 — 보통 `my-awesome-app` 같은 거. kebab-case 유지, 공백 없음.
+
+## 2단계 — `docs/troubleshooting.md` 시드
+
+한 줄 다운로드:
+
+```bash
+curl -fsSL -o docs/troubleshooting.md \
+  https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/troubleshooting-starter.md
+```
+
+또는 다음 내용을 직접 저장:
+
+````markdown
+# Troubleshooting log
+
+Issues hit and the fix for each. Newest at the bottom.
+
+Format: **Symptom** · **Cause** · **Fix** · **Commit** · (optional **Pattern**).
+
+---
+
+## How to add a new entry
+
+```markdown
+## <short title>
+
+- **Symptom**: <literal error message or observable behavior>
+- **Cause**: <verified explanation> (or `Hypothesis: ... Verified by: ...`)
+- **Fix**: <files/functions changed, mechanism>
+- **Commit**: <hash from `git rev-parse HEAD` AFTER committing>
+- **Pattern**: <one-line recurring lesson — optional>
+```
+
+구체적으로만. "교훈" 에세이 금지.
+````
+
+## 3단계 — `CLAUDE.md` 룰 추가
+
+스니펫을 가져와 읽고, `CLAUDE.md`에 append:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/claude-md-snippet.md
+# 출력 확인 후 CLAUDE.md에 paste
+```
+
+또는 영어 가이드의 `Step 3` 블록을 그대로 paste.
+
+## 4단계 — Stop hook 추가
+
+한 줄 다운로드:
+
+```bash
+curl -fsSL -o .claude/settings.json \
+  https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/settings.json
+```
+
+hook이 하는 일:
+
+- 매 commit 후 commit hash + 제목을 git에서 읽음
+- 그 hash가 `docs/troubleshooting.md` 또는 `content/logs/`에 이미 있는지 grep
+- 있으면 → 조용히 종료 (이미 로그됨)
+- commit 메시지에 `[no-log]` 또는 `[skip-log]` 있음 → 자동으로 skipped 마커 추가 후 종료
+- 그 외 → `decision: "block"` + reason 반환 → Claude가 이번 turn에 dual-write 처리
+
+루프는 hash가 로그 파일에 들어가는 즉시 자연 종료.
+
+## 5단계 — 첫 실제 entry trigger
+
+Claude에게 non-trivial한 일을 시켜라 — 실제 버그 수정, 아키텍처 결정 등. fix commit 후 Stop hook이 fire. Claude가 두 파일 모두 작성해야 함.
+
+첫 한 번은 명시적으로:
+
+```
+We just fixed <X>. Per CLAUDE.md rules, write the troubleshooting entry
+and the log mdx file in the same turn as a follow-up commit. Use the
+seven anti-hallucination rules — paste the actual error, name actual
+files, use the real commit hash from `git rev-parse HEAD`.
+```
+
+검증:
+
+```bash
+tail -20 docs/troubleshooting.md
+ls -la content/logs/$(basename $PWD)/
+git log -1 --format=%H | cut -c1-7
+```
+
+가짜로 적은 게 있으면 (잘못된 commit hash, code랑 안 맞는 plausible-sounding cause) 어느 룰을 어겼는지 짚어주고 다시. 룰은 첫날 enforce해야만 동작 — Claude는 그렇지 않으면 지름길 택함.
+
+## 6단계 — 시간이 지나면 보이는 것
+
+5–10개 항목 후:
+
+- grep 가능한 문제 캐시 (`docs/troubleshooting.md`). 비슷한 에러 만나면 여기 먼저.
+- 프로젝트 timeline (`content/logs/<slug>/`). 시간순. 첫 결정부터 최근 commit까지 빌드 서사로 읽힘.
+- 판단 결정의 진짜 기록 (kind=tech-retro, ux-retro, business). 한 달이면 잊을 것들.
+
+블로그/포트폴리오 있으면 public 항목을 프로젝트 페이지에 렌더. 없으면 markdown만으로도 충분 — `cat docs/troubleshooting.md | less`.
+
+## 7단계 — 여러 repo를 하나의 포트폴리오로 통합 (선택)
+
+별도 repo에 여러 프로젝트가 있고 *하나의 포트폴리오 사이트*에서 모든 timeline을 렌더하고 싶다면, 이 사이트는 **cross-repo aggregation**을 지원한다. 각 프로젝트 repo는 자체 로그를 자기 repo에 둠 — sync 없음, 복사 없음.
+
+연결하는 법:
+
+1. 포트폴리오 repo의 `content/projects/<slug>.mdx` frontmatter에 `logSourceRepo: "owner/name"` 추가 (또는 `/admin/projects` 에디터 — 필드가 "Repo URL" 바로 아래).
+2. 포트폴리오의 `GITHUB_TOKEN`이 그 source repo에 `Contents: read` 권한 있어야. 같은 owner 안의 repo면 기존 PAT으로 자동 OK. 다른 owner면 새 fine-grained PAT.
+3. 포트폴리오의 `/projects/<slug>` 방문 → timeline이 source repo의 `content/logs/<slug>/` 디렉터리에서 실시간 fetch.
+
+참고:
+
+- pull-on-demand, polling 아님. 사용자가 방문할 때만 fetch, 30초 ISR 캐시. webhook 없음, GitHub Actions 없음, 스케줄 작업 없음.
+- source repo는 표준 install (1-4단계) 외에 추가 셋업 필요 없음. `content/logs/<slug>/*.mdx` 파일만 있으면 됨.
+- visibility는 entry별. `public`은 timeline에 보임. `private`은 포트폴리오 어디에도 안 나옴. `unlisted`는 직링크로만 접근.
+- 각 포트폴리오는 단일 owner. 친구는 *자기* 포트폴리오가 *자기* repo를 fetch하게 셋업. 중앙 aggregator 없음.
+
+## 과거 일 backdating
+
+몇 달 전에 일어난 중요한 일을 지금 로그하고 싶다면 `date` frontmatter를 실제 사건 일자로:
+
+```yaml
+---
+title: "PL/SQL 리팩터 — 원가 계산 병목 만났을 때"
+date: "2024-11-03"
+project: "manufacturing-cost-system"
+kind: "tech-retro"
+visibility: "public"
+language: "ko"
+summary: "7K 줄에서 3K 줄로 줄인 회고. 사건 18개월 후에 작성."
+---
+```
+
+timeline은 `date` 오름차순 정렬이라 backfilled 항목이 올바른 역사적 위치에 들어감. 7개 anti-hallucination 룰 그대로 적용 — 검증할 수 있는 것만 작성 (git history, 옛 노트, 특정 commit hash에 대한 본인 기억에서). 정확한 디테일이 없으면 지어내지 말고 `[unverified: <주장>]`이라고 표기.
+
+## FAQ
+
+**"내 프로젝트는 Next.js 아닌데 동작하나?"**
+
+Yes. 시스템은 웹 프레임워크에 의존하지 않음. markdown 파일을 쓰는 거니까. 렌더할 사이트가 없으면 mdx 빼고 `docs/logs/<project>/<date>-<slug>.md`. 같은 구조, 같은 룰.
+
+**"한 repo에 여러 프로젝트 (monorepo)면?"**
+
+디렉터리 구조 사용 — `content/logs/api/...`, `content/logs/frontend/...`, `content/logs/infra/...`. frontmatter의 `project` 필드가 디렉터리 이름과 일치.
+
+**"Claude가 자잘한 commit에도 entry 쓴다."**
+
+CLAUDE.md 룰을 더 엄격하게. 로그하지 *말아야* 할 예시를 명시. 2-3번 정정 후엔 보통 잡힘.
+
+**"Claude가 에러를 paste 안 하고 paraphrase한다."**
+
+룰 #1을 그대로 인용해서 보냄: *"Symptom is literal. 실제 에러를 fenced code block에 paste. paraphrase 금지."* entry 거절하고 재작성 요청. 두 번 정확히 하면 패턴 락인.
+
+**"dual-write 의미가 뭐? 한 파일이면 안 되나?"**
+
+single-source 시도했음. 둘 다 실패:
+
+- date-indexed only (mdx 로그) → grep이 서사 안에 묻힌 fact 반환. 느린 회상.
+- problem-indexed only (troubleshooting.md) → timeline 없음, 결정 공개 archive 없음, recruiter-readable artifact 없음.
+
+duplication 비용 낮음 (mdx body가 troubleshooting entry의 풍부한 복사라서). 같은 버그 처음 재발할 때 비용 회수.
+
+**"Stop hook 리마인더 끄려면?"**
+
+`.claude/settings.json` 삭제 (또는 Stop section만). 단점: nudge 없으면 Claude가 가끔 prompt 없이 로그 빼먹음. 유지 권장.
+
+**"팀에 도입하려면?"**
+
+CLAUDE.md 룰과 `.claude/settings.json` 둘 다 repo에 commit. 누가 clone하든 같은 Claude 지시 + 같은 hook 받음. dual-write는 키보드 앞에 누가 있든 동일하게 동작.
+
+## 이것이 아닌 것
+
+- 큰 팀의 **ADR** 대체 아님. ADR은 리뷰 게이트와 별도 repo. solo/small엔 이거로 충분.
+- 프로젝트 관리 도구 아님. 이슈/티켓은 GitHub Issues / Linear에. 이 로그는 *무엇이 일어났나* 기록, *무엇이 계획됐나* 아님.
+- 분석/메트릭 시스템 아님. *판단 결정과 사건*의 writeup이지 숫자가 아님.
+
+## 미니멈 버전
+
+10분도 길면 2, 4단계 스킵. 3단계만 (CLAUDE.md 룰) 유지하고 `docs/log.md` 한 평평한 파일에 작성. Stop hook 리마인더와 구조화된 mdx surface는 잃지만 Claude는 prompt 받으면 여전히 로그함. 나머지는 나중에.
+
+진짜 가치가 복리로 쌓이는 건 **룰 #2 (Cause is verified)**. anti-hallucination 룰 하나만 유지하면 이거. 다시 읽을 가치 있는 노트북과 plausible-sounding fiction이 조용히 채워지는 노트북의 차이.
+
+---
+
+이 사이트는 정확히 이 셋업. 복붙용 파일 다 [`install/`](https://github.com/Daeseon-AI-Factory/daseon-blog/tree/main/install) 디렉터리에:
+
+- [`setup.sh`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/setup.sh) — 한 방 부트스트랩
+- [`troubleshooting-starter.md`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/troubleshooting-starter.md) — 시드 파일
+- [`settings.json`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/settings.json) — Stop hook
+- [`claude-md-snippet.md`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/claude-md-snippet.md) — `CLAUDE.md`에 paste할 룰 블록
+
+Repo: <a href="https://github.com/Daeseon-AI-Factory/daseon-blog" target="_blank" rel="noopener noreferrer">github.com/Daeseon-AI-Factory/daseon-blog</a>. 라이브 타임라인 데모: <a href="/ko/projects/daeseon-ai">/projects/daeseon-ai</a>.

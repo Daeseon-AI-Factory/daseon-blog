@@ -19,6 +19,7 @@ export default function NewProjectPage() {
         featured: false,
         url: "",
         repo: "",
+        logSourceRepo: "",
         tags: "",
         stack: "",
         role: "",
