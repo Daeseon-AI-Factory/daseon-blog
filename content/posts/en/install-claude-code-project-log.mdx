@@ -1,0 +1,242 @@
+---
+title: "Install a project log in any Claude Code session in 10 minutes"
+description: "Copy-paste setup so Claude automatically records non-trivial fixes, decisions, and retros in your repo — without hallucinating."
+date: "2026-05-27"
+language: "en"
+translationKey: "install-claude-code-project-log"
+tags: ["claude-code", "tooling", "process"]
+status: "published"
+format: "note"
+summary: "Step-by-step installation of a dual-write project log (machine-facing reference + human-facing timeline) for any Claude Code project. Includes anti-hallucination rules and a Stop hook reminder."
+---
+
+Claude Code sessions vaporize. The session ends, the chat scrolls off, and three weeks later you can't reconstruct *why* you picked that library, what the error message actually was, or which commit fixed the production bug. The transcript is technically saved, but nobody greps a transcript.
+
+The fix is small: have Claude write a structured log entry every time something non-trivial happens, in two files at once, with rules that block fabrication. Below is the exact setup. Copy-paste, no thinking required. About 10 minutes from zero to working.
+
+This is the same system this site runs. The `/projects/daeseon-ai` page on this domain is a live demo — every entry there was written by Claude under these rules, including the meta-entry about designing the system.
+
+## What you'll have when you're done
+
+Two files per non-trivial event, written by Claude in the same turn as the fix commit:
+
+1. **`docs/troubleshooting.md`** — flat, problem-indexed, terse. The thing you grep when you hit the same bug again. Symptom / Cause / Fix / Commit / Pattern.
+2. **`content/logs/<project-slug>/<YYYY-MM-DD>-<short-slug>.mdx`** — narrative, date-indexed, project-scoped. Carries `kind` (troubleshoot / tech-retro / ux-retro / business / monetization / update) and `visibility` (public / unlisted / private).
+
+Plus a Stop hook that prints a reminder after any recent commit so Claude doesn't quietly skip the log.
+
+## Prerequisites
+
+```
+- Claude Code installed and running in your project
+- git repo (any host)
+- jq on PATH (preinstalled on macOS; `apt install jq` on Linux)
+```
+
+That's it. Doesn't matter if you're on Next.js, Rails, FastAPI, Go, or anything else.
+
+## Step 1 — Make the directories
+
+In your repo root:
+
+```bash
+mkdir -p docs content/logs/$(basename $PWD) .claude
+```
+
+`$(basename $PWD)` uses your repo folder name as the project slug. Replace with whatever slug you want — usually `my-awesome-app` or whatever shows up on your homepage. Just keep it kebab-case, no spaces.
+
+## Step 2 — Seed `docs/troubleshooting.md`
+
+Save this as `docs/troubleshooting.md`:
+
+````markdown
+# Troubleshooting log
+
+Issues hit and the fix for each. Newest at the bottom.
+
+Format: **Symptom** · **Cause** · **Fix** · **Commit** · (optional **Pattern**).
+
+When you fix a non-trivial issue, append an entry below. The `.claude/settings.json` Stop hook will remind you after any recent commit.
+
+---
+
+## How to add a new entry
+
+```markdown
+## <short title>
+
+- **Symptom**: <literal error message or observable behavior>
+- **Cause**: <verified explanation> (or `Hypothesis: ... Verified by: ...`)
+- **Fix**: <files/functions changed, mechanism>
+- **Commit**: <hash from `git rev-parse HEAD` AFTER committing>
+- **Pattern**: <one-line recurring lesson — optional>
+```
+
+Concrete only. No "lessons learned" essays.
+````
+
+That's the starter. Real entries get appended below `---`.
+
+## Step 3 — Add the CLAUDE.md rule
+
+Paste this block into your project's `CLAUDE.md` (create the file if it doesn't exist):
+
+````markdown
+## Project log (required, dual-write)
+
+When you fix or decide something non-trivial in this repo, write BOTH of these in the same turn as the commit:
+
+1. `docs/troubleshooting.md` — terse problem-indexed reference (Symptom / Cause / Fix / Commit / Pattern). Append a new entry below the `---` divider.
+2. `content/logs/<project-slug>/<YYYY-MM-DD>-<short-slug>.mdx` — dated narrative with frontmatter:
+
+```yaml
+---
+title: "Concrete one-line title"
+date: "YYYY-MM-DD"
+project: "<project-slug>"
+kind: "troubleshoot | tech-retro | ux-retro | business | monetization | update"
+visibility: "public | unlisted | private"
+language: "en"
+summary: "One or two sentences."
+tags: ["topic", "stack"]
+---
+```
+
+### What counts as non-trivial
+
+LOG IT: build/deploy errors, hidden coupling, dependency migrations, architecture or infra decisions, design/copy choices made on judgment, strategy or pricing memos.
+
+DON'T LOG: routine renames, lint fixes, typo fixes, dependency bumps with no behavior change, formatting commits.
+
+### Anti-hallucination rules (non-negotiable)
+
+1. **Symptom is literal.** Paste the actual error/output in a fenced code block. No paraphrasing.
+2. **Cause is verified.** Only state what you read in the actual code or ran in the actual command. If you guessed, write `Hypothesis: ...` and `Verified by: ...`. If unverifiable, omit Cause or mark `Suspected:` with an explicit caveat.
+3. **Fix names actual files.** `git diff` is the source of truth. If `git diff` doesn't show the change, don't claim you made it.
+4. **Commit hash AFTER committing.** Use `git rev-parse HEAD` after the commit lands. Never write a hash that doesn't exist yet.
+5. **Date from git.** `git log -1 --format=%cI` for the commit time. For forward-looking entries (decisions being written in the moment), today's date from the session start. Never guess.
+6. **Pattern is rare.** Only write a Pattern line if a recurring lesson is obvious from this one incident. Padding it with generic advice is worse than omitting.
+7. **No fabricated metrics.** "Took about 60s" if you saw 60s. "Took 1m 23s exactly" only if you have the timestamp.
+
+### Visibility defaults by kind
+
+- `business`, `monetization` → `private` by default (strategy memos shouldn't ship accidentally)
+- `knowledge`-style facts → `unlisted` if you have such a type
+- Everything else → `public`
+
+Override per entry in frontmatter.
+````
+
+This is the instruction Claude reads at the start of every turn (via `CLAUDE.md`), so it now has a permanent rule that says "log everything non-trivial, in two files, with verified facts."
+
+## Step 4 — Add the Stop hook
+
+Save this as `.claude/settings.json` (or merge with your existing one — don't overwrite if you have other settings):
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "recent=$(git log --since=\"2 minutes ago\" --oneline 2>/dev/null | head -1); [ -z \"$recent\" ] && exit 0; jq -n --arg c \"$recent\" '{systemMessage: (\"⚠ Recent commit: \" + $c + \"\\n\\nLog this in docs/troubleshooting.md + content/logs/ (problem + cause + fix + commit hash).\")}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+What it does: after Claude finishes a turn, this checks `git log` for any commit in the last 2 minutes. If there is one, it prints a reminder ("⚠ Recent commit: …. Log this in …") visible to you in the UI. No commit = silent.
+
+The reminder shows the commit message verbatim so Claude (and you) can verify the next log entry's fix description matches what was actually committed.
+
+If `.claude/` is brand new, also add it to `.gitignore` or commit it deliberately — your call. Committing makes the hook part of the repo (every machine that clones it gets the same reminder). Gitignoring keeps it local-only.
+
+## Step 5 — Trigger the first real entry
+
+Have Claude do something non-trivial — fix a real bug, make an architecture decision, anything that should be logged. After the fix commit, the Stop hook will print the reminder. Claude should then write both files.
+
+To make sure it's working, ask Claude explicitly the first time:
+
+```
+We just fixed <X>. Per CLAUDE.md rules, write the troubleshooting entry
+and the log mdx file in the same turn as a follow-up commit. Use the
+seven anti-hallucination rules — paste the actual error, name actual
+files, use the real commit hash from `git rev-parse HEAD`.
+```
+
+Verify:
+
+```bash
+# The new entry should be at the bottom of troubleshooting.md
+tail -20 docs/troubleshooting.md
+
+# The new mdx should exist
+ls -la content/logs/$(basename $PWD)/
+
+# The commit hash in the entry should match
+git log -1 --format=%H | cut -c1-7
+```
+
+If the entry fabricated something (e.g., wrong commit hash, plausible-sounding cause that doesn't match the code), point Claude at the specific rule it violated and ask for a correction. The rules only work if you enforce them on day one — Claude is happy to take shortcuts otherwise.
+
+## Step 6 — Watch it compound
+
+After 5–10 entries you'll have:
+
+- A grep-able problem cache (`docs/troubleshooting.md`). When you hit a familiar-looking error, grep here first.
+- A project timeline (`content/logs/<slug>/`). Sorted chronologically, you can read the build narrative from the first decision to the latest commit.
+- A real record of *judgment calls* (kind=tech-retro, ux-retro, business). These are the things you'd otherwise forget within a month.
+
+If you have a blog/site/portfolio, render the public entries on a project page. If you don't, the markdown alone is plenty — `cat docs/troubleshooting.md | less` works fine as a CLI lookup.
+
+## FAQ
+
+**"My project isn't Next.js — does this work?"**
+
+Yes. Nothing about the system depends on a web framework. You're writing markdown files. If you have no website to render them on, drop the mdx and use `.md` in `docs/logs/<project>/<date>-<slug>.md` instead. Same structure, same rules.
+
+**"What if I have multiple projects in one repo (monorepo)?"**
+
+Use the directory structure — `content/logs/api/...`, `content/logs/frontend/...`, `content/logs/infra/...`. The `project` field in frontmatter matches the directory.
+
+**"Claude keeps writing entries for trivial stuff."**
+
+Tighten the CLAUDE.md rule. Add explicit examples of what NOT to log. After 2–3 corrections it usually settles.
+
+**"Claude keeps writing entries that paraphrase the error instead of pasting it."**
+
+Quote rule #1 verbatim back at it: *"Symptom is literal. Paste the actual error in a fenced code block. No paraphrasing."* Reject the entry and ask for a rewrite. Once it's done correctly twice in a row, the pattern locks in.
+
+**"What's the point of dual-write? Isn't one file enough?"**
+
+I tried single-source. Date-indexed only (the mdx logs) → grep returns the fix buried in narrative. Slow recall. Problem-indexed only (troubleshooting.md) → no timeline, no public archive of decisions, no recruiter-readable artifact. The duplication cost is low because the mdx body is mostly a richer copy of the troubleshooting entry. It pays back the first time a bug recurs.
+
+**"Can I disable the Stop hook reminder?"**
+
+Delete `.claude/settings.json` (or its Stop section). You'll lose the nudge — Claude will sometimes skip logging without a prompt. Recommended to keep it.
+
+**"Where do I put this on a team?"**
+
+The CLAUDE.md rule and `.claude/settings.json` should both be committed to the repo. Anyone who clones gets the same Claude instructions and the same hook. The dual-write happens regardless of who's at the keyboard.
+
+## What this is NOT
+
+- It's not a replacement for **ADRs** (architecture decision records) in larger orgs. ADRs have review gates and a dedicated repo. For solo/small projects, this is plenty.
+- It's not a project management tool. Issues and tickets belong in GitHub Issues / Linear; this log records *what happened*, not *what's planned*.
+- It's not an analytics or metrics system. It's a writeup of *judgment calls and incidents*, not numbers.
+
+## The minimum viable version
+
+If 10 minutes is too much, skip steps 2 and 4. Keep only step 3 (the CLAUDE.md rule) and start writing to `docs/log.md` (one flat file). You'll lose the Stop hook reminder and the structured mdx surface, but Claude will still log non-trivial events when prompted. Add the rest later.
+
+The thing that actually compounds value is **rule #2** (Cause is verified). If you only keep one anti-hallucination rule, keep that one. It's the difference between a notebook that's worth re-reading and a notebook that quietly fills up with plausible-sounding fiction.
+
+---
+
+This site uses exactly this setup. Source: <a href="https://github.com/Daeseon-AI-Factory/daseon-blog" target="_blank" rel="noopener noreferrer">github.com/Daeseon-AI-Factory/daseon-blog</a>. The portable spec lives at `docs/project-log-spec.md` in that repo. Live timeline demo: <a href="/projects/daeseon-ai">/projects/daeseon-ai</a>.
