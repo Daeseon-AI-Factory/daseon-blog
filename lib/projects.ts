@@ -1,7 +1,6 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import matter from "gray-matter";
 import { type Locale, LOCALES } from "./i18n";
+import { listFiles, readText } from "./source";
 
 export type ProjectStatus = "active" | "shipped" | "archived";
 
@@ -27,12 +26,15 @@ export type Project = {
   content: string;
 };
 
-const ROOT = path.join(process.cwd(), "content", "projects");
+function relativeDir(locale: Locale): string {
+  return `content/projects/${locale}`;
+}
 
 async function readProjectFile(locale: Locale, fileName: string): Promise<Project | null> {
   if (!fileName.endsWith(".mdx")) return null;
   const slug = fileName.replace(/\.mdx$/, "");
-  const raw = await fs.readFile(path.join(ROOT, locale, fileName), "utf-8");
+  const raw = await readText(`${relativeDir(locale)}/${fileName}`);
+  if (!raw) return null;
   const { data, content } = matter(raw);
   const fm = data as Partial<ProjectFrontmatter>;
   if (!fm.title || !fm.date || !fm.description) return null;
@@ -54,13 +56,7 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
 }
 
 async function listLocale(locale: Locale): Promise<Project[]> {
-  const dir = path.join(ROOT, locale);
-  let entries: string[];
-  try {
-    entries = await fs.readdir(dir);
-  } catch {
-    return [];
-  }
+  const entries = await listFiles(relativeDir(locale));
   const projects = await Promise.all(entries.map((f) => readProjectFile(locale, f)));
   return projects
     .filter((p): p is Project => Boolean(p))
@@ -78,8 +74,7 @@ export async function getFeaturedProjects(locale: Locale, limit = 3): Promise<Pr
 }
 
 export async function getProject(locale: Locale, slug: string): Promise<Project | null> {
-  const all = await listLocale(locale);
-  return all.find((p) => p.slug === slug) ?? null;
+  return readProjectFile(locale, `${slug}.mdx`);
 }
 
 export async function findProjectTranslation(p: Project): Promise<Project | null> {

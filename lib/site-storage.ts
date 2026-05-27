@@ -1,14 +1,21 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { commitFile, githubConfigured } from "./github";
+import { readText } from "./source";
+import siteJson from "@/content/site.json";
 import type { SiteAuthor } from "./site";
 
 const REL_PATH = "content/site.json";
 const ABS_PATH = path.join(process.cwd(), REL_PATH);
 
 export async function loadSiteConfig(): Promise<SiteAuthor> {
-  const raw = await fs.readFile(ABS_PATH, "utf-8");
-  return JSON.parse(raw) as SiteAuthor;
+  const raw = await readText(REL_PATH);
+  if (!raw) return siteJson as SiteAuthor;
+  try {
+    return JSON.parse(raw) as SiteAuthor;
+  } catch {
+    return siteJson as SiteAuthor;
+  }
 }
 
 export async function saveSiteConfig(next: SiteAuthor): Promise<{ via: "github" | "local"; commitUrl?: string }> {

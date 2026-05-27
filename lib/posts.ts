@@ -1,8 +1,8 @@
-import { promises as fs } from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
 import { type Locale, LOCALES } from "./i18n";
+import { listFiles, readText } from "./source";
 
 export type ContentType = "post" | "note" | "knowledge";
 export type Visibility = "public" | "unlisted" | "private";
@@ -36,8 +36,6 @@ export type Post = {
   readingMinutes: number;
 };
 
-const CONTENT_ROOT = path.join(process.cwd(), "content");
-
 const TYPE_DIRS: Record<ContentType, string> = {
   post: "posts",
   note: "notes",
@@ -50,15 +48,19 @@ function defaultVisibility(type: ContentType): Visibility {
   return "public";
 }
 
-function rootFor(type: ContentType): string {
-  return path.join(CONTENT_ROOT, TYPE_DIRS[type]);
+function relativeDir(type: ContentType, locale: Locale): string {
+  return `content/${TYPE_DIRS[type]}/${locale}`;
+}
+
+function relativeFile(type: ContentType, locale: Locale, slug: string): string {
+  return `${relativeDir(type, locale)}/${slug}.mdx`;
 }
 
 async function readContentFile(type: ContentType, locale: Locale, fileName: string): Promise<Post | null> {
   if (!fileName.endsWith(".mdx")) return null;
   const slug = fileName.replace(/\.mdx$/, "");
-  const filePath = path.join(rootFor(type), locale, fileName);
-  const raw = await fs.readFile(filePath, "utf-8");
+  const raw = await readText(`${relativeDir(type, locale)}/${fileName}`);
+  if (!raw) return null;
   const { data, content } = matter(raw);
 
   const fm = data as Partial<PostFrontmatter>;
@@ -93,13 +95,7 @@ async function readContentFile(type: ContentType, locale: Locale, fileName: stri
 }
 
 async function listLocaleType(type: ContentType, locale: Locale): Promise<Post[]> {
-  const dir = path.join(rootFor(type), locale);
-  let entries: string[];
-  try {
-    entries = await fs.readdir(dir);
-  } catch {
-    return [];
-  }
+  const entries = await listFiles(relativeDir(type, locale));
   const items = await Promise.all(entries.map((f) => readContentFile(type, locale, f)));
   return items
     .filter((p): p is Post => Boolean(p))
@@ -126,8 +122,7 @@ export async function getDraftPosts(): Promise<Post[]> {
 }
 
 export async function getPost(locale: Locale, slug: string): Promise<Post | null> {
-  const all = await listLocaleType("post", locale);
-  return all.find((p) => p.slug === slug) ?? null;
+  return readContentFile("post", locale, `${slug}.mdx`);
 }
 
 export async function findTranslation(post: Post): Promise<Post | null> {
@@ -143,8 +138,7 @@ export async function getContentItem(
   locale: Locale,
   slug: string,
 ): Promise<Post | null> {
-  const all = await listLocaleType(type, locale);
-  return all.find((p) => p.slug === slug) ?? null;
+  return readContentFile(type, locale, `${slug}.mdx`);
 }
 
 export async function listContent(type: ContentType, locale: Locale): Promise<Post[]> {
@@ -160,11 +154,11 @@ export async function getAllContentAcrossTypes(): Promise<Post[]> {
 }
 
 export function relativePathFor(type: ContentType, locale: Locale, slug: string): string {
-  return `content/${TYPE_DIRS[type]}/${locale}/${slug}.mdx`;
+  return relativeFile(type, locale, slug);
 }
 
 export function absolutePathFor(type: ContentType, locale: Locale, slug: string): string {
-  return path.join(rootFor(type), locale, `${slug}.mdx`);
+  return path.join(process.cwd(), relativeFile(type, locale, slug));
 }
 
 export { TYPE_DIRS };
