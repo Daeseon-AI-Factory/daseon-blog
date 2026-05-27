@@ -220,3 +220,7 @@ Auth approach for v1: Route middleware checks session. GitHub OAuth via NextAuth
 When you hit and fix a non-trivial issue (build failures, deploy errors, hidden coupling, surprising platform behavior), **append an entry to `docs/troubleshooting.md`** in the same turn as the fix commit. Format and examples are in that file. A Stop hook in `.claude/settings.json` reminds about this after any recent commit.
 
 Cheap heuristic: if you can imagine your future self (or another engineer) hitting the same issue and benefiting from a 60-second writeup, log it. Don't log routine refactors or one-line typo fixes.
+
+## Architecture reference
+
+`docs/architecture.md` explains build vs runtime, fs vs `fetch`, ISR caching, and why publish-to-live is ~3-5s even though a Vercel rebuild also runs. Read it before changing anything in `lib/source.ts`, `lib/storage.ts`, or the content read path. Hard constraint: **never `fs.writeFile` in code that runs in production** — see the EROFS entry in `troubleshooting.md`.
