@@ -35,6 +35,25 @@ Plus a Stop hook that prints a reminder after any recent commit so Claude doesn'
 
 That's it. Doesn't matter if you're on Next.js, Rails, FastAPI, Go, or anything else.
 
+## Fastest path (one-liner)
+
+If you trust the script (read it first — `less` it from the same URL), this does everything in steps 1, 2, and 4 in one shot. It does NOT touch your `CLAUDE.md` — that's the only manual step.
+
+```bash
+cd /path/to/your/repo
+curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/setup.sh | bash
+```
+
+What it does:
+
+- Creates `docs/`, `.claude/`, and `content/logs/<your-repo-name>/`
+- Downloads `docs/troubleshooting.md` (the seed file)
+- Downloads `.claude/settings.json` (the Stop hook)
+- Prints the `CLAUDE.md` snippet so you can read and paste it manually
+- Leaves your existing files alone (idempotent — won't overwrite)
+
+If you'd rather see each step explicitly, keep going below.
+
 ## Step 1 — Make the directories
 
 In your repo root:
@@ -47,7 +66,14 @@ mkdir -p docs content/logs/$(basename $PWD) .claude
 
 ## Step 2 — Seed `docs/troubleshooting.md`
 
-Save this as `docs/troubleshooting.md`:
+One-line download:
+
+```bash
+curl -fsSL -o docs/troubleshooting.md \
+  https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/troubleshooting-starter.md
+```
+
+Or save this content manually:
 
 ````markdown
 # Troubleshooting log
@@ -79,7 +105,14 @@ That's the starter. Real entries get appended below `---`.
 
 ## Step 3 — Add the CLAUDE.md rule
 
-Paste this block into your project's `CLAUDE.md` (create the file if it doesn't exist):
+Fetch the snippet text, read it, then append it to your `CLAUDE.md`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/claude-md-snippet.md
+# review the output, then append it to CLAUDE.md
+```
+
+Or paste this block directly (create the file if it doesn't exist):
 
 ````markdown
 ## Project log (required, dual-write)
@@ -131,7 +164,14 @@ This is the instruction Claude reads at the start of every turn (via `CLAUDE.md`
 
 ## Step 4 — Add the Stop hook
 
-Save this as `.claude/settings.json` (or merge with your existing one — don't overwrite if you have other settings):
+One-line download (skip if you already have `.claude/settings.json` with other settings — merge manually instead):
+
+```bash
+curl -fsSL -o .claude/settings.json \
+  https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/settings.json
+```
+
+Or save this content manually:
 
 ```json
 {
@@ -239,4 +279,11 @@ The thing that actually compounds value is **rule #2** (Cause is verified). If y
 
 ---
 
-This site uses exactly this setup. Source: <a href="https://github.com/Daeseon-AI-Factory/daseon-blog" target="_blank" rel="noopener noreferrer">github.com/Daeseon-AI-Factory/daseon-blog</a>. The portable spec lives at `docs/project-log-spec.md` in that repo. Live timeline demo: <a href="/projects/daeseon-ai">/projects/daeseon-ai</a>.
+This site uses exactly this setup. All copy-paste files live in the [`install/`](https://github.com/Daeseon-AI-Factory/daseon-blog/tree/main/install) directory of the repo:
+
+- [`setup.sh`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/setup.sh) — one-shot bootstrap
+- [`troubleshooting-starter.md`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/troubleshooting-starter.md) — seed file
+- [`settings.json`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/settings.json) — Stop hook
+- [`claude-md-snippet.md`](https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/claude-md-snippet.md) — rule block for `CLAUDE.md`
+
+Repo: <a href="https://github.com/Daeseon-AI-Factory/daseon-blog" target="_blank" rel="noopener noreferrer">github.com/Daeseon-AI-Factory/daseon-blog</a>. The portable spec lives at `docs/project-log-spec.md`. Live timeline demo: <a href="/projects/daeseon-ai">/projects/daeseon-ai</a>.
