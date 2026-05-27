@@ -214,3 +214,9 @@ Auth approach for v1: Route middleware checks session. GitHub OAuth via NextAuth
 - When writing blog content suggestions, follow Writing Conventions strictly.
 - When suggesting design changes in v1: refuse and suggest writing a post instead.
 - Owner's broader brand: AI engineer who learns in public, calm tone, no guru posturing.
+
+## Troubleshooting log (required)
+
+When you hit and fix a non-trivial issue (build failures, deploy errors, hidden coupling, surprising platform behavior), **append an entry to `docs/troubleshooting.md`** in the same turn as the fix commit. Format and examples are in that file. A Stop hook in `.claude/settings.json` reminds about this after any recent commit.
+
+Cheap heuristic: if you can imagine your future self (or another engineer) hitting the same issue and benefiting from a 60-second writeup, log it. Don't log routine refactors or one-line typo fixes.
