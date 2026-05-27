@@ -48,6 +48,14 @@ When you hit a new issue, append an entry at the bottom. The `.claude/settings.j
 - **Fix**: Vercel Dashboard → Project → Settings → **Deployment Protection** → Vercel Authentication → **Off** (or "Only Preview Deployments"). No code change.
 - **Pattern**: Vercel's default-on protections (DDoS, Auth, password) need to be reviewed per-project. The defaults assume internal staging, not a public portfolio.
 
+## Client bundle pulled in `node:` URIs
+
+- **Symptom**: Vercel build (and local `next build`) failed with `You may need an additional plugin to handle "node:" URIs. Import trace: node:path → ./lib/source.ts → ./lib/logs.ts → ./components/LogTimeline.tsx`.
+- **Cause**: `LogTimeline.tsx` is a `"use client"` component but imported a value from `lib/logs.ts`. That module re-exports server-only `lib/source.ts` (which imports `node:fs`/`node:path`). Webpack pulls the whole module graph into the client bundle and can't resolve `node:` schemes for the browser.
+- **Fix**: Split client-safe constants into `lib/log-kinds.ts` (LogKind union, label dict — zero fs imports). `lib/logs.ts` re-exports them so server code is unchanged. `LogTimeline` imports from `lib/log-kinds` only.
+- **Commit**: `413a853`.
+- **Pattern**: Any module imported from a `"use client"` file is part of the client bundle, *transitively*. Keep `lib/source.ts` and other fs-touching code out of the import graph of client components. When in doubt, put shared constants in their own file with no infra imports.
+
 ---
 
 ## How to add a new entry
