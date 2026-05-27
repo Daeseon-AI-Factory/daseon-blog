@@ -96,3 +96,18 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: 7b17463 Mark log-housekeeping commit 65420d3 as routine [no-log] -->
 <!-- skipped: daa6b99 Fill in commit hash 3ff7952 in cross-repo aggregation log + troubleshooting [no-log] -->
 <!-- skipped: 985b491 logs(dalkkak-ai): add project page + 6 timeline entries for Phase 1 -->
+
+---
+
+## Prerender crash on cross-repo log entries with unquoted YAML dates
+
+- **Symptom**: Vercel build failed:
+  ```
+  Error occurred prerendering page "/projects/docvault".
+  [Error: Objects are not valid as a React child (found: [object Date]). If you meant to render a collection of children, use an array instead.] { digest: '3551725568' }
+  Export encountered an error on /(public)/projects/[slug]/page: /projects/docvault, exiting the build.
+  ```
+- **Cause**: docvault satellite repo's log entries had unquoted ISO dates (`date: 2026-03-24`), which js-yaml (used by gray-matter) parses as `Date` instances rather than strings. `lib/logs.ts readLogFile` passed `fm.date` through unchanged. `formatDate(iso)` in `lib/format.ts` called `parseISO(date_object)` — date-fns's `parseISO` expects string, so the `try` body threw and the `catch` returned the raw input (a `Date`). The Date then ended up inside JSX (`{formatDate(e.frontmatter.date, locale)}`) and React refused to render an object as a child. Existing `daseon-blog` log entries quote their dates (`date: "2026-05-27"`), so the bug never surfaced until the first cross-repo aggregation pulled in a satellite's unquoted entries.
+- **Fix**: Coerce `fm.date` at parse time in `lib/logs.ts:readLogFile` and `lib/projects.ts:readProjectFile` — `Date` → `toISOString().slice(0, 10)`, string passes through, anything else rejects the entry. Made `formatDate` accept `Date | string | unknown` and always return a string. Also normalized trailing slash/whitespace in `lib/source.ts:repoConfig` so `logSourceRepo: "owner/name/"` resolves correctly.
+- **Commit**: c3517f5
+- **Pattern**: YAML's auto-typing (`!!timestamp` for ISO date literals) surfaces only when external content sources adopt the spec. Library code that reads frontmatter should coerce types, not trust them. Same caution applies to numbers (`123` vs `"123"`) and booleans (`yes`/`no`/`on`/`off`).

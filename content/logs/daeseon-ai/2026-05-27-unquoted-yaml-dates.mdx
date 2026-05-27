@@ -1,0 +1,83 @@
+---
+title: "First cross-repo pull crashed the build — YAML parsed log dates as Date objects"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "Adding docvault as the first cross-repo log source surfaced a latent bug: log entries with unquoted ISO dates parsed as Date instances instead of strings, ended up in JSX, and tripped the prerender."
+tags: ["yaml", "gray-matter", "react", "cross-repo", "ssg"]
+---
+
+## What this fixes
+
+The cross-repo log aggregation shipped two weeks ago — `lib/source.ts` and `lib/logs.ts` accept a `logSourceRepo` override so a project page in this blog can pull its timeline from a separate repo's `content/logs/<slug>/` directory. It worked in isolation. The first real satellite (`Daeseon-AI-Factory/docvault`) crashed the Vercel build the moment its log entries hit the rendering path.
+
+## Symptom
+
+```
+Error occurred prerendering page "/projects/docvault".
+[Error: Objects are not valid as a React child (found: [object Date]).
+ If you meant to render a collection of children, use an array instead.]
+Export encountered an error on /(public)/projects/[slug]/page: /projects/docvault, exiting the build.
+Error: Command "npm run build" exited with 1
+```
+
+## Cause
+
+docvault's log entries were written with unquoted ISO dates:
+
+```yaml
+date: 2026-03-24      # unquoted
+```
+
+This blog's own log entries always quoted them:
+
+```yaml
+date: "2026-05-27"    # quoted
+```
+
+Both forms are valid YAML, but the meaning is different. The YAML spec's `!!timestamp` tag auto-converts unquoted ISO date literals to native timestamp objects. js-yaml (which gray-matter uses) implements that — so unquoted dates parsed as JavaScript `Date` instances rather than strings.
+
+`lib/logs.ts:readLogFile` passed `fm.date` through verbatim into the `LogFrontmatter` object. `lib/format.ts:formatDate` did:
+
+```ts
+export function formatDate(iso: string, locale: Locale): string {
+  try {
+    const date = parseISO(iso);
+    return format(date, ...);
+  } catch {
+    return iso;
+  }
+}
+```
+
+`parseISO` from date-fns expects a string. Passed a `Date`, it threw. The `catch` returned `iso` — which was the original `Date` object. That Date then landed inside JSX:
+
+```tsx
+{formatDate(e.frontmatter.date, locale)}
+```
+
+React: "Objects are not valid as a React child". Build aborts.
+
+## Fix
+
+Three layers, defense in depth:
+
+1. **Data layer (`lib/logs.ts`, `lib/projects.ts`)**: coerce `fm.date` at parse time. `Date` → `toISOString().slice(0, 10)`, string passes through, anything else rejects the entry.
+2. **Format layer (`lib/format.ts`)**: accept `Date | string | unknown`, never return a non-string.
+3. **Source layer (`lib/source.ts:repoConfig`)**: normalize trailing slash/whitespace from `logSourceRepo` so values like `"owner/name/"` (easy to mistype in admin) still resolve cleanly.
+
+Build passes. `/projects/docvault` renders with the three timeline entries pulled from the docvault repo.
+
+## What I'd do differently
+
+The fragility was knowable. When I wrote the `LogFrontmatter` type, I typed `date: string` and trusted gray-matter to honor it. gray-matter doesn't lie — it returns whatever js-yaml produces, and js-yaml honors the YAML spec including `!!timestamp`. The lesson: any type assertion on `matter()` output is a vibes-based assertion. Coerce at the boundary, or pin gray-matter's YAML engine to a stricter schema (`JSON_SCHEMA` would skip the timestamp tag entirely).
+
+## Pattern
+
+External content sources push the type-coercion responsibility onto the consuming code. YAML's auto-typing (numbers, booleans, timestamps, null aliases like `~`) only matters when someone else writes the file — your own conventions hide the issue. Library code that reads frontmatter from any source should normalize at the boundary, not trust the schema.
+
+## Commit
+
+`c3517f5` — Fix prerender crash on cross-repo log entries with unquoted YAML dates.
