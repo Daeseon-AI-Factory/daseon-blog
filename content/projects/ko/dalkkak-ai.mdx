@@ -18,7 +18,7 @@ role: "Solo (Claude Code 페어 프로그래밍)"
 
 ## 무엇을 하는가
 
-- 멀티-페인 터미널 그리드 (react-mosaic + xterm.js) + 페인별 PTY
+- 멀티-페인 터미널 그리드 (react-mosaic + xterm.js) + 페인별 PTY (`portable-pty`)
 - 각 페인은 `dalkkak-<id>` 키의 tmux 세션 → 앱보다 오래 삶
 - 멀티-스타트업 사이드바, 스타트업별 layout, `⌘1..9` / `⌘⇧[` / `⌘⇧]` 단축키
 - localStorage에 layout JSON 영속화, 실행 시 자동 reattach
@@ -38,6 +38,6 @@ Phase 2 (Claude Code 출력 augmentation), Phase 3 (cross-startup operator layer
 
 ## 짚을 만한 엔지니어링 포인트
 
-- **Lifecycle decouple.** xterm + PTY를 React 바깥 module-level registry로 빼냄. Mosaic split/stack 으로 인한 remount가 이들을 건드리지 않음. VS Code Server의 터미널 호스팅 패턴. ([로그](/ko/logs/dalkkak-ai/2026-05-26-lifecycle-decouple-mosaic-remount))
+- **Lifecycle decouple.** 터미널 상태를 async Rust↔JS IPC로 React 생명주기에서 분리: xterm + PTY를 React 바깥 module-level registry에 두고, Mosaic split/stack remount가 실행 중인 프로세스를 건드리지 않음 — 프로세스 상태 손실 없음. VS Code Server의 터미널 호스팅 패턴. ([로그](/ko/logs/dalkkak-ai/2026-05-26-lifecycle-decouple-mosaic-remount))
 - **Subprocess env hygiene.** Tauri GUI 앱은 최소 PATH + 거의 빈 환경변수를 상속. 명시적 `TERM`, `LANG`, PATH augmentation 없이는 `claude --resume`이 15초 멈추고 tmux가 silent하게 실패함. ([로그 1](/ko/logs/dalkkak-ai/2026-05-26-pty-env-claude-resume-15s), [로그 2](/ko/logs/dalkkak-ai/2026-05-26-pane-exited-tauri-gui-path))
 - **Bug-as-asset.** 출시된 모든 버그에 6-섹션 post-mortem (symptom / root cause / fix / instruction-blame / avoidability / lessons), `CLAUDE.md` RULE #6로 강제.

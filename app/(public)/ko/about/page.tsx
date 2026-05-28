@@ -48,18 +48,19 @@ export default function AboutKO() {
         </header>
 
         <p className="text-lg leading-relaxed text-ink">
-          제조·물류·금융 분야의 미션크리티컬 엔터프라이즈 시스템을 5년 이상
-          만들고 현대화해온 백엔드 엔지니어. 백엔드 로직, SQL/PL-SQL, 트랜잭션
-          설계, 시스템 간 통합에 강합니다. 현재는 Java/Spring 백엔드 플랫폼과
-          AI 보조 제품 엔지니어링에 집중 — 견고한 백엔드와 실제로 쓰이는 AI
-          도구를 함께 만듭니다.
+          제조·물류·금융 분야의 복잡한 프로덕션 시스템을 6년간 현대화하며
+          측정 가능한 결과를 만들어온 소프트웨어 엔지니어 — 처리 속도 60%
+          단축, 월간 재처리 거의 0건, 7,700줄 핵심 쿼리 57% 축소. API·데이터
+          레이어 설계, 트랜잭션 정합성, 분산 멀티서버 환경의 동시성에
+          깊습니다. Java/Spring, C#/.NET, SQL/PL-SQL 사용. 현재 토론토에서
+          Spring 서비스와 LLM 기반 개발자 도구를 만들고 있습니다.
         </p>
 
         <Section title={t("ko", "about.currently")}>
           <ul className="space-y-1.5 text-[0.95rem]">
-            <li>SK AX, 토론토 (2021.9 – 현재). Java/Spring + AI-assisted product engineering.</li>
-            <li>Daeseon AI Factory를 만드는 중 — 제품을 빠르게 출시하기 위한 재사용 가능한 백엔드 + AI 코어.</li>
-            <li>Senior / Staff 백엔드 또는 AI 엔지니어 포지션을 찾고 있습니다. 원격 또는 토론토 현지.</li>
+            <li>SK AX(한국, 2021.9 – 2026.5)에서 약 5년 근무를 최근 마무리. 현재 토론토 거주.</li>
+            <li>LLM 기반 개발자 도구 — TubeShadow, Dalkkak — 과 이 사이트를 Daeseon AI Factory 아래에서 제작 중.</li>
+            <li>Senior 백엔드 또는 AI 엔지니어 포지션을 찾고 있습니다. 토론토 또는 원격.</li>
             <li>
               지금 무엇을 하고 있는지는{" "}
               <Link href="/ko/now" className="text-accent underline">
@@ -73,21 +74,22 @@ export default function AboutKO() {
         <Section title={t("ko", "about.previously")}>
           <ul className="space-y-4 text-[0.95rem]">
             <li>
-              <p className="font-medium text-ink">SK AX · Software Engineer</p>
+              <p className="font-medium text-ink">SK AX · Software Engineer · 한국</p>
               <p className="text-xs text-ink-muted">2021.9 – 2026.5</p>
               <p className="mt-1 text-ink-muted">
-                제조 원가 관리 시스템, 8개 사이트에 걸친 엔터프라이즈 모바일 웹
-                플랫폼, 실시간 MES. Java/Spring 백엔드, Oracle PL/SQL, 재무
-                시스템과의 트랜잭션 재설계.
+                제조 원가 관리, 8개 사이트에 걸친 엔터프라이즈 모바일 웹
+                플랫폼, 실시간 MES. Java/Spring·JPA 백엔드, Oracle PL/SQL,
+                제조·재무 시스템 간 트랜잭션 재설계.
               </p>
             </li>
             <li>
-              <p className="font-medium text-ink">Dure Info · Software Developer</p>
+              <p className="font-medium text-ink">Dure Info · Software Developer · 한국</p>
               <p className="text-xs text-ink-muted">2020.6 – 2021.9</p>
               <p className="mt-1 text-ink-muted">
-                네트워크 패킷 단편화로 인한 데이터 손실 버그를 커스텀 버퍼링
-                레이어(MemoryStream)와 애플리케이션 레벨 프로토콜 검증으로
-                해결.
+                PC/PDA/Kiosk 클라이언트의 DB 접근을 중계하는 멀티 클라이언트
+                TCP 소켓 서버(Windows Service). 부분 TCP 수신으로 인한 XML
+                역직렬화 실패를 애플리케이션 레벨 메시지 프레이밍으로 해결 —
+                구분자로 끝나는 완전한 메시지가 도착할 때까지 바이트를 버퍼링.
               </p>
             </li>
           </ul>
@@ -95,18 +97,19 @@ export default function AboutKO() {
 
         <Section title="주요 성과">
           <ul className="space-y-1.5 text-[0.95rem]">
-            <li>PL/SQL 원가 계산 코어를 ~7,000줄 → ~3,000줄로 리팩터. 주간 티켓 처리량 4 → 7.</li>
-            <li>엔드포인트별 40개 미들웨어 API를 단일 게이트웨이로 통합. 연 $100K+ 운영 비용 절감.</li>
-            <li>제조 운영과 재무 시스템 사이의 트랜잭션 경계를 staging-table + batch-worker 패턴으로 재설계. 처리 시간 -60%, 월 20건 재처리 → ~0건.</li>
-            <li>멀티 인스턴스 환경에서 원가 계산 작업 중복을 막는 커스텀 DB 락 메커니즘 구현.</li>
-            <li>실시간 MES 장비 메시지 처리를 4초 타임아웃 SLA에 맞게 최적화.</li>
+            <li>엔드포인트별 40개 미들웨어 API를 단일 리버스 프록시(리플렉션 기반 RPC 디스패처)로 통합, 8개 사이트 배포 — 엔드포인트별 재배포 제거로 약 1 FTE 절감.</li>
+            <li>제조·재무 시스템 간 트랜잭션 경계를 staging-table + batch-worker 패턴으로 재설계. 처리 시간 −60%, 월 20건 재처리 → 거의 0건.</li>
+            <li>7,700줄 모놀리식 CASE 기반 PL/SQL 쿼리를 프로세스별 CTE로 리팩터(−57%), 5개 서브프로세스를 격리해 변경 전파 차단. 주간 원가원장 처리량 4 → 7건.</li>
+            <li>모바일 WMS 스캔의 HTTP 413 오류를 PK-only 페이로드 + 최신 상태 조회로 해결 — 인프라 변경 없음. 스캔 배치 크기 30 → 60, 재고 정확도 유지.</li>
+            <li>분산 락(ShedLock / job_lock 테이블)으로 서버 간 중복 실행 제거, @Async로 스케줄러와 실행을 분리해 양 공장 마감을 병렬 안전 처리.</li>
+            <li>멀티 인스턴스 MES의 중복 ID 생성을 Oracle 행 단위 락(FOR UPDATE)으로 방지, 데이터 이상·다운타임 제거.</li>
           </ul>
         </Section>
 
         <Section title={t("ko", "about.writingAbout")}>
           <ul className="space-y-1.5 text-[0.95rem]">
-            <li>LLM 시스템 패턴 — RAG, eval, tool use, agent loop (LangGraph).</li>
-            <li>백엔드 시스템 — 트랜잭션 설계, 락, 시스템 간 통합.</li>
+            <li>LLM 앱 패턴 — 비동기 분석 파이프라인, 프로바이더 추상화, 프롬프트 엔지니어링.</li>
+            <li>백엔드 시스템 — 트랜잭션 설계, 락, 동시성, 시스템 간 통합.</li>
             <li>before / change / result / limit 형식의 프로젝트 회고.</li>
           </ul>
         </Section>
@@ -116,15 +119,15 @@ export default function AboutKO() {
             <dt className="text-ink-muted">언어</dt>
             <dd>Java, Python, SQL/PL-SQL, C#, TypeScript</dd>
             <dt className="text-ink-muted">백엔드</dt>
-            <dd>Spring Boot, FastAPI, REST APIs, .NET</dd>
+            <dd>Spring Boot, JPA, FastAPI, REST APIs, .NET</dd>
             <dt className="text-ink-muted">프론트</dt>
             <dd>Next.js, React</dd>
             <dt className="text-ink-muted">AI / LLM</dt>
-            <dd>RAG, Agent Workflows, LangGraph, AI-assisted dev</dd>
+            <dd>Claude &amp; Gemini API, prompt engineering, async LLM pipeline</dd>
             <dt className="text-ink-muted">DB</dt>
-            <dd>PostgreSQL, MongoDB, Oracle</dd>
+            <dd>PostgreSQL, Oracle</dd>
             <dt className="text-ink-muted">인프라</dt>
-            <dd>Docker, Docker Compose, Git, Linux, AWS basics, CI/CD</dd>
+            <dd>Docker, Git, Linux, AWS, CI/CD (GitHub Actions), JUnit</dd>
           </dl>
         </Section>
 

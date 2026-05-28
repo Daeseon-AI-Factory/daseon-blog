@@ -48,19 +48,21 @@ export default function AboutEN() {
         </header>
 
         <p className="text-lg leading-relaxed text-ink">
-          Backend engineer with 5+ years building and modernizing
-          mission-critical enterprise systems across manufacturing, warehouse,
-          and financial operations. Strong in backend logic, SQL/PL-SQL,
-          transaction design, and cross-system integration. Currently focused
-          on Java/Spring backend platforms and AI-assisted product engineering
-          — reliable backends plus practical AI-powered tools.
+          Software engineer with 6 years modernizing complex production systems
+          across manufacturing, warehouse, and financial operations, and
+          shipping measurable results: processing 60% faster, monthly
+          reprocessing cut to near zero, a 7,700-line core query reduced 57%.
+          Deep in API and data-layer design, transaction integrity, and
+          concurrency across distributed multi-server systems — in Java/Spring,
+          C#/.NET, and SQL/PL-SQL. Now in Toronto, building Spring services and
+          LLM-powered developer tools.
         </p>
 
         <Section title={t("en", "about.currently")}>
           <ul className="space-y-1.5 text-[0.95rem]">
-            <li>SK AX, Toronto (Sep 2021 – present). Java/Spring + AI-assisted product engineering.</li>
-            <li>Building the Daeseon AI Factory — reusable backend and AI cores for shipping product faster.</li>
-            <li>Open to senior / staff backend or AI engineer roles. Remote or Toronto local.</li>
+            <li>Recently wrapped up ~5 years at SK AX (Korea, Sep 2021 – May 2026). Now based in Toronto.</li>
+            <li>Building LLM-powered developer tools — TubeShadow and Dalkkak — and this site, under the Daeseon AI Factory umbrella.</li>
+            <li>Open to senior backend or AI engineer roles. Toronto or remote.</li>
             <li>
               What I&apos;m on right now lives at{" "}
               <Link href="/now" className="text-accent underline">
@@ -74,21 +76,24 @@ export default function AboutEN() {
         <Section title={t("en", "about.previously")}>
           <ul className="space-y-4 text-[0.95rem]">
             <li>
-              <p className="font-medium text-ink">SK AX · Software Engineer</p>
+              <p className="font-medium text-ink">SK AX · Software Engineer · Korea</p>
               <p className="text-xs text-ink-muted">Sep 2021 – May 2026</p>
               <p className="mt-1 text-ink-muted">
-                Manufacturing cost management system, enterprise mobile web
-                platform across 8 sites, and real-time MES. Backend Java/Spring,
-                PL/SQL on Oracle, transaction redesign across financial systems.
+                Manufacturing cost management, an enterprise mobile web platform
+                across 8 sites, and real-time MES. Backend Java/Spring, JPA,
+                PL/SQL on Oracle, and transaction redesign across manufacturing
+                and financial systems.
               </p>
             </li>
             <li>
-              <p className="font-medium text-ink">Dure Info · Software Developer</p>
+              <p className="font-medium text-ink">Dure Info · Software Developer · Korea</p>
               <p className="text-xs text-ink-muted">Jun 2020 – Sep 2021</p>
               <p className="mt-1 text-ink-muted">
-                Solved a critical data-loss bug from network packet
-                fragmentation by implementing a custom buffering layer
-                (MemoryStream) with application-level protocol validation.
+                Multi-client TCP socket server (Windows Service) brokering DB
+                access for PC/PDA/Kiosk clients. Fixed XML deserialization
+                failures from partial TCP reads with application-level message
+                framing — buffering bytes until a complete delimiter-terminated
+                message arrived.
               </p>
             </li>
           </ul>
@@ -96,18 +101,19 @@ export default function AboutEN() {
 
         <Section title="Selected impact">
           <ul className="space-y-1.5 text-[0.95rem]">
-            <li>Refactored the PL/SQL costing core from ~7,000 to ~3,000 lines; weekly ticket throughput 4 → 7.</li>
-            <li>Consolidated 40 endpoint-specific middleware APIs into a single common gateway. $100K+/year in operational savings.</li>
-            <li>Redesigned transaction boundaries between manufacturing operations and financial systems using a staging-table + batch-worker pattern. Processing time -60%, reprocessing 20 monthly cases → near zero.</li>
-            <li>Implemented a custom database-backed locking mechanism to prevent duplicate costing jobs across multiple application instances.</li>
-            <li>Optimized real-time MES equipment message handling to meet a strict 4-second timeout SLA.</li>
+            <li>Consolidated 40 endpoint-specific middleware APIs into one reverse proxy (reflection-based RPC dispatcher), deployed across 8 sites — freeing ~1 FTE by eliminating per-endpoint redeployments.</li>
+            <li>Redesigned transaction boundaries between manufacturing and financial systems with a staging-table + batch-worker pattern. Processing time −60%; reprocessing from 20 cases/month to near zero.</li>
+            <li>Refactored a 7,700-line monolithic CASE-based PL/SQL query into per-process CTEs (−57%), isolating 5 sub-processes so changes stop cascading. Weekly cost-ledger throughput 4 → 7 tickets.</li>
+            <li>Fixed HTTP 413 errors on mobile WMS scans with PK-only payloads + fresh-state retrieval — no infra change. Scan batch size 30 → 60, inventory stayed accurate.</li>
+            <li>Eliminated cross-server duplicate execution with a distributed lock (ShedLock / job_lock table) and decoupled scheduler from execution via @Async, so parallel plant closes run safely.</li>
+            <li>Prevented duplicate ID generation across multi-instance MES with Oracle row-level locks (FOR UPDATE), avoiding data anomalies and downtime.</li>
           </ul>
         </Section>
 
         <Section title={t("en", "about.writingAbout")}>
           <ul className="space-y-1.5 text-[0.95rem]">
-            <li>LLM systems patterns — RAG, evals, tool use, agent loops (LangGraph).</li>
-            <li>Backend systems — transaction design, locking, cross-system integration.</li>
+            <li>LLM app patterns — async analysis pipelines, provider abstraction, prompt engineering.</li>
+            <li>Backend systems — transaction design, locking, concurrency, cross-system integration.</li>
             <li>Project recaps in the before / change / result / limit format.</li>
           </ul>
         </Section>
@@ -117,15 +123,15 @@ export default function AboutEN() {
             <dt className="text-ink-muted">Languages</dt>
             <dd>Java, Python, SQL/PL-SQL, C#, TypeScript</dd>
             <dt className="text-ink-muted">Backend</dt>
-            <dd>Spring Boot, FastAPI, REST APIs, .NET</dd>
+            <dd>Spring Boot, JPA, FastAPI, REST APIs, .NET</dd>
             <dt className="text-ink-muted">Frontend</dt>
             <dd>Next.js, React</dd>
             <dt className="text-ink-muted">AI / LLM</dt>
-            <dd>RAG, Agent Workflows, LangGraph, AI-assisted dev</dd>
+            <dd>Claude &amp; Gemini API, prompt engineering, async LLM pipeline</dd>
             <dt className="text-ink-muted">Databases</dt>
-            <dd>PostgreSQL, MongoDB, Oracle</dd>
+            <dd>PostgreSQL, Oracle</dd>
             <dt className="text-ink-muted">Infra</dt>
-            <dd>Docker, Docker Compose, Git, Linux, AWS basics, CI/CD</dd>
+            <dd>Docker, Git, Linux, AWS, CI/CD (GitHub Actions), JUnit</dd>
           </dl>
         </Section>
 

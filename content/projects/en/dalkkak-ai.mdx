@@ -18,7 +18,7 @@ A native macOS app that gives you multiple terminal panes across multiple "start
 
 ## What it does
 
-- Multi-pane terminal grid (react-mosaic + xterm.js) over per-pane PTYs.
+- Multi-pane terminal grid (react-mosaic + xterm.js) over per-pane PTYs (`portable-pty`).
 - Each pane is a tmux session keyed `dalkkak-<id>`, so sessions outlive the app.
 - Multi-startup sidebar with per-startup layout; `⌘1..9` / `⌘⇧[` / `⌘⇧]` navigation.
 - Layout JSON persistence in localStorage, automatic reattach on launch.
@@ -38,6 +38,6 @@ Phase 2 (Claude Code output augmentation), Phase 3 (cross-startup operator layer
 
 ## Engineering bits worth pointing at
 
-- **Lifecycle decouple.** xterm and the PTY live in a module-level registry, outside React. Mosaic split/stack remounts don't touch them. VS Code Server's terminal-hosting pattern. ([log](/logs/dalkkak-ai/2026-05-26-lifecycle-decouple-mosaic-remount))
+- **Lifecycle decouple.** Terminal state is decoupled from the React lifecycle via async Rust↔JS IPC: xterm and the PTY live in a module-level registry, outside React, and Mosaic split/stack remounts never touch the running process — no process-state loss. VS Code Server's terminal-hosting pattern. ([log](/logs/dalkkak-ai/2026-05-26-lifecycle-decouple-mosaic-remount))
 - **Subprocess env hygiene.** Tauri's GUI app inherits a minimal PATH and a near-empty environment. Without explicit `TERM`, `LANG`, and PATH augmentation, `claude --resume` froze for 15 seconds and tmux silently failed to spawn. ([log 1](/logs/dalkkak-ai/2026-05-26-pty-env-claude-resume-15s), [log 2](/logs/dalkkak-ai/2026-05-26-pane-exited-tauri-gui-path))
 - **Bug-as-asset.** Every shipped bug got a six-section post-mortem (symptom / root cause / fix / instruction-blame / avoidability / lessons), enforced by `CLAUDE.md` RULE #6.

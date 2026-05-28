@@ -1,0 +1,42 @@
+---
+title: "DocVault"
+description: "소규모 팀(~100 엔드포인트)을 위한 자체 호스팅 내부자 위협 이벤트 수집기. osquery + 자체 클립보드 에이전트가 Go 서버로 전송하고, DB 트리거 해시 체인이 감사 로그의 변조를 탐지 가능하게 만든다."
+date: "2026-03-24"
+language: "ko"
+translationKey: "docvault"
+status: "active"
+featured: false
+url: "https://github.com/Daeseon-AI-Factory/docvault"
+repo: "https://github.com/Daeseon-AI-Factory/docvault"
+logSourceRepo: "Daeseon-AI-Factory/docvault"
+tags: ["security", "go", "postgres", "audit-log", "insider-threat"]
+stack: ["Go", "PostgreSQL", "osquery", "htmx", "AES-GCM"]
+role: "Solo"
+---
+
+소규모 조직(~100 엔드포인트)의 내부자 위협 이벤트를 수집·조회하는 자체 호스팅 도구. osquery와 자체 제작 클립보드 에이전트가 사용자 PC에서 활동을 수집해 HTTPS로 전송한다. Go 서버가 PostgreSQL에 저장하고 htmx 조회 UI를 제공한다. DB 트리거가 모든 로그 행에 SHA-256 해시 체인을 걸어 애플리케이션 레벨 변조를 탐지한다. 임계값 룰이 야간 접근·대량 다운로드 같은 패턴을 하이라이트한다.
+
+## 이것은
+
+- 엔드포인트 이벤트 수집기 (파일 작업, 클립보드, USB, 메신저 접근).
+- DB 트리거 해시 체인이 적용된 감사 로그 — 애플리케이션 레벨에서 변조 탐지 가능.
+- 임계값 룰 기반 이상 행위 점수화 (10종, ML 없음).
+- htmx 조회/검색 UI.
+- (옵션) AES envelope encryption 적용 파일 저장소.
+
+## 이것이 아닌
+
+- **DRM이 아니다.** 차단하지 않고 탐지만 한다.
+- **UEBA가 아니다.** 머신러닝 없이 임계값 룰 10종이다.
+- **법적 증거 시스템이 아니다.** 해시 체인은 애플리케이션 레벨 변조는 막지만, DB 슈퍼유저는 우회 가능하다(`DISABLE TRIGGER` → 재작성 → 재계산). 진짜 증거 정합성은 외부 타임스탬핑(RFC 3161)이나 WORM 스토리지가 필요하다.
+- **프로덕션 보안 제품이 아니다.** 인증 강화·지원·SLA 없는 개인 프로젝트.
+
+## 엔지니어링 하이라이트
+
+- **변조 탐지를 앱이 아니라 DB에서.** SHA-256 해시 체인(`row_hash = SHA-256(prev_hash || data)`)을 pgcrypto로 INSERT 트리거 안에서 계산하고, BEFORE UPDATE/DELETE 트리거가 예외를 던진다. ad-hoc `psql`을 포함한 모든 insert 경로가 체인을 거치게 강제되므로, 정합성이 애플리케이션의 절제에 의존하지 않는다.
+- **파일 본문에 chunked AES-256-GCM.** 첫 버전은 AES-CTR(MAC 없음)이었는데, 문서 점검에서 README는 GCM이라 적혀있지만 실제로는 파일 *키*만 인증되고 있었음을 발견. `encryption.go`를 chunked GCM(64 KiB 청크, 청크 인덱스 + final 플래그를 담은 청크별 nonce)으로 재작성해 truncation·reorder를 방어하고 변조 탐지 테스트를 추가. ([로그](/ko/projects/docvault/log/2026-05-27-aes-ctr-mac-fix))
+- **동시 insert 강건화.** 해시 체인 트리거에 동시 INSERT 경쟁 조건이 있었음(두 트랜잭션이 같은 `prev_hash`를 읽음). 체인별 트랜잭션 범위 `pg_advisory_xact_lock`으로 해결. ([로그](/ko/projects/docvault/log/2026-03-25-hash-chain-trigger))
+
+## 다음
+
+클립보드/osquery 외 에이전트 커버리지 확대, 실제 검토 워크플로(배정 / 분류 / 종료). 배포 URL 없음 — `make build` + Postgres 인스턴스로 로컬 실행.

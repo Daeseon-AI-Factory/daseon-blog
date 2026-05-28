@@ -1,12 +1,42 @@
 ---
-title: docvault
-description: docvault
-date: '2026-05-27'
-language: en
-status: active
+title: "DocVault"
+description: "A self-hosted insider-threat event collector for small teams (~100 endpoints). osquery + a custom clipboard agent feed a Go server; a DB-trigger hash chain makes the audit log tamper-evident."
+date: "2026-03-24"
+language: "en"
+translationKey: "docvault"
+status: "active"
 featured: false
-url: 'https://github.com/Daeseon-AI-Factory/docvault/'
-repo: 'https://github.com/Daeseon-AI-Factory/docvault/'
-logSourceRepo: Daeseon-AI-Factory/docvault/
+url: "https://github.com/Daeseon-AI-Factory/docvault"
+repo: "https://github.com/Daeseon-AI-Factory/docvault"
+logSourceRepo: "Daeseon-AI-Factory/docvault"
+tags: ["security", "go", "postgres", "audit-log", "insider-threat"]
+stack: ["Go", "PostgreSQL", "osquery", "htmx", "AES-GCM"]
+role: "Solo"
 ---
-Test
+
+A self-hosted tool for collecting and reviewing insider-threat events across a small fleet (~100 endpoints). osquery and a custom clipboard agent collect activity on user PCs and send it over HTTPS. The Go server stores events in PostgreSQL and serves an htmx query UI. Database triggers maintain a SHA-256 hash chain over every log row so application-level tampering is detectable. Threshold rules surface patterns like off-hours access or bulk downloads.
+
+## What it is
+
+- Endpoint event collector (file ops, clipboard, USB, messenger access).
+- Audit log with a DB-trigger hash chain — tamper-evident at the application layer.
+- Threshold-rule anomaly scoring (10 rules, no ML).
+- htmx query/search UI.
+- Optional AES envelope encryption for stored files.
+
+## What it is not
+
+- **Not DRM.** It detects, it doesn't block.
+- **Not UEBA.** Ten threshold rules, no machine learning.
+- **Not a legal-evidence system.** The hash chain resists application-level tampering but a DB superuser can still bypass it (`DISABLE TRIGGER`, rewrite, recompute). Real evidence integrity needs external timestamping (RFC 3161) or WORM storage.
+- **Not a production security product.** No auth hardening, support, or SLA — a personal project.
+
+## Engineering highlights
+
+- **Tamper-evident audit log in the database, not the app.** A SHA-256 hash chain (`row_hash = SHA-256(prev_hash || data)`) is computed inside an INSERT trigger via pgcrypto; BEFORE UPDATE/DELETE triggers raise exceptions. Any insert path — including ad-hoc `psql` — is forced through the chain, so integrity doesn't depend on application discipline.
+- **Chunked AES-256-GCM for file bodies.** The first cut used AES-CTR (no MAC); a documentation audit caught that the README claimed GCM but only the file *keys* were authenticated. Rewrote `encryption.go` as chunked GCM (64 KiB chunks, per-chunk nonce carrying chunk index + final flag) to defeat truncation and reorder, with tamper-detection tests. ([log](/projects/docvault/log/2026-05-27-aes-ctr-mac-fix))
+- **Concurrent-insert hardening.** The hash-chain triggers had a race under concurrent INSERTs (two transactions reading the same `prev_hash`). Fixed with a transaction-scoped `pg_advisory_xact_lock` per chain. ([log](/projects/docvault/log/2026-03-25-hash-chain-trigger))
+
+## What's next
+
+Agent coverage beyond clipboard/osquery, and a real review workflow (assign / triage / close). No deployment URL — runs locally via `make build` + a Postgres instance.

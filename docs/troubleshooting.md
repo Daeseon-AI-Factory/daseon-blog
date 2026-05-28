@@ -113,3 +113,6 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Pattern**: YAML's auto-typing (`!!timestamp` for ISO date literals) surfaces only when external content sources adopt the spec. Library code that reads frontmatter should coerce types, not trust them. Same caution applies to numbers (`123` vs `"123"`) and booleans (`yes`/`no`/`on`/`off`).
 
 <!-- skipped: 9e192c6 Log c3517f5 (YAML date coercion fix) — dual-write per CLAUDE.md rules -->
+<!-- skipped: f6018ba Mark 9e192c6 (log-housekeeping for c3517f5) as routine [no-log] -->
+<!-- skipped: b99c1bb Add shadow-ai project (EN+KO) with logSourceRepo connecting to satellite [no-log] -->
+<!-- skipped: 48860b4 Wire dalkkak-ai to ddalkkak satellite + remove migrated duplicate logs [no-log] -->

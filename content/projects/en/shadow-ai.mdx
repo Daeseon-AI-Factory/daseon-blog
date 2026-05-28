@@ -27,6 +27,12 @@ A YouTube clip miner + shadowing trainer. Paste a YouTube URL, pull subtitles an
 - **Curated content**: shipped with a starter video collection (`curated-videos.yml`) so new users have something to do day one.
 - **Five languages**: next-intl path-based routing (en default + ko / ja / zh / es).
 
+## Engineering highlights
+
+- **Async event-driven LLM pipeline.** Provider calls fire on Spring's `AFTER_COMMIT` event via `@Async` — outside the DB transaction — so a multi-second LLM round trip never holds a database connection and exhausts the pool. Each clip's analysis moves through a `PENDING → READY / FAILED` state machine, so the UI can show progress and retries are idempotent.
+- **Runtime-selectable provider.** `AiAnalysisClient` interface with `ClaudeClient` / `GeminiClient` implementations chosen by `@ConditionalOnProperty`. Swapping vendors is one env var — used in anger when a Claude credit ran out mid-build and the app fell back to Gemini 2.5 Flash with no code change.
+- **Cost control by design.** Analysis is persisted in Postgres JSONB, so it's one LLM call per clip for its entire lifetime. Transcripts come from YouTube captions, not Whisper STT — skipping the most expensive step entirely.
+
 ## Stack
 
 Backend: Java 21 · Spring Boot 3.3 · Gradle Kotlin DSL · PostgreSQL · Flyway · Spring Security + JWT.
