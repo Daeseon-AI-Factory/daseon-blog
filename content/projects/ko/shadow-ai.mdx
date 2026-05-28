@@ -1,0 +1,40 @@
+---
+title: "TubeShadow"
+description: "YouTube 영상에서 클립 따고 AI 분석 받고 SM-2 간격 반복으로 복습하는 영어 쉐도잉 도구. 개발자와 지식노동자용."
+date: "2026-05-23"
+language: "ko"
+translationKey: "shadow-ai"
+status: "active"
+featured: false
+url: "https://github.com/Daeseon-AI-Factory/shadow-ai"
+repo: "https://github.com/Daeseon-AI-Factory/shadow-ai"
+logSourceRepo: "Daeseon-AI-Factory/shadow-ai"
+tags: ["english-learning", "shadowing", "youtube", "srs", "ai"]
+stack: ["Java 21", "Spring Boot 3.3", "PostgreSQL", "Next.js 16", "TypeScript", "Tailwind 4", "Claude Haiku"]
+role: "Solo"
+---
+
+YouTube 클립 마이너 + 쉐도잉 트레이너. YouTube URL 붙여넣으면 자막/메타데이터 자동 추출, 자막 더블클릭 또는 수동으로 시작/끝 마커 찍어서 자유롭게 클립 자르고, 태그/덱/SM-2 간격 반복이 있는 개인 라이브러리에 모음.
+
+## 무엇을 하는가
+
+- **임포트**: YouTube URL → `yt-dlp`로 자막+메타데이터 추출. Idempotent self-healing — 다시 임포트하면 일시적 실패 자동 복구.
+- **클립**: 자막 더블클릭 또는 수동 시작/끝. 0.5~1.5x 속도로 무한반복.
+- **라이브러리**: 이름/자막 검색, 태그 필터, 정렬, JSON 내보내기.
+- **AI 분석**: 클립당 Claude Haiku 한 번 호출 (맥락/문법/표현/어휘) → Postgres JSONB에 캐싱. 클립당 평생 LLM 호출 1회.
+- **녹음 + A/B**: MediaRecorder → 업로드 → 원본과 본인 녹음 교차 재생, 시간순 누적.
+- **복습**: SM-2 알고리즘 (Anki식 Again/Hard/Good/Easy), 연속 일수 위젯, 덱 필터.
+- **큐레이션 콘텐츠**: 신규 사용자가 즉시 시작할 수 있는 시작용 영상 컬렉션 (`curated-videos.yml`) 포함.
+- **5개 언어**: next-intl path-based 라우팅 (en 기본 + ko / ja / zh / es).
+
+## 스택
+
+백엔드: Java 21 · Spring Boot 3.3 · Gradle Kotlin DSL · PostgreSQL · Flyway · Spring Security + JWT.
+프론트엔드: Next.js 16 (App Router) · TypeScript strict · Tailwind 4 · shadcn/ui · Zustand · TanStack Query.
+AI: Anthropic Claude Haiku 4.5 + prompt caching (Gemini 2.5 Flash도 free-tier용으로 pluggable).
+
+## 아직 없는 것
+
+- 배포 URL 없음 — 로컬 `docker-compose up`으로만 실행.
+- BYOAI (사용자가 본인 API 키로 분석): Claude/Gemini/Perplexity용 프롬프트를 사용자가 본인 채팅 도구에 붙여넣는 형태로 일부 구현.
+- 모바일 앱 없음. 브라우저 only, 모바일 반응형까지.
