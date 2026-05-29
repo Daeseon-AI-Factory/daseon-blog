@@ -1,0 +1,31 @@
+---
+title: "Distributed lock"
+description: "A lock that enforces exclusive access across processes and servers — not just threads inside one JVM."
+date: "2026-05-28"
+language: "en"
+translationKey: "distributed-lock"
+type: "knowledge"
+tags: ["distributed-systems", "concurrency", "locking"]
+---
+
+A normal lock (a `synchronized` block, a mutex) coordinates threads inside one process. The moment you run two instances of a service, that lock is useless across them — each JVM has its own. A **distributed lock** moves the lock somewhere all instances share: a database row, Redis, ZooKeeper.
+
+## Why it matters
+
+Scale a scheduled job horizontally and every instance fires it at the same time. Without a shared lock you get duplicate execution — the same batch run twice, double-posted rows.
+
+## Where I've used it
+
+Two flavors, same goal:
+
+- **Job-level**: ShedLock over a `job_lock` table so only one instance runs a scheduled cost-ledger close, then `@Async` to let independent plant closes run in parallel without stepping on each other.
+- **Row-level**: Oracle `SELECT ... FOR UPDATE` to serialize ID generation across multi-instance MES services, which had been producing duplicate IDs — a [[race-condition]] in the read-modify-write of the next sequence value.
+- **Advisory**: in DocVault, a `pg_advisory_xact_lock` per hash chain, because concurrent INSERTs were reading the same `prev_hash` and forking the audit chain.
+
+## The trap
+
+A lock isn't correctness by itself. If a holder pauses (GC, network) past the lock's expiry, a second holder can acquire it while the first still thinks it owns it — you need **fencing tokens** or a transaction-scoped lock that releases on commit/rollback. And a distributed lock is a throughput ceiling: everything it guards is serialized. Often a **unique constraint** or an [[idempotent]] design is cheaper than a lock.
+
+## In Korean
+
+"분산 락" — usually left as "락" (transliterated *lock*) rather than the native "잠금". In practice Korean devs say "락 잡는다" (grab the lock); "잠금" reads as a UI lock (screen lock), so the loanword survives for the concurrency sense.

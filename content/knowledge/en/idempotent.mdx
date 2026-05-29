@@ -1,0 +1,29 @@
+---
+title: "Idempotent"
+description: "An operation you can run many times with the same end state as running it once."
+date: "2026-05-28"
+language: "en"
+translationKey: "idempotent"
+type: "knowledge"
+tags: ["distributed-systems", "api", "reliability"]
+---
+
+An operation is **idempotent** if applying it N times leaves the system in the same state as applying it once. `DELETE /users/42` is idempotent — the user is gone whether you call it one time or five. A naive `POST /orders` is not — five calls make five orders.
+
+## Why it matters
+
+Networks retry. A client that never receives a response can't tell "request lost" from "response lost," so it sends the request again. If the operation isn't idempotent, the retry double-charges, double-ships, double-inserts.
+
+The usual fix is an **idempotency key**: the client attaches a unique key per logical operation, the server records it, and a repeat with the same key returns the first result instead of re-running the effect.
+
+## Where I've used it
+
+DocVault's import is idempotent on purpose — re-importing the same URL retries a failed transcript fetch instead of creating a duplicate record. The same property drove a manufacturing reprocessing redesign: a staging table plus a [[distributed-lock]] meant a re-run *resumed* instead of duplicating ledger rows, which took monthly reprocessing from ~20 cases to near zero.
+
+## The trap
+
+Idempotent ≠ side-effect-free. An idempotent `PUT` still writes on every call; it just converges to the same state. And "idempotent at the API" can still break under concurrency: two simultaneous *first-time* requests can both pass the "have I seen this key?" check unless that check is atomic. That's a [[race-condition]], and it needs a lock or a unique constraint — not just an idempotency key.
+
+## In Korean
+
+"멱등(冪等)". What translation loses: the English *idempotent* (idem = same, potent = power) reads its meaning on the surface. "멱등" is a math loanword ("same under repeated exponentiation") — accurate, but most people meet it as opaque jargon and have to unpack it once before it clicks.

@@ -1,0 +1,41 @@
+---
+title: "Race condition"
+description: "A bug where the result depends on the unpredictable interleaving of concurrent operations."
+date: "2026-05-28"
+language: "en"
+translationKey: "race-condition"
+type: "knowledge"
+tags: ["concurrency", "distributed-systems", "bugs"]
+---
+
+A **race condition** is when the correctness of a result depends on timing you don't control — the order in which concurrent operations interleave. It passes in dev, passes in tests, and fails in production under load, which is what makes it nasty.
+
+## The classic shape: read-modify-write
+
+```
+A reads counter = 5
+B reads counter = 5
+A writes 6
+B writes 6     # should be 7 — one increment is lost
+```
+
+Two actors read the same value before either writes. The lost update is the canonical race.
+
+## Where I've hit it
+
+- Multi-instance MES services generated **duplicate IDs**: each instance read the same "next" value before any wrote back. Fixed by serializing that read-modify-write with an Oracle row lock (`FOR UPDATE`) — a [[distributed-lock]] at the row level.
+- DocVault's audit hash chain **forked** under concurrent INSERTs: two transactions read the same `prev_hash` and both chained off it. The verifier walked one branch and missed the divergence. Fixed with a transaction-scoped advisory lock.
+
+## How you actually fix it
+
+Make the critical section atomic. In order of preference:
+
+1. **Database constraint** — a `UNIQUE` index makes the duplicate impossible regardless of timing. Cheapest when it fits.
+2. **Atomic operation** — `UPDATE ... SET n = n + 1` instead of read-then-write.
+3. **A lock** — only when 1 and 2 don't fit; it's a throughput cost.
+
+An [[idempotent]] design sidesteps some races entirely: if a repeat is harmless, a lost-then-retried operation isn't a corruption.
+
+## In Korean
+
+"경쟁 상태" or "경합 상태". "경쟁" (competition) is the literal calque of *race*; "경합" (contention) is arguably more precise for the lock-contention sense. Both are used; the English term is common in speech ("레이스 컨디션").
