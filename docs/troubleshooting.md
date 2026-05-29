@@ -131,3 +131,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Trade-off**: `[[]]` links are not validated at build — a link to a non-existent term renders as a dead link (wiki "red link"). Acceptable for v1; a build-time checker is a later add. Backlinks and tag/graph index deferred to v2/v3.
 - **Commit**: 43a1218
 - **Pattern**: When a content type's data layer already exists, the work is just the surface. Check `lib/posts.ts` `ContentType` before assuming a new section needs new plumbing.
+
+<!-- skipped: acf3538 Log 43a1218 (wiki v1) — dual-write per CLAUDE.md rules -->
