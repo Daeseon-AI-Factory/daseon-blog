@@ -34,6 +34,20 @@ export function PostList({ posts, locale }: { posts: Post[]; locale: Locale }) {
               </span>
             </div>
           </Link>
+          {post.frontmatter.tags && post.frontmatter.tags.length > 0 ? (
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {post.frontmatter.tags.map((tag) => (
+                <li key={tag}>
+                  <Link
+                    href={localizedPath(locale, `/posts/tag/${encodeURIComponent(tag)}`)}
+                    className="rounded-full border border-paper-line px-2 py-0.5 font-mono text-[0.65rem] uppercase tracking-widest text-ink-muted hover:border-accent hover:text-ink"
+                  >
+                    {tag}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </li>
       ))}
     </ul>
