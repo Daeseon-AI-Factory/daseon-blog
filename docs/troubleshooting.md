@@ -118,3 +118,4 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: 48860b4 Wire dalkkak-ai to ddalkkak satellite + remove migrated duplicate logs [no-log] -->
 <!-- skipped: 98eace8 Align About + projects to resume; flesh out docvault (EN+KO) [no-log] -->
 <!-- skipped: 053d03b Feature shadow-ai (TubeShadow) on home alongside dalkkak-ai [no-log] -->
+<!-- skipped: 9289c73 Record skip markers for recent content commits [no-log] -->
