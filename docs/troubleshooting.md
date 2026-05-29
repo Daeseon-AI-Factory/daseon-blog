@@ -119,3 +119,15 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: 98eace8 Align About + projects to resume; flesh out docvault (EN+KO) [no-log] -->
 <!-- skipped: 053d03b Feature shadow-ai (TubeShadow) on home alongside dalkkak-ai [no-log] -->
 <!-- skipped: 9289c73 Record skip markers for recent content commits [no-log] -->
+<!-- skipped: 74456ba chore: record hook skip-marker for recent content commits [no-log] -->
+
+---
+
+## Bilingual wiki (v1) — knowledge type surfaced at /wiki with [[]] cross-links (feature record)
+
+- **Context**: Wanted a 나무위키-style hand-curated technical glossary, bilingual, cross-linked — distinct from `/posts` narrative. The `knowledge` content type already existed in `lib/posts.ts` (`ContentType`, `TYPE_DIRS.knowledge`, default visibility `unlisted`) and `content/knowledge/{en,ko}/` dirs existed, but no route rendered them.
+- **Choice**: Reuse the `knowledge` type as-is; build only the missing surface. Wiki-style `[[term]]` linking via a remark plugin rather than manual markdown links, so entries cross-reference by term name. `unlisted` default is kept — entries don't pollute the `/posts` feed/sitemap but the `/wiki` index lists them.
+- **Files changed**: `lib/remark-wiki-link.ts` (new — `[[term]]`/`[[display|target]]` → link, slug via `\p{L}` to keep Korean); `lib/mdx.ts` (`renderMdx` optional `wikiLinkBase`, plugin injected only when set); `app/(public)/wiki/{page,[slug]/page}.tsx` + ko mirror; `components/WikiBody.tsx`, `components/WikiList.tsx`; `lib/i18n.ts` (`nav.wiki`, `wiki.*`); `components/Header.tsx` (nav link). Seed: `content/knowledge/{en,ko}/{idempotent,distributed-lock,race-condition}.mdx`.
+- **Trade-off**: `[[]]` links are not validated at build — a link to a non-existent term renders as a dead link (wiki "red link"). Acceptable for v1; a build-time checker is a later add. Backlinks and tag/graph index deferred to v2/v3.
+- **Commit**: 43a1218
+- **Pattern**: When a content type's data layer already exists, the work is just the surface. Check `lib/posts.ts` `ContentType` before assuming a new section needs new plumbing.

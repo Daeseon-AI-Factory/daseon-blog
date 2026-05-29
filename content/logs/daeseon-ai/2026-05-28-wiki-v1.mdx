@@ -1,0 +1,37 @@
+---
+title: "Added a bilingual wiki — the knowledge content type was already there, just unrendered"
+date: "2026-05-28"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Built /wiki v1: a 나무위키-style cross-linked glossary of technical terms, EN+KO, with [[term]] wiki-links. The knowledge content type already existed in the data layer; this was mostly the missing frontend + a small remark plugin."
+tags: ["mdx", "remark", "i18n", "wiki", "next"]
+---
+
+## What I did
+
+Added a `/wiki` section — hand-written, cross-linked definitions of terms I actually use, in both English and Korean.
+
+## What it looked like before
+
+`lib/posts.ts` already defined `ContentType = "post" | "note" | "knowledge"`, mapped `knowledge` to `content/knowledge/`, and defaulted it to `unlisted` visibility. The directories existed. But nothing rendered them — the only routes were `/posts`, `/projects`, `/about`, `/now`. So a knowledge entry could be written but never seen.
+
+## What I changed
+
+- A remark plugin (`lib/remark-wiki-link.ts`) that turns `[[term]]` and `[[display|target]]` into links to `/wiki/<slug>`. The slug keeps Korean characters (`\p{L}`), so `[[분산 락|distributed-lock]]` renders Korean text linking to the shared slug.
+- `renderMdx` got an optional `wikiLinkBase`; the plugin only runs when it's set, so `[[...]]` stays literal in posts and projects.
+- `/wiki` index (alphabetical) + `/wiki/[slug]` detail, plus the Korean mirror. Reused the existing `listContent("knowledge", locale)` / `getContentItem` — no data-layer changes.
+- Seeded three cross-linked entries — idempotent, distributed-lock, race-condition — each grounded in real work (Oracle `FOR UPDATE` for duplicate MES IDs, ShedLock for duplicate cost jobs, DocVault's hash-chain race) and each with a short translation-nuance note (멱등 / 분산 락 / 경쟁 상태).
+
+## What happened
+
+Build prerenders all six routes; verified the `[[]]` links resolve to real anchors in the static HTML (`[[distributed-lock]]` → `/wiki/distributed-lock`) and the EN↔KO toggle points across locales.
+
+## What it doesn't do / what's next
+
+No backlinks ("entries that reference this term") and no tag/graph index yet — v2/v3. `[[]]` links aren't validated at build, so a typo'd term renders as a dead link. The point of v1 was the surface + linking; filling it out is the ongoing part.
+
+## Commit
+
+`43a1218` — Add bilingual wiki (v1).
