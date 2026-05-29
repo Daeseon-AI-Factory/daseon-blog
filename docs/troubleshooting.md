@@ -116,3 +116,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: f6018ba Mark 9e192c6 (log-housekeeping for c3517f5) as routine [no-log] -->
 <!-- skipped: b99c1bb Add shadow-ai project (EN+KO) with logSourceRepo connecting to satellite [no-log] -->
 <!-- skipped: 48860b4 Wire dalkkak-ai to ddalkkak satellite + remove migrated duplicate logs [no-log] -->
+<!-- skipped: 98eace8 Align About + projects to resume; flesh out docvault (EN+KO) [no-log] -->
+<!-- skipped: 053d03b Feature shadow-ai (TubeShadow) on home alongside dalkkak-ai [no-log] -->
