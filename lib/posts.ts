@@ -20,6 +20,8 @@ export type PostFrontmatter = {
   status?: PostStatus;
   format?: "multi-register" | "before-after" | "note";
   distribution?: Record<string, boolean>;
+  /** Wiki only: the tools/patterns that are instances of this principle. */
+  instances?: string[];
   type?: ContentType;
   visibility?: Visibility;
   summary?: string;
@@ -77,6 +79,7 @@ async function readContentFile(type: ContentType, locale: Locale, fileName: stri
     status: fm.status ?? "published",
     format: fm.format,
     distribution: fm.distribution,
+    instances: fm.instances,
     type: (fm.type as ContentType) ?? type,
     visibility: (fm.visibility as Visibility) ?? defaultVisibility(type),
     summary: fm.summary,

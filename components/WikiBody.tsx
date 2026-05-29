@@ -52,6 +52,23 @@ export async function WikiBody({
           ) : null}
         </div>
       </header>
+      {entry.frontmatter.instances && entry.frontmatter.instances.length > 0 ? (
+        <div className="mb-10 rounded-md border border-paper-line bg-white p-4">
+          <p className="font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+            {t(locale, "wiki.instances")}
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {entry.frontmatter.instances.map((inst) => (
+              <li
+                key={inst}
+                className="rounded-full border border-paper-line px-2.5 py-1 font-mono text-xs text-ink-muted"
+              >
+                {inst}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="prose">{rendered}</div>
     </article>
   );
