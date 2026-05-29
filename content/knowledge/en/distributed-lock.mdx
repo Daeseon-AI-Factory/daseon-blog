@@ -1,31 +1,34 @@
 ---
 title: "Distributed lock"
-description: "A lock that enforces exclusive access across processes and servers — not just threads inside one JVM."
-date: "2026-05-28"
+description: "Mutual exclusion across processes and servers, not threads in one JVM. The principle under ShedLock, Redlock, and SELECT FOR UPDATE."
+date: "2026-05-29"
 language: "en"
-translationKey: "distributed-lock"
 type: "knowledge"
-tags: ["distributed-systems", "concurrency", "locking"]
+tags: ["principle", "distributed-systems", "concurrency", "locking"]
 ---
 
-A normal lock (a `synchronized` block, a mutex) coordinates threads inside one process. The moment you run two instances of a service, that lock is useless across them — each JVM has its own. A **distributed lock** moves the lock somewhere all instances share: a database row, Redis, ZooKeeper.
+## The principle
 
-## Why it matters
+A normal lock (`synchronized`, a mutex) coordinates threads inside one process. Run two instances and that lock is useless across them — each has its own. A **distributed lock** moves the exclusion to something all instances share, so only one of N actors is in the critical section at a time.
 
-Scale a scheduled job horizontally and every instance fires it at the same time. Without a shared lock you get duplicate execution — the same batch run twice, double-posted rows.
+The deep point: it's the same mutual-exclusion idea, just with the shared state moved out of process memory and onto the network — which adds a failure mode in-process locks don't have (the holder can die while still "holding").
 
-## Where I've used it
+## How it maps to practice
 
-Two flavors, same goal:
+- **ShedLock over a DB table** — only one instance runs a scheduled job. (I used this for cost-ledger closes, with `@Async` so independent plant closes still ran in parallel.)
+- **`SELECT ... FOR UPDATE`** — a row-level lock. (Used it to serialize ID generation across multi-instance MES that was producing duplicate IDs — a [[race-condition]] in a read-modify-write.)
+- **`pg_advisory_xact_lock`** — a lock keyed on an arbitrary value, auto-released on commit. (Fixed a forked audit hash-chain under concurrent inserts.)
+- **Redis `SETNX` / Redlock** — lock in Redis with a TTL.
+- **ZooKeeper / etcd leases** — lock as a lease with a session.
 
-- **Job-level**: ShedLock over a `job_lock` table so only one instance runs a scheduled cost-ledger close, then `@Async` to let independent plant closes run in parallel without stepping on each other.
-- **Row-level**: Oracle `SELECT ... FOR UPDATE` to serialize ID generation across multi-instance MES services, which had been producing duplicate IDs — a [[race-condition]] in the read-modify-write of the next sequence value.
-- **Advisory**: in DocVault, a `pg_advisory_xact_lock` per hash chain, because concurrent INSERTs were reading the same `prev_hash` and forking the audit chain.
+## How it gets buried
 
-## The trap
+"Distributed coordination at scale," "leader election as a service." Often the actual need is "don't run this twice," and a database unique constraint or an [[idempotent]] design is cheaper and safer than a lock.
 
-A lock isn't correctness by itself. If a holder pauses (GC, network) past the lock's expiry, a second holder can acquire it while the first still thinks it owns it — you need **fencing tokens** or a transaction-scoped lock that releases on commit/rollback. And a distributed lock is a throughput ceiling: everything it guards is serialized. Often a **unique constraint** or an [[idempotent]] design is cheaper than a lock.
+## Say it clearly
+
+"Only one of the running instances does this at a time." And the trap: a lock isn't correctness — if the holder stalls past the lock's expiry, a second holder acquires it while the first still thinks it owns it. You need **fencing tokens** or a transaction-scoped lock.
 
 ## In Korean
 
-"분산 락" — usually left as "락" (transliterated *lock*) rather than the native "잠금". In practice Korean devs say "락 잡는다" (grab the lock); "잠금" reads as a UI lock (screen lock), so the loanword survives for the concurrency sense.
+"분산 락" — left as the loanword "락", not the native "잠금" (which reads as a UI/screen lock). Devs say "락 잡는다" (grab the lock). The loanword survives specifically for the concurrency sense.

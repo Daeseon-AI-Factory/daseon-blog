@@ -1,0 +1,37 @@
+---
+title: "Append-only log"
+description: "An ordered, immutable sequence you only append to and read by offset. The principle under Kafka, WAL, and event sourcing — they're instances, not the idea."
+date: "2026-05-29"
+language: "en"
+type: "knowledge"
+tags: ["principle", "distributed-systems", "storage", "durability"]
+---
+
+## The principle
+
+A log is an ordered sequence of records. You only ever **append** to the end; you never edit or reorder what's already there. Readers don't pop items off — they hold an **offset** and move it forward at their own pace. The log itself is the source of truth; any current "state" is a *projection* you rebuild by replaying the log.
+
+That's the whole idea. Everything below is an instance of it.
+
+## How it maps to practice
+
+- **Kafka** — a partitioned append-only log. "Topics" are logs; consumers track offsets. That's the entire core; the rest is packaging.
+- **Redis Streams** — the same log primitive inside Redis (`XADD` / `XREAD`, consumer groups track position).
+- **Postgres WAL / Oracle redo log** — the database writes the change to a log *first*, then applies it. Crash recovery = replay the log.
+- **Event sourcing** — store the events, derive the row. The table is a projection; the log is truth.
+- **git** — commits are an append-only DAG; branches are offsets.
+- **Raft** — consensus is literally agreeing on one shared append-only log.
+
+When you see "what is Kafka?", the useful answer isn't a feature list — it's "it's an append-only log, here's what that buys you (replay, multiple independent readers, durability ordering) and what it costs (you manage offsets, storage grows)."
+
+## How it gets buried
+
+"Real-time data-in-motion streaming platform." "The central nervous system of your data." "Event mesh." These describe the marketing surface of one product and hide the 50-year-old primitive (the database write-ahead log) underneath.
+
+## Say it clearly
+
+"An append-only log: writers add to the end, each reader remembers its own position, and the log — not any snapshot — is the source of truth."
+
+## In Korean
+
+"로그" stays as the loanword; "기록(記錄)" means a record/log in the everyday sense and loses the technical "append-only, offset-tracked sequence" meaning. "추가 전용 로그" is understood but rarely said — people just say "로그" and rely on context. The concept "이벤트를 다시 재생한다(replay)" is where Korean explanations usually click.

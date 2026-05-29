@@ -1,41 +1,47 @@
 ---
 title: "Race condition"
-description: "A bug where the result depends on the unpredictable interleaving of concurrent operations."
-date: "2026-05-28"
+description: "Correctness that depends on the uncontrolled interleaving of concurrent operations. The principle under lost updates, double-submits, and TOCTOU."
+date: "2026-05-29"
 language: "en"
-translationKey: "race-condition"
 type: "knowledge"
-tags: ["concurrency", "distributed-systems", "bugs"]
+tags: ["principle", "concurrency", "distributed-systems", "bugs"]
 ---
 
-A **race condition** is when the correctness of a result depends on timing you don't control — the order in which concurrent operations interleave. It passes in dev, passes in tests, and fails in production under load, which is what makes it nasty.
+## The principle
 
-## The classic shape: read-modify-write
+A **race condition** is when the result depends on timing you don't control — the order concurrent operations interleave. The defining trait: it passes in dev, passes in tests, and fails in production under load. The canonical shape is read-modify-write:
 
 ```
-A reads counter = 5
-B reads counter = 5
+A reads n = 5
+B reads n = 5
 A writes 6
-B writes 6     # should be 7 — one increment is lost
+B writes 6      # should be 7 — one update lost
 ```
 
-Two actors read the same value before either writes. The lost update is the canonical race.
+Two actors read the same value before either writes.
 
-## Where I've hit it
+## How it maps to practice
 
-- Multi-instance MES services generated **duplicate IDs**: each instance read the same "next" value before any wrote back. Fixed by serializing that read-modify-write with an Oracle row lock (`FOR UPDATE`) — a [[distributed-lock]] at the row level.
-- DocVault's audit hash chain **forked** under concurrent INSERTs: two transactions read the same `prev_hash` and both chained off it. The verifier walked one branch and missed the divergence. Fixed with a transaction-scoped advisory lock.
+- **Lost update** — the counter example above; two writers clobber each other.
+- **Duplicate IDs across instances** — each instance reads the same "next" value before any writes back. (Fixed by serializing the read-modify-write with `SELECT FOR UPDATE` — a row-level [[distributed-lock]].)
+- **Forked log/chain** — concurrent inserts read the same predecessor and both chain off it. (Hit this in an audit hash chain; fixed with an advisory lock.)
+- **Double-submit** — user double-clicks; two requests both pass the "already submitted?" check.
+- **TOCTOU** — time-of-check to time-of-use: you check a file/permission, then act, and it changed in between.
 
-## How you actually fix it
+## How to actually fix it
 
-Make the critical section atomic. In order of preference:
+Make the critical section atomic, cheapest first:
 
-1. **Database constraint** — a `UNIQUE` index makes the duplicate impossible regardless of timing. Cheapest when it fits.
-2. **Atomic operation** — `UPDATE ... SET n = n + 1` instead of read-then-write.
+1. **DB constraint** — a `UNIQUE` index makes the duplicate impossible regardless of timing.
+2. **Atomic op** — `UPDATE ... SET n = n + 1`, not read-then-write.
 3. **A lock** — only when 1 and 2 don't fit; it's a throughput cost.
 
-An [[idempotent]] design sidesteps some races entirely: if a repeat is harmless, a lost-then-retried operation isn't a corruption.
+An [[idempotent]] design sidesteps some races: if a repeat is harmless, a lost-then-retried op isn't corruption.
+
+## Say it clearly
+
+"It works until two things happen at the same time." Not a buzzword target — the failure mode of skipping the analysis is "it passed all the tests," which is exactly why it ships.
 
 ## In Korean
 
-"경쟁 상태" or "경합 상태". "경쟁" (competition) is the literal calque of *race*; "경합" (contention) is arguably more precise for the lock-contention sense. Both are used; the English term is common in speech ("레이스 컨디션").
+"경쟁 상태" (race = 경쟁/competition, literal) or "경합 상태" (경합/contention, arguably more precise for lock contention). Spoken Korean often just uses the English: "레이스 컨디션".

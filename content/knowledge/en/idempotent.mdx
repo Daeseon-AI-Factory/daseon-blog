@@ -1,29 +1,33 @@
 ---
 title: "Idempotent"
-description: "An operation you can run many times with the same end state as running it once."
-date: "2026-05-28"
+description: "Applying an operation N times lands in the same state as applying it once. The principle that makes retries safe — and the truth behind 'exactly-once'."
+date: "2026-05-29"
 language: "en"
-translationKey: "idempotent"
 type: "knowledge"
-tags: ["distributed-systems", "api", "reliability"]
+tags: ["principle", "distributed-systems", "api", "reliability"]
 ---
 
-An operation is **idempotent** if applying it N times leaves the system in the same state as applying it once. `DELETE /users/42` is idempotent — the user is gone whether you call it one time or five. A naive `POST /orders` is not — five calls make five orders.
+## The principle
 
-## Why it matters
+An operation is **idempotent** if running it N times converges to the same state as running it once. It's not about avoiding side effects — it's about the side effect being *repeatable without accumulating*. `DELETE /users/42` is idempotent; a naive `POST /orders` is not.
 
-Networks retry. A client that never receives a response can't tell "request lost" from "response lost," so it sends the request again. If the operation isn't idempotent, the retry double-charges, double-ships, double-inserts.
+## How it maps to practice
 
-The usual fix is an **idempotency key**: the client attaches a unique key per logical operation, the server records it, and a repeat with the same key returns the first result instead of re-running the effect.
+- **HTTP semantics** — `PUT`, `DELETE`, `GET` are defined as idempotent; `POST` is not. This is why a proxy can safely retry a `GET` but not a `POST`.
+- **Idempotency keys** — Stripe et al. have the client send a unique key per logical charge; the server dedupes on it. This is the standard fix for "did my payment go through?"
+- **"Exactly-once" messaging** — mostly a marketing word. The honest mechanism is *at-least-once delivery + idempotent processing*. Kafka's "exactly-once" is dedup keyed on producer/sequence IDs — idempotency under the hood.
+- **DB upsert** — `INSERT ... ON CONFLICT DO UPDATE` makes a write idempotent on the key.
 
-## Where I've used it
+The reason it matters: networks retry. A client that loses the response can't tell failure from success, so it resends. Idempotency is what makes that resend safe instead of a double-charge.
 
-DocVault's import is idempotent on purpose — re-importing the same URL retries a failed transcript fetch instead of creating a duplicate record. The same property drove a manufacturing reprocessing redesign: a staging table plus a [[distributed-lock]] meant a re-run *resumed* instead of duplicating ledger rows, which took monthly reprocessing from ~20 cases to near zero.
+## How it gets buried
 
-## The trap
+"Exactly-once delivery!" sold as a property of a broker. It isn't — delivery is at-least-once, and *processing* is made idempotent. The buzzword hides where the work actually happens (your consumer).
 
-Idempotent ≠ side-effect-free. An idempotent `PUT` still writes on every call; it just converges to the same state. And "idempotent at the API" can still break under concurrency: two simultaneous *first-time* requests can both pass the "have I seen this key?" check unless that check is atomic. That's a [[race-condition]], and it needs a lock or a unique constraint — not just an idempotency key.
+## Say it clearly
+
+"Run it twice, same result. So we can retry safely." If a [[race-condition]] can let two first-time requests both slip through the dedup check, the key alone isn't enough — you need a [[distributed-lock]] or a unique constraint.
 
 ## In Korean
 
-"멱등(冪等)". What translation loses: the English *idempotent* (idem = same, potent = power) reads its meaning on the surface. "멱등" is a math loanword ("same under repeated exponentiation") — accurate, but most people meet it as opaque jargon and have to unpack it once before it clicks.
+"멱등(冪等)" — a math loanword ("same under repeated exponentiation"). Accurate but opaque; most people meet it as jargon and unpack it once. English *idempotent* (idem = same) wears its meaning on the surface.
