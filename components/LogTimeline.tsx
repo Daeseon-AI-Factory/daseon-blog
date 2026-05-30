@@ -104,6 +104,9 @@ export function LogTimeline({ project, entries, locale }: Props) {
               <p className="mt-1 font-mono text-[0.7rem] uppercase tracking-widest text-ink-subtle">
                 {formatDate(e.frontmatter.date, locale)} · {e.readingMinutes}{" "}
                 {locale === "ko" ? "분" : "min"}
+                {e.frontmatter.handwritten
+                  ? ` · ${locale === "ko" ? "직접" : "By hand"}`
+                  : ""}
               </p>
               {e.frontmatter.summary ? (
                 <p className="mt-2 text-sm text-ink-muted">{e.frontmatter.summary}</p>

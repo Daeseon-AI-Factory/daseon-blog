@@ -39,6 +39,12 @@ export async function WikiBody({
               <span>{entry.frontmatter.tags.join(" · ")}</span>
             </>
           ) : null}
+          {entry.frontmatter.handwritten ? (
+            <>
+              <span>·</span>
+              <span>{t(locale, "post.handwritten")}</span>
+            </>
+          ) : null}
           {translation ? (
             <>
               <span>·</span>

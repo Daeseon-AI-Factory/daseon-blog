@@ -22,6 +22,8 @@ export type PostFrontmatter = {
   distribution?: Record<string, boolean>;
   /** Wiki only: the tools/patterns that are instances of this principle. */
   instances?: string[];
+  /** True when the entry was written by hand (no AI). Renders a "BY HAND" meta label. */
+  handwritten?: boolean;
   type?: ContentType;
   visibility?: Visibility;
   summary?: string;
@@ -80,6 +82,7 @@ async function readContentFile(type: ContentType, locale: Locale, fileName: stri
     format: fm.format,
     distribution: fm.distribution,
     instances: fm.instances,
+    handwritten: fm.handwritten,
     type: (fm.type as ContentType) ?? type,
     visibility: (fm.visibility as Visibility) ?? defaultVisibility(type),
     summary: fm.summary,

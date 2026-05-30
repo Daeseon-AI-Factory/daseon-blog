@@ -33,6 +33,12 @@ export async function PostBody({
           <span>
             {post.readingMinutes} {t(locale, "post.readingTime")}
           </span>
+          {post.frontmatter.handwritten ? (
+            <>
+              <span>·</span>
+              <span>{t(locale, "post.handwritten")}</span>
+            </>
+          ) : null}
           {translation ? (
             <>
               <span>·</span>

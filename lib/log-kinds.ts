@@ -15,6 +15,8 @@ export type LogFrontmatter = {
   visibility: LogVisibility;
   summary?: string;
   tags?: string[];
+  /** True when the entry was written by hand (no AI). Renders a "BY HAND" meta label. */
+  handwritten?: boolean;
 };
 
 export type LogEntry = {

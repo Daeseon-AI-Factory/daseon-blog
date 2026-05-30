@@ -49,6 +49,7 @@ async function readLogFile(project: string, fileName: string, sourceRepo?: strin
     visibility: (fm.visibility as Visibility) ?? defaultLogVisibility(kind),
     summary: fm.summary,
     tags: fm.tags,
+    handwritten: fm.handwritten,
   };
   return {
     project,

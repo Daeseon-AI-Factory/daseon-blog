@@ -32,6 +32,12 @@ export function PostList({ posts, locale }: { posts: Post[]; locale: Locale }) {
               <span>
                 {post.readingMinutes} {t(locale, "post.readingTime")}
               </span>
+              {post.frontmatter.handwritten ? (
+                <>
+                  <span>·</span>
+                  <span>{t(locale, "post.handwritten")}</span>
+                </>
+              ) : null}
             </div>
           </Link>
           {post.frontmatter.tags && post.frontmatter.tags.length > 0 ? (
