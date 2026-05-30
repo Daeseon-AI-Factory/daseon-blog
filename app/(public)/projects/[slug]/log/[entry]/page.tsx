@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { LogBody } from "@/components/LogBody";
-import { getProjectLog } from "@/lib/logs";
+import { getHumanCompanion, getProjectLog } from "@/lib/logs";
 import { getProject } from "@/lib/projects";
 import { SITE } from "@/lib/site";
 
@@ -34,11 +34,12 @@ export default async function ProjectLogEntryEN({ params }: { params: Params }) 
   const log = await getProjectLog(slug, entry, sourceRepo);
   if (!log) notFound();
   if (log.frontmatter.visibility === "private") notFound();
+  const humanContent = await getHumanCompanion(slug, entry, sourceRepo);
 
   return (
     <>
       <Header locale="en" currentPath={`/projects/${slug}/log/${entry}`} />
-      <LogBody entry={log} locale="en" />
+      <LogBody entry={log} locale="en" humanContent={humanContent} />
       <Footer locale="en" />
     </>
   );

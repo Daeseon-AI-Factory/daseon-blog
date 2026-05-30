@@ -63,7 +63,12 @@ async function readLogFile(project: string, fileName: string, sourceRepo?: strin
 
 export async function listProjectLogs(project: string, sourceRepo?: string): Promise<LogEntry[]> {
   const entries = await listFiles(`${LOG_ROOT}/${project}`, sourceRepo ? { repo: sourceRepo } : undefined);
-  const items = await Promise.all(entries.map((f) => readLogFile(project, f, sourceRepo)));
+  // Exclude `.human.mdx` companion files — they attach to a sibling entry, not stand alone.
+  const items = await Promise.all(
+    entries
+      .filter((f) => !f.endsWith(".human.mdx"))
+      .map((f) => readLogFile(project, f, sourceRepo)),
+  );
   return items
     .filter((e): e is LogEntry => Boolean(e))
     .sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? -1 : 1));
@@ -71,6 +76,25 @@ export async function listProjectLogs(project: string, sourceRepo?: string): Pro
 
 export async function getProjectLog(project: string, slug: string, sourceRepo?: string): Promise<LogEntry | null> {
   return readLogFile(project, `${slug}.mdx`, sourceRepo);
+}
+
+/**
+ * Reads the optional `<slug>.human.mdx` companion next to a log entry.
+ * The companion contributes body-only — frontmatter (if any) is stripped.
+ * Returns null if no companion exists.
+ */
+export async function getHumanCompanion(
+  project: string,
+  slug: string,
+  sourceRepo?: string,
+): Promise<string | null> {
+  const raw = await readText(
+    `${LOG_ROOT}/${project}/${slug}.human.mdx`,
+    sourceRepo ? { repo: sourceRepo } : undefined,
+  );
+  if (!raw) return null;
+  const { content } = matter(raw);
+  return content.trim() ? content : null;
 }
 
 export async function listAllLogs(): Promise<LogEntry[]> {

@@ -8,14 +8,24 @@ import { LOG_KIND_LABELS } from "@/lib/logs";
 export async function LogBody({
   entry,
   locale,
+  humanContent,
 }: {
   entry: LogEntry;
   locale: Locale;
+  humanContent?: string | null;
 }) {
-  const rendered = await renderMdx(entry.content);
+  const aiRendered = await renderMdx(entry.content);
+  const humanRendered = humanContent ? await renderMdx(humanContent) : null;
   const fm = entry.frontmatter;
+  const hasCompanion = humanRendered !== null;
+  const containerClass = hasCompanion
+    ? "mx-auto max-w-6xl px-5 py-12"
+    : "mx-auto max-w-3xl px-5 py-12";
+  const aiLabel = locale === "ko" ? "AI 버전" : "AI version";
+  const humanLabel = locale === "ko" ? "직접" : "By hand";
+
   return (
-    <article className="mx-auto max-w-3xl px-5 py-12">
+    <article className={containerClass}>
       <Link
         href={localizedPath(locale, `/projects/${entry.project}`)}
         className="font-mono text-xs uppercase tracking-widest text-ink-subtle hover:text-ink"
@@ -34,6 +44,12 @@ export async function LogBody({
           <span>
             {entry.readingMinutes} {locale === "ko" ? "분" : "min"}
           </span>
+          {fm.handwritten ? (
+            <>
+              <span>·</span>
+              <span>{humanLabel}</span>
+            </>
+          ) : null}
         </div>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink md:text-4xl">
           {fm.title}
@@ -43,7 +59,24 @@ export async function LogBody({
         ) : null}
       </header>
 
-      <div className="prose">{rendered}</div>
+      {hasCompanion ? (
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
+          <section>
+            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+              {aiLabel}
+            </h2>
+            <div className="prose">{aiRendered}</div>
+          </section>
+          <section className="md:border-l md:border-paper-line md:pl-12">
+            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+              {humanLabel}
+            </h2>
+            <div className="prose">{humanRendered}</div>
+          </section>
+        </div>
+      ) : (
+        <div className="prose">{aiRendered}</div>
+      )}
     </article>
   );
 }
