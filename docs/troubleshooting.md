@@ -148,3 +148,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Trade-off**: Companion has no frontmatter — metadata (title, date, kind, handwritten flag) comes from the main entry. Orphan companions (AI entry deleted) are silently ignored. Wider container creates a layout inconsistency with single-column entries; mitigated by only widening when needed.
 - **Commit**: 78368f2
 - **Pattern**: When the user needs to add their voice to existing AI artifacts, a *companion file* alongside is less destructive than editing the original. The AI artifact stays as a record of what AI produced; the human view is additive. Works for any `X.something.mdx` hanging off `X.mdx`.
+
+<!-- skipped: 043185a Log 78368f2 (side-by-side human companion) — dual-write per CLAUDE.md rules -->
