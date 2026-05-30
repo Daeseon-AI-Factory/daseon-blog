@@ -133,3 +133,18 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Pattern**: When a content type's data layer already exists, the work is just the surface. Check `lib/posts.ts` `ContentType` before assuming a new section needs new plumbing.
 
 <!-- skipped: acf3538 Log 43a1218 (wiki v1) — dual-write per CLAUDE.md rules -->
+<!-- skipped: bbda3b9 Reframe wiki as fundamentals (principle→practice), English-first [no-log] -->
+<!-- skipped: 5d4fcc4 Wiki: structured Instances block connecting each principle to its tools [no-log] -->
+<!-- skipped: e6b40be Add /posts/tag/[tag] route + clickable tag chips on PostList [no-log] -->
+<!-- skipped: 54e0be8 Add `handwritten` frontmatter flag — distinguishes hand-written entries [no-log] -->
+
+---
+
+## Side-by-side human companion for log entries (feature record)
+
+- **Context**: Project timelines were entirely AI-written; Daeseon had no presence in them. He wanted to attach his own commentary to existing AI entries without rewriting them — "left = AI, right = my understanding."
+- **Choice**: Companion-file convention — alongside `<slug>.mdx`, an optional `<slug>.human.mdx` carries body-only human commentary. Detail page renders two columns on `md+`, stacks on mobile. No companion → page is unchanged. File-companion was picked over an inline marker (e.g. `---human---` split) so existing AI entries don't need editing; the human author drops a new file next to them.
+- **Files changed**: `lib/logs.ts` (`getHumanCompanion` reader + `.human.mdx` excluded from `listProjectLogs`), `components/LogBody.tsx` (accepts `humanContent`, conditional two-column with `max-w-6xl` when present), both log entry routes (`app/(public)/projects/[slug]/log/[entry]/page.tsx` + ko mirror) fetch the companion and pass through.
+- **Trade-off**: Companion has no frontmatter — metadata (title, date, kind, handwritten flag) comes from the main entry. Orphan companions (AI entry deleted) are silently ignored. Wider container creates a layout inconsistency with single-column entries; mitigated by only widening when needed.
+- **Commit**: 78368f2
+- **Pattern**: When the user needs to add their voice to existing AI artifacts, a *companion file* alongside is less destructive than editing the original. The AI artifact stays as a record of what AI produced; the human view is additive. Works for any `X.something.mdx` hanging off `X.mdx`.

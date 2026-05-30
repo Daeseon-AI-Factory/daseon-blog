@@ -1,0 +1,44 @@
+---
+title: "Project timelines now accept a side-by-side human commentary per entry"
+date: "2026-05-30"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Every AI-written log entry can now carry an optional <slug>.human.mdx companion. The detail page renders the two side-by-side on desktop (AI on the left, human on the right) and stacks them on mobile. Lets the human author add their voice without editing the AI artifact."
+tags: ["mdx", "project-log", "human-vs-ai", "ui"]
+---
+
+## What I did
+
+Added a companion-file mechanism so every project-log entry can carry a parallel hand-written commentary, displayed side-by-side with the AI version.
+
+## What it looked like before
+
+Project timelines (daeseon-ai, shadow-ai, dalkkak-ai, docvault) were entirely AI-written. The human author had no presence in them — readable but uniform, and not honest about the actual authorship split.
+
+## What I changed
+
+A `.human.mdx` companion convention. Next to any `<date>-<slug>.mdx`, drop `<date>-<slug>.human.mdx` containing only the body (frontmatter ignored). On the detail page:
+
+- Desktop (`md+`): two columns, AI on the left, "By hand" on the right, with a separator and a wider `max-w-6xl` container.
+- Mobile: stacked, same labels.
+- No companion: page is unchanged (single column, `max-w-3xl`).
+
+The companion is filtered out of `listProjectLogs` so it doesn't appear as a standalone timeline entry — it's strictly an attachment to its sibling.
+
+Files: `lib/logs.ts` (`getHumanCompanion` + the filter), `components/LogBody.tsx` (conditional two-column), both EN and KO log-entry routes.
+
+## What happened
+
+Build passes; an entry that has a companion (zero exist yet — that's the next step) will render two-column.
+
+## What it doesn't do / what's next
+
+- Companions are body-only — they can't override metadata. Fine for the use case ("my parallel commentary on the same event") but means a companion can't disagree with the entry's title or kind without editing the main file.
+- An orphan companion (AI entry deleted) is silently ignored, not surfaced as a warning.
+- The next step is purely content: drop a first real `.human.mdx` next to one of the existing AI entries (probably shadow-ai or dalkkak-ai) to see how it reads in the wild.
+
+## Commit
+
+`78368f2` — Add side-by-side human companion for log entries.
