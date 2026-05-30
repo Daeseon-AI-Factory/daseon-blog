@@ -150,3 +150,4 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Pattern**: When the user needs to add their voice to existing AI artifacts, a *companion file* alongside is less destructive than editing the original. The AI artifact stays as a record of what AI produced; the human view is additive. Works for any `X.something.mdx` hanging off `X.mdx`.
 
 <!-- skipped: 043185a Log 78368f2 (side-by-side human companion) — dual-write per CLAUDE.md rules -->
+<!-- skipped: 8fb746e Mark 043185a (companion dual-write) as routine [no-log] -->
