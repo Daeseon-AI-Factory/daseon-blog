@@ -1,0 +1,54 @@
+---
+title: "Admin project CRUD: full editor, featured toggle, GitHub-or-FS storage"
+date: "2026-05-27"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Added /admin/projects with list, create, edit, delete, and inline featured toggle, backed by a new lib/project-storage.ts that mirrors the post storage split (GitHub commit in prod, local FS in dev)."
+backfilled: true
+tags: ["admin", "crud", "storage", "next-app-router"]
+---
+
+## What was done
+
+Built the admin surface for managing `/content/projects/{en,ko}/*.mdx` files end-to-end, without leaving the browser:
+
+- `/admin/projects` — list view, sorted featured-first, with per-row featured toggle, edit, view, and delete actions.
+- `/admin/projects/new` — full `ProjectEditor` covering every frontmatter field: title, description, date, locale, slug, status, featured, `url` (required — the live link), repo, stack, tags, role, translationKey.
+- `/admin/projects/[locale]/[slug]/edit` — same editor pre-filled from the existing mdx.
+- API: `POST /api/admin/projects` (create) and `PUT` / `DELETE /api/admin/projects/[locale]/[slug]` (update / remove).
+- `lib/project-storage.ts` — new storage helper mirroring the post-storage pattern: when GitHub is configured (`githubConfigured()` true) it commits via the Contents API, otherwise it writes to the local filesystem.
+- `AdminNav` gains a "Projects" link between Posts and Distribution.
+
+The featured cap is shown in the header as `n/3` but not enforced server-side — the home page's `getFeaturedProjects` already slices the top-3 by date, so over-selection in the admin is cosmetic.
+
+## Why it was needed
+
+Original rationale not in commit; reconstructed from diff. Until this commit, projects were authorable only by hand-editing mdx files in the repo. Posts already had `lib/storage.ts` + an admin editor, so projects were the last content type lagging behind. The new helper mirrors the post path exactly, which preserves the dev-vs-prod write split documented in `docs/architecture.md` (never `fs.writeFile` in production — see the EROFS entry in troubleshooting).
+
+## Files / functions changed
+
+- `app/(admin)/admin/projects/page.tsx` — list page.
+- `app/(admin)/admin/projects/new/page.tsx` — create page wrapping `ProjectEditor`.
+- `app/(admin)/admin/projects/[locale]/[slug]/edit/page.tsx` — edit page, pre-fills `ProjectEditor`.
+- `app/api/admin/projects/route.ts` — `POST` (create). Validates locale via `isLocale`, slug via `isValidSlug`, requires title/description/url/body, refuses if file already exists (409), defaults `status` to `active`, calls `revalidatePath` for `/`, `/ko`, `/projects`, `/ko/projects`, the specific project pages, and `/admin/projects`.
+- `app/api/admin/projects/[locale]/[slug]/route.ts` — `PUT` (update) + `DELETE`.
+- `components/admin/ProjectsList.tsx` — list + inline featured toggle + delete.
+- `components/admin/ProjectEditor.tsx` — shared form.
+- `components/admin/AdminNav.tsx` — adds "Projects" tab.
+- `lib/project-storage.ts` — `projectFileExists`, `serializeProjectMdx` (drops `undefined` keys before `matter.stringify`), `saveProject`, `deleteProject`. GitHub branch via `commitFile` / `deleteFile`; local branch via `fs.writeFile` / `fs.unlink` under `process.cwd()`.
+
+Net: +855 lines across 9 files, all new (no existing files modified beyond `AdminNav.tsx`).
+
+## Result / verification
+
+Commit landed in main. No verification artifacts attached to this commit (no follow-up test entry, no screenshots). The storage helper is a near-copy of `lib/storage.ts`, which is exercised by the post admin flow, so the prod-vs-dev branching is the same shape that already works.
+
+## Open / what didn't get done
+
+- Featured cap is advisory in the UI, not enforced in `POST` / `PUT`. Could allow more than 3 featured projects to exist on disk; the home page silently truncates.
+- No admin UI for editing project log entries (cross-repo or repo-local). Mdx still hand-written, as called out later in the cross-repo aggregation entry from the same day.
+- This commit slipped past the project-log dual-write convention — no `[no-log]` and no log entry at the time. This entry is the backfill.
+
+## Commit — `9d1972a`

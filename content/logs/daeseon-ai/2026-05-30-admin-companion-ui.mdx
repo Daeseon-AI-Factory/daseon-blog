@@ -1,0 +1,48 @@
+---
+title: "Admin UI for log-entry companions"
+date: "2026-05-30"
+project: "daeseon-ai"
+kind: "tech-retro"
+
+visibility: "public"
+language: "en"
+summary: "Browser-based editor for <slug>.human.mdx companion files so they no longer have to be edited by hand on disk."
+backfilled: true
+tags: ["admin", "logs", "companions", "next-app-router"]
+---
+
+## What was done
+
+Added a browser path for editing log-entry companion files. Before this commit, the companion feature was file-based only: the author had to open `content/logs/<project>/<slug>.human.mdx` in an editor and commit by hand. After this commit there is a list view per project, a per-entry editor, and an API route that writes the file through `storage.commitFile` and revalidates the affected public paths.
+
+- `/admin/projects/<slug>/logs` lists every AI log entry for that project (pulled from the satellite repo when `logSourceRepo` is set, otherwise this repo), each row tagged `✓ companion` or `+ add`.
+- `/admin/projects/<slug>/logs/<entry>` is the editor: textarea for the companion body, save / update / delete. The AI body is shown inline above for context.
+- `POST /api/admin/log-companion` and `DELETE /api/admin/log-companion` commit or remove `content/logs/<project>/<slug>.human.mdx` and revalidate `/projects/<project>`, `/projects/<project>/log/<slug>`, and the `/ko` mirrors.
+- Each row on `/admin/projects` now has a "Logs" link.
+
+## Why it was needed
+
+Stated in the commit message: companions had shipped as a file-only feature in 7f46862, so adding one required a local checkout + manual commit. The point of the admin section is that the owner actually uses it; an authoring step that requires `git add` defeats that. Companions also live in the blog repo (not the satellite, per 7f46862), so the PAT and `storage.commitFile` plumbing already existed — this commit was purely the UI on top.
+
+## Files / functions changed (real paths)
+
+- `app/(admin)/admin/projects/[slug]/logs/page.tsx` — list view, calls `listProjectLogs` + `listHumanCompanions` and renders the tagged rows.
+- `app/(admin)/admin/projects/[slug]/logs/[entry]/page.tsx` — per-entry editor route, renders `CompanionEditor`.
+- `components/admin/CompanionEditor.tsx` — client component, textarea + save/delete buttons hitting the API route.
+- `app/api/admin/log-companion/route.ts` — `POST` and `DELETE` handlers, both call `bumpRelevantPaths(project, slug)` to `revalidatePath` the four affected pages.
+- `lib/logs.ts` — new `listHumanCompanions(project)` returns a `Set<string>` of slugs that already have a `.human.mdx` sibling.
+- `lib/storage.ts` — new `saveHumanCompanion` / `deleteHumanCompanion` helpers wrapping `commitFile` with the correct path layout.
+- `components/admin/ProjectsList.tsx` — added the "Logs" link to each project row.
+
+Total: 367 insertions across 7 files.
+
+## Result / verification
+
+The commit message describes the wiring but does not record a verification step. The route shape is internally consistent (list → detail → API → revalidate), and `storage.commitFile` was already in production use for other admin writes by this point, so the write path was not new code.
+
+## Open / what didn't get done
+
+The new routes are `[slug]/logs/[entry]` under `app/(admin)/admin/projects/`. The next day this collided with the `[locale]/[slug]` segment pattern elsewhere in the project tree and caused a production hang on 2026-05-31 — see that day's troubleshoot entry. Nothing in this commit guards against the collision; the issue was not visible until the build/route resolver ran in production.
+
+## Commit — `3c8c80f`
+

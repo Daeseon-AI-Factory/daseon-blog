@@ -1,0 +1,69 @@
+---
+title: "Architecture overview — daseon.ai (this blog) as of 2026-05-31"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "snapshot"
+visibility: "public"
+language: "en"
+summary: "Next.js 15 App Router site that reads MDX from GitHub Raw at runtime so commits go live in ~3-5s without waiting for the Vercel rebuild."
+tags: ["architecture", "snapshot"]
+---
+
+## System shape
+
+```
+Author commits MDX
+  → GitHub repo (source of truth: content/{posts,projects,logs,knowledge,notes,now}/**.mdx)
+  → Two parallel paths:
+
+  (a) Vercel webhook → next build → new deployment (~30-90s, background)
+
+  (b) Live reader hits daseon.ai/<route>
+      → Next.js Serverless Function (App Router page.tsx)
+      → lib/source.ts: if GITHUB_TOKEN+GITHUB_REPO set,
+        fetch raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>
+        with { next: { revalidate: 30 } }   ← ISR cache, 30s
+      → lib/mdx.ts + lib/serialize-mdx.ts: gray-matter + next-mdx-remote
+      → rendered HTML
+
+Admin (auth-gated /admin/*):
+  Browser → middleware.ts (jose-verified session cookie)
+          → app/(admin)/admin/**: posts / projects / logs / site / analytics / distribution
+          → app/api/admin/**: writes via Octokit → GitHub Contents API
+          → revalidatePath() invalidates the relevant ISR key
+          → next reader request sees fresh content in ~3-5s
+```
+
+## Key libs / modules
+
+- `lib/source.ts` — content read abstraction; GitHub Raw in prod (when `GITHUB_TOKEN`+`GITHUB_REPO` set), local fs in dev. `revalidate: 30`s ISR. Hard constraint: never imported by `"use client"` components.
+- `lib/storage.ts` + `lib/project-storage.ts` + `lib/site-storage.ts` — write paths via Octokit Contents API; pairs with `source.ts` for round-trip.
+- `lib/posts.ts` / `lib/projects.ts` / `lib/logs.ts` / `lib/now.ts` — typed loaders per content kind; `logs.ts` also reads cross-repo via satellite `logSourceRepo` and excludes `.human.mdx` companions from index.
+- `lib/mdx.ts` + `lib/serialize-mdx.ts` + `lib/remark-mermaid.ts` + `lib/remark-wiki-link.ts` — MDX pipeline: gray-matter frontmatter, remark-gfm, rehype-pretty-code (shiki), rehype-slug, wiki `[[link]]` resolution, mermaid block extraction.
+- `lib/auth.ts` + `middleware.ts` — `jose`-signed JWT session cookie; middleware gates `/admin/*` and `/api/admin/*`.
+- `app/(public)/` — public routes: `/`, `/posts/[slug]`, `/projects/[slug]`, `/projects/[slug]/log/[entry]`, `/wiki/[slug]`, `/about`, `/now`, plus mirrored `/ko/**` and `/feed.xml`.
+- `app/(admin)/admin/` — auth-gated CRUD UIs: `posts/`, `projects/[locale]/[slug]/edit/`, `logs/[project]/[entry]/`, `site/`, `analytics/`, `distribution/`, `login/`. Companion files (`<slug>.human.mdx`) are edited here.
+
+## Why these choices
+
+- GitHub Raw + 30s ISR (not fs at runtime) — verified in `lib/source.ts`: production `fs.writeFile` would EROFS on Vercel's Serverless Function bundle, and a build-time-only fs read would make publish-to-live take a full Vercel rebuild (~60s) instead of ~3-5s.
+- Octokit Contents API for writes (not a DB) — keeps GitHub as single source of truth; the same MDX a human edits locally is what the admin UI writes. No schema migration surface.
+- App Router with route groups `(public)` / `(admin)` — admin and public share the same Next.js app/middleware/auth but render under separate layouts. Verified by directory layout.
+- MDX over a CMS — frontmatter (`gray-matter`) + remark/rehype lets posts, projects, logs, wiki, and notes share one pipeline. Each content kind is just a directory under `content/`.
+- `jose` + cookie session (not NextAuth) — `lib/auth.ts` + `middleware.ts` together gate `/admin/*` without an OAuth dependency. Lighter than NextAuth for a solo-admin site.
+
+## Boundaries
+
+- `docs/architecture.md` — authoritative for build-vs-runtime timing, fs-vs-fetch, ISR cache mechanics, why publish-to-live is ~3-5s. Read before touching `lib/source.ts` or `lib/storage.ts`.
+- `docs/troubleshooting.md` — terse Claude-facing index of past failures (EROFS, node-URI client-bundle leak, Vercel auth 401, dynamic-param hang, etc.). Indexed by problem.
+- `docs/project-log-spec.md` — authoritative for log-entry shape across this repo and satellite repos (kinds, frontmatter, dual-write rule).
+- `docs/project-log-system-v1-blueprint.md` — v1 spec for the log system (Revisions A/B/C/D: decision/discussion kinds, option-presentation rule, T1/T2/T3 tiers, learning-gap kind). External-review version.
+- `docs/blog-guide.md` + `docs/blog-guide.ko.md` — authoring handbook (where to put what kind of content; companion-file conventions).
+- `docs/industry-retro-backlog.md` — queued post candidates with voice/fingerprint rules.
+- `install/` — install kit (v3) for propagating the log-system hook + CLAUDE.md snippet to satellite repos.
+- `CLAUDE.md` — authoritative for writing conventions, dual-write rules, option-presentation enforcement, and the hard constraints repeated above.
+
+## State of completion
+
+Public read path (posts, projects, logs, wiki, notes, now, bilingual EN/KO, RSS) is shipped and live on daseon.ai. Admin CRUD covers posts, projects, log companions, and site config; auth and middleware are wired. Log-system v1 (Revisions A/B/C/D) is mid-rollout — the spec, hook, and propagation scripts exist; the architecture-overview fan-out (this entry is part of it) and `kind: decision`/`discussion`/`learning-gap` writer flows are still being filled in.
+
