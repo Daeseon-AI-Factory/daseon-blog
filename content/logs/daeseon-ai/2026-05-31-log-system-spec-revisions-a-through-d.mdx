@@ -1,0 +1,108 @@
+---
+title: "Project log system v1 spec — Revisions A through D in one batch"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "decision"
+tier: "1"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "Four spec revisions that take the logging system from a single-tier dual-write convention into a tiered judgment-recording system with a learning-gap kind, framework-cited templates, and CLAUDE.md-enforced option presentation."
+tags: ["spec", "claude-code", "methodology", "decision"]
+---
+
+## Context & constraints
+
+The system was working as a dual-write logger (problem-indexed cache + dated narrative) but the audit revealed a deeper gap: *judgment artifacts* were not first-class. Tech-retro entries captured what shipped but the option-weighing process, the discussions that preceded decisions, and the knowledge-gap moments that drove understanding were either buried inside other kinds or not recorded at all. The author explicitly framed this as "the most important element of being an AI engineer" — judgment over generated code — and asked for templates equal in rigor to what MBA programs and senior engineers actually use, not ad-hoc invention.
+
+Constraints:
+- Existing system must continue working (don't break the dual-write).
+- Templates must be defensible — drawn from established frameworks, not made up.
+- The CLAUDE.md rule must enforce option-presentation behavior in conversation, not just post-hoc recording (most options get presented and decided in conversation; if the rule only fires at log time, it fires too late).
+- Spec must be externally reviewable so the author can hand it to a senior engineer or recruiter for critique.
+
+## Goals (ranked)
+
+1. Make decision/trade-off/discussion artifacts first-class and discoverable (separate `kind`s, not buried in tech-retro entries)
+2. Enforce option-presentation discipline in real-time conversation, not after the fact
+3. Provide MBA-grade templates for substantial decisions while keeping the system usable (don't force the heavy template on rename commits)
+4. Capture knowledge-gap moments explicitly — the differentiating signal of an AI engineer's growth that no other public log convention does
+
+## Options considered
+
+### A. Add `kind: decision` only, keep everything else implicit
+- Cost: minimal — just a new kind in `lib/log-kinds.ts`
+- Reversibility: two-way
+- Risk: doesn't address the option-presentation gap (decisions are made in conversation, not just recorded). The conversation pattern of "Claude shows options, human picks one" without per-option reasoning is the actual root cause.
+- Evidence: audit showed several "should-have-logged" commits were decisions that *did* have reasoning in conversation, but the reasoning was lost because no record existed.
+
+### B. Add `kind: decision` + enforce option-presentation in CLAUDE.md (chosen, with C below)
+- Cost: ~60 lines added to CLAUDE.md and install snippet. ~400 extra tokens per turn loaded.
+- Reversibility: two-way (revert the CLAUDE.md addition)
+- Risk: token cost in CLAUDE.md is real. Author may find the per-option enforcement annoying when they want quick suggestions.
+- Evidence: the audit-flagged "should-have-logged" commits show conversation-time decisions that were never captured; addressing both sides (conversation + recording) is necessary.
+
+### C. Add a tier system for decisions (T1/T2/T3) plus `kind: learning-gap` plus `kind: discussion` as first-class (chosen alongside B)
+- Cost: heavy template authoring time (~20-30 min for Tier-1 entries), plus three new kinds to surface in rendering
+- Reversibility: two-way (kinds can be deprecated)
+- Risk: applied uniformly, this burns out the author. Mitigation: tiers exist so Tier-1 is rare.
+- Evidence: established frameworks (Bezos two-way doors, Klein pre-mortem, Nygard ADR) all exist precisely because this kind of recording works for real engineers; the question is whether the *author* will sustain it. Audit data on `.human.mdx` habit suggests partial sustainability.
+
+### D. Defer all of this to v2 — keep current single-kind system, ship more code instead
+- Cost: 0 spec work now
+- Risk: the audit gap stays. Future audit finds the same patterns. The whole point of running the audit was to find these gaps; deferring the fix means the audit was just a costly exercise.
+- Evidence: against. The audit produced specific actionable items; the cost of acting on them is lower than the cost of having run the audit if it doesn't result in change.
+
+## Trade-off accepted
+
+- ~60 lines of CLAUDE.md, ~400 extra tokens per turn — accepted because the alternative (relying on author/Claude memory) is what the audit found failed.
+- ~500-line blueprint doc (plus ~500-line conversational backup) — heavy but reviewable; the doc's purpose explicitly includes external critique.
+- 20-30 min authoring time per Tier-1 decision — accepted because Tier-1 is meant to be rare (3-5/month). Tiers exist precisely so the heavy template only applies when the decision deserves it.
+- Three new kinds in the taxonomy (decision, discussion, learning-gap) increase cognitive load — accepted because each has a clear trigger (options weighed / conversation happened / re-ask happened); the distinction should hold in practice.
+
+## Pre-mortem (6 months out)
+
+1. **Failure mode: Tier-1 fatigue.** Author files 10 Tier-1 entries in the first month enthusiastically, then 1 in month 3, then 0 in month 6. System decays to single-tier in practice. — Mitigation: tier threshold tuning. If Tier-1 count is too high, the trigger is too aggressive; loosen it.
+2. **Failure mode: `kind: learning-gap` becomes performative.** Entries become "look how much I'm learning today!" rather than honest "I was wrong about X." — Mitigation: discipline issue, not solvable by code. Quarterly review by the author can catch drift.
+3. **Failure mode: External reviewer says the framework-cited tiers are inappropriate for solo AI-pair-programming work.** Pre-mortem of pre-mortem: if reviewer pushes back, the doc has explicit "Open questions" section for exactly this. Revise.
+
+## Decision criteria to flip
+
+- If after 30 days the Tier-1 count is < 1, lower the threshold (the triggers are too tight)
+- If after 30 days the Tier-1 count is > 8, raise the threshold (too loose; T1 should be rare)
+- If `.human.mdx` annotation rate stays at <10% of AI entries, the dual-author model is failing — investigate whether the habit is the bottleneck or the surface is wrong
+- If external reviewer (a senior engineer evaluating the spec doc) calls the tier system over-engineered for solo work, accept that signal and simplify
+
+## Success measure
+
+- 30 days post-ship: at least 3 Tier-1 entries written, 5-10 Tier-2, 1-2 learning-gap. Sustained for two consecutive months.
+- One external reviewer reads the blueprint doc and provides at least one specific critique (positive or negative).
+- The CLAUDE.md option-presentation rule shows visible behavior change in Claude Code outputs — verifiable by sampling 10 random conversation turns and checking whether option lists include the 5 required slots.
+
+## Reversal plan
+
+1. Remove the new sections from CLAUDE.md + install snippet
+2. Mark `kind: decision`/`discussion`/`learning-gap` entries as superseded (don't delete — preserve history)
+3. Resume single-tier convention
+4. Estimated time: 1 hour. No data loss; entries remain readable as `kind: snapshot` or similar.
+
+## Verified by
+
+- The commit that installs this change (`b0d820c`) is itself a Tier-1 decision artifact — its own log entry (this one) demonstrates the template works for at least the author and this commit.
+- The CLAUDE.md enforcement was tested in the same turn it was added: the author saw the new option-presentation pattern in this very response thread before approving the commit.
+- Framework citations link to public artifacts (Nygard ADR 2011, Bezos 1997 letter, Klein HBR 2007) — defensible if challenged.
+
+## Discussion artifacts
+
+This entire decision was developed in conversation. The conversational record is in the session transcript (private). The blueprint doc (`docs/project-log-system-v1-blueprint.md`) captures the *resolved* spec; this entry captures the *decision* to adopt it.
+
+A separate `kind: discussion` entry could be written for the back-and-forth — that's queued but not required, because the relevant push-back from the author ("don't cut scope", "MBA-grade templates", "my own learning gaps should be logged") is captured in this entry's Options section.
+
+## Status
+
+Accepted 2026-05-31. Validation period: 30 days.
+
+## Commit
+
+`b0d820c` — Project log system v1: Revisions A/B/C/D spec, scripts, post stub, CLAUDE.md enforcement.
