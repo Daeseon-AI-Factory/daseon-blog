@@ -37,10 +37,23 @@ export function ProfileCard({ locale, tagline, currentPath }: Props) {
         </div>
 
         {status ? (
-          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-paper-line bg-white px-3 py-1 font-mono text-[0.65rem] uppercase tracking-widest text-ink-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
-            {status}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="inline-flex w-fit items-center gap-2 rounded-full border border-paper-line bg-white px-3 py-1 font-mono text-[0.65rem] uppercase tracking-widest text-ink-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
+              {status}
+            </p>
+            {SITE.author.resumeUrl ? (
+              <a
+                href={SITE.author.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 font-mono text-[0.65rem] uppercase tracking-widest text-paper transition hover:bg-ink/85"
+              >
+                {locale === "ko" ? "이력서 (PDF)" : "Resume (PDF)"}
+                <span aria-hidden>↓</span>
+              </a>
+            ) : null}
+          </div>
         ) : null}
 
         {tagline ? (

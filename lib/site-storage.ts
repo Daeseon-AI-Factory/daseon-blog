@@ -72,6 +72,7 @@ export function validateSiteConfig(input: Partial<SiteAuthor>): { ok: true; data
       linkedin: (input.linkedin as string) ?? "",
       twitter: (input.twitter as string) ?? "",
       youtube: (input.youtube as string) ?? "",
+      resumeUrl: (input.resumeUrl as string) ?? "",
       handle: input.handle as string,
       hobby: (input.hobby as string) ?? "",
       hobbyKo: (input.hobbyKo as string) ?? "",

@@ -166,6 +166,10 @@ export default function AboutKO() {
             <a className="underline" href={`mailto:${SITE.author.email}`}>
               {SITE.author.email}
             </a>
+            . 이력서:{" "}
+            <a className="underline" href={SITE.author.resumeUrl} target="_blank" rel="noopener noreferrer">
+              {SITE.author.resumeUrl}
+            </a>
           </p>
         </Section>
       </main>

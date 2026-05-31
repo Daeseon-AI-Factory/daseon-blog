@@ -16,6 +16,7 @@ export type SiteAuthor = {
   linkedin: string;
   twitter: string;
   youtube: string;
+  resumeUrl: string;
   handle: string;
   hobby: string;
   hobbyKo: string;

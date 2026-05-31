@@ -171,6 +171,10 @@ export default function AboutEN() {
             <a className="underline" href={`mailto:${SITE.author.email}`}>
               {SITE.author.email}
             </a>
+            . Résumé:{" "}
+            <a className="underline" href={SITE.author.resumeUrl} target="_blank" rel="noopener noreferrer">
+              {SITE.author.resumeUrl}
+            </a>
             .
           </p>
         </Section>

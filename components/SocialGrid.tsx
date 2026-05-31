@@ -34,6 +34,14 @@ const ICONS = {
       <path d="M6.18 15.64a2.18 2.18 0 012.18 2.18C8.36 19 7.38 20 6.18 20a2.18 2.18 0 010-4.36zM4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27zM4 10.1A9.9 9.9 0 0113.9 20h-2.83A7.07 7.07 0 004 12.93z" />
     </svg>
   ),
+  resume: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-full w-full">
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+      <path d="M14 3v6h6" />
+      <path d="M8 13h8" />
+      <path d="M8 17h5" />
+    </svg>
+  ),
 };
 
 type LinkKey = keyof typeof ICONS;
@@ -45,6 +53,7 @@ function buildLinks(rssHref: string): Array<{ key: LinkKey; href: string; label:
     { key: "twitter", href: SITE.author.twitter, label: "X", external: true },
     { key: "youtube", href: SITE.author.youtube, label: "YouTube", external: true },
     { key: "email", href: SITE.author.email ? `mailto:${SITE.author.email}` : "", label: "Email", external: false },
+    { key: "resume", href: SITE.author.resumeUrl, label: "Resume", external: false },
     { key: "rss", href: rssHref, label: "RSS", external: false },
   ];
   return candidates.filter((c) => Boolean(c.href));
