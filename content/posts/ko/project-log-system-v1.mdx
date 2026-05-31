@@ -1,0 +1,148 @@
+---
+title: "AI에게 위임한 작업을 위한 프로젝트 로그 시스템 만들기"
+date: "2026-05-31"
+language: "ko"
+translationKey: "project-log-system-v1"
+visibility: "public"
+handwritten: false
+tags: ["methodology", "claude-code", "logging", "infrastructure"]
+summary: "Claude Code에게 위임한 모든 substantive 결정을 기록하는 로깅 시스템의 라이브 빌드 — 작성자 판단 미스를 잡는 trigger 레이어, 다중 satellite 프로젝트를 하나의 timeline으로 모으는 cross-repo aggregation, 검증된 framework에서 가져온 tiered 결정 템플릿, 그리고 내가 모든 항목을 일일이 적지 않으면서도 loop에서 빠지지 않게 하는 human-annotation surface까지."
+---
+
+이 글은 시스템을 *지어가며* 동시에 적었다. 마무리 후가 아니라. 목표는 출하된 *결과*가 아니라 출하 과정의 *결정과 trade-off*를 실시간으로 잡아두는 것 — 그래야 미래의 나(또는 외부 reviewer)가 *왜 시스템이 이렇게 생겼는지* 재구성할 수 있다.
+
+## 무엇을 만들었나
+
+AI에게 substantive code 작업을 위임하면서도 모든 결정이 *visible*, *queryable*, *annotatable* 하기를 원하는 사람을 위한 로깅 시스템. 네 가지 속성:
+
+1. **기본값으로 놓치지 않음.** 이전 버전에서 가장 큰 gap이 작성자 판단 미스였음. 이제 positive trigger 레이어가 그걸 override함.
+2. **AI 작성 + 사람 주석.** 모든 AI 작성 entry 옆에 `.human.mdx` 슬롯이 sibling으로 렌더링됨. 빈 슬롯은 "REVIEW NEEDED"로 표시 — *부재가 눈에 보임*.
+3. **크로스 레포 aggregation.** 5개 프로젝트 (1 hub + 4 satellite)가 한 portfolio timeline으로 모임. pull-on-demand 방식. sync 없음, second source of truth 없음.
+4. **Methodology가 portfolio.** 시스템 자체가 별도 surface(`/method`)로 *project*처럼 문서화됨. 이 post도 그 일부.
+
+## 왜 이 post를 쓰는가
+
+다른 사람들의 logging 시스템을 보면 같은 gap이 있다 — *완성된 시스템*을 문서화하지, *지어가는 과정*은 문서화하지 않는다. 실제 결정은 *지어가는 과정*에 산다. 뭘 시도했고, 뭘 거절했고, 어떤 trade-off가 아팠는지. 그래서 *과정*이지 *마무리*가 아니다.
+
+더 구체적인 이유: 2026년엔 누구나 AI로 코드를 출하할 수 있다. 엔지니어의 차별 신호는 *그 위의 판단 레이어* — 뭘 만들지 고른 결정, 어떤 trade-off를 받아들였는지, AI가 처음에 추천한 걸 어디서 거절했는지, 자기 이해의 빈 부분을 어떻게 알아채고 채웠는지. 이 중 무엇도 코드에 살지 않는다. *기록*에 살거나 사라진다. 그래서 시스템 자체가 portfolio piece가 된다.
+
+## Phase A — 새는 거 막기
+
+### Positive trigger
+
+이전 버전엔 `[no-log]` 메커니즘이 있었고 *작성자 판단*을 신뢰했다. 5개 프로젝트 cold audit 결과: 그 판단이 약 1/3 정도 unreliable했다. 855-LOC admin CRUD에 log entry 없음. production hang 일으킨 367-LOC 변경이 routine으로 태그됨. 다른 프로젝트의 ADR 기록(canonical "왜 hooks" 결정)이 `[no-log]` 커밋 안에 묻혀있음.
+
+해결책: 3가지 조건 중 하나만 발동해도 `[no-log]`를 override하는 positive trigger.
+
+- LOC delta > 200 (insertion + deletion 합)
+- 민감 경로 touch (`lib/*storage*`, `lib/*auth*`, `lib/*hooks*`, `middleware.*`, `app/(admin)`, `app/api/auth`, `.claude/settings`, `.claude/hooks/`, `install/`, `next.config`, `package.json`, `tsconfig`, `migrations`, `prisma/schema`, `*.schema.*`)
+- 제목 키워드 (대소문자 무관): `decision`, `architecture`, `fallback`, `audit`, `auth`, `security`, `migration`, `dispatcher`, `ADR-N`, `refactor`, `pivot`, `breaking`, `deprecat`, `hidden coupling`
+
+False positive override 메커니즘: `docs/troubleshooting.md`에 *명시적으로* `<!-- override-trigger: hash subject — real rationale -->` 한 줄 추가. silent override는 의도적으로 막음 — 시스템의 핵심 목적이 *사람의 추론을 audit trail에 보존*하는 것이라.
+
+배포 전 검증: audit이 잡은 3개 known-bad 커밋에 trigger 로직 돌려봄. 3개 다 올바르게 분류. 변경을 설치한 커밋(`a9c4911`) 자체가 첫 dogfood — 378 LOC + 민감 경로 3개 touch → trigger 1+2 발동 → `[no-log]` 태그로 통과 못 함, full dual-write entry 강제됨 (이전 hook이면 silent skip했을 일).
+
+### 위성 전파
+
+hook은 hub repo에 살지만 4개 satellite에서도 굴러야 함. factory script (`scripts/propagate-hook.sh`)가 source-of-truth hook을 각 satellite에 복사 + commit + push. dirty working tree는 skip (사용자 진행 중 작업 surprise 안 함).
+
+Trade-off: solo dev + 단일 머신 가정. multi-machine 셋업이면 global-hook 패턴(`~/.claude/global-hooks/`에 한 파일, 모든 satellite가 `exec`) 필요. 현재 단계에선 factory script로 충분.
+
+실제 결과: 4 satellite 중 2개는 첫 시도에 hook 받음. 2개는 다른 in-progress 작업으로 dirty라 skip. 스크립트가 idempotent라 satellite clean해진 후 재실행하면 catch up.
+
+### Skip marker 동기화
+
+audit이 또 발견: 4개 satellite 중 3개가 *과거 dozens의 `[no-log]` 커밋*에 대응되는 `<!-- skipped: -->` marker가 0개. Stop hook의 자동 기록 기능이 그 repo들에 *설치 자체가 안 됨*. 즉 *의도된 skip*의 audit trail이 누락.
+
+sync script (`scripts/sync-skip-markers.sh`)가 각 satellite git log를 walk해서 `[no-log]` / `[skip-log]` 커밋 중 hash가 `docs/troubleshooting.md`에 없는 것을 찾아 batch로 marker 추가. shadow-ai 결과: 34개 중 33개 reconciled. jarvis-pc: 22개 중 21개.
+
+## Phase B — Architecture overview + audit backfill
+
+audit이 가장 critical로 짚은 gap: *어떤 프로젝트도 시스템 모양을 설명하는 log entry가 단 1개도 없었음*. 모든 dated entry가 *독자가 이미 architecture를 안다*고 가정하고 incident부터 들어감.
+
+해결책 간단하지만 지루: 프로젝트당 architecture-overview entry 1개씩, 오늘 날짜, kind `snapshot`. 5개 repo를 손으로 작성하면 시간 burn이라 fan-out workflow로: 12 agent 병렬, 각자 한 프로젝트의 로컬 상태 읽고 (manifest, top-level 디렉토리, recent git log, 기존 log entries) MDX draft 생성. 12개 draft가 97초 만에 돌아옴.
+
+같은 workflow가 audit이 specific하게 짚은 7개 *missing entry*에 대한 backfill도 생성 — `[no-log]` 태그됐거나 entry 자체가 없는 substantial 커밋들. backfill은 frontmatter에 `backfilled: true` 명시 — 미래 reader가 *contemporaneously 작성되지 않았고 diff에서 reconstruct됨*을 알 수 있게.
+
+가장 중요한 backfill: dalkkak-ai의 ADR-001 — per-session status를 Claude Code hook으로 구현(vs TUI scraping, process-check polling). 결정은 `docs/DECISIONS.md`에 기록됐지만 `[no-log]` 태그라 timeline에 안 보였음. Tier-1 `kind: decision` backfill로 이제 보임.
+
+## Phase C — 프로젝트 페이지 status header
+
+Portfolio의 visible 신호는 *"이 프로젝트가 commit X개 출하"*가 아님. *"이 프로젝트가 Y개 결정과 Z개 learning-gap 기록"*임. 그래서 `/projects/<slug>`에 timeline 위에 status block:
+
+```
+N logged · Judgment layer: 3 결정 · 1 논의 · 2 이해 공백
+Last update: 2026-05-31 · 아키텍처 오버뷰 ↓
+```
+
+decision, discussion, learning-gap이 자체 렌더링 가진 first-class kind가 됨. activity heatmap (entry kind별 색칠된 calendar grid)은 deferred — 데이터는 있지만 viz가 오후 하나 들어가야 하는데 시간이 없음.
+
+## 결정 tier (MBA-grade 레이어)
+
+선택의 무게별 3 tier. 모두 *검증된 framework에서 가져옴*, 발명한 게 아님:
+
+- **Tier 1 (substantial)** — architecture, vendor choice, monetization, security posture, data model. 8 슬롯 템플릿: Context · Goals 우선순위 · Options considered (≥3, "do nothing" 포함) · Trade-off accepted · Pre-mortem (6개월 뒤 실패 시나리오 3개) · Decision criteria to flip · Success measure · Reversal plan. 제대로 작성 시 20-30분. 목표: 월 3-5개.
+- **Tier 2 (notable)** — feature 방향, UX 결정, dependency upgrade. 6 슬롯. ~5-10분.
+- **Tier 3 (trivial)** — rename, lint, formatting, 동작 변경 없는 dep bump. entry 없음. 그냥 commit.
+
+tier가 참조한 framework:
+
+- Michael Nygard, *Documenting Architecture Decisions*, 2011 — ADR 패턴
+- Jeff Bezos, 1997 shareholder letter — reversibility용 two-way / one-way door framing
+- Gary Klein, *Performing a Project Premortem*, HBR 2007 — pre-mortem 슬롯
+- Atlassian DACI — decision-roles framework (솔로엔 lightweight)
+
+## `learning-gap` kind
+
+가장 novel한 부분. 누구나 *배운 것*을 기록한다. *모르던 것*과 그 이해의 path를 기록하는 사람은 거의 없다.
+
+5개 필수 슬롯:
+
+1. 처음에 이해 못 했던 것
+2. gap이 어디서 왔는지 (prior assumption, 빠진 context, 잘못된 mental model)
+3. 무엇이 click했는지
+4. 아직 헷갈리는 것 (있다면)
+5. 업데이트할 wiki entry
+
+Trigger: 사람이 "이거 전에 물어봤는데" / 같은 질문 다른 표현으로 re-ask / mid-conversation에서 knowledge gap을 acknowledge할 때. Claude Code가 같은 turn에 entry 제안. 분기마다: entry들 walk through해서 wiki 업데이트로 consolidate.
+
+여기서의 betting: *confusion path 기록*이 AI 엔지니어의 *성장 artifact*. recruiter가 *시스템을 진짜로 이해한 사람*에 관심 있다면 (출하만 한 사람이 아니라), 이게 봐야 할 것. 경험적 검증 안 됨.
+
+## `/method` 페이지
+
+방법론 자체에 dedicated된 surface. header nav에서 link. 네 가지 속성, framework 인용 포함 decision tier, 세 가지 judgment-layer kind, install guide + 이 post 포인터 다 커버.
+
+framing은 *"무엇을 만들었나"*가 아니라 *"어떻게 일하는가"*. recruiter나 외부 reviewer가 5-10분에 read하고 individual log entries scan 없이도 methodology 이해. spec은 reviewable인데 specs are dry; methodology 페이지가 그 spec read를 earn하는 entry point.
+
+[/method](/method)에 있음.
+
+## 다음 sprint queued
+
+- **`kind: discussion` writer.** kind는 정의됐고 렌더링 됨, 근데 *write* path ("방금 strategy chat 했음, 요약 paste"하는 admin form 또는 CC slash command)는 UX 디자인 필요. CC slash command (`/log-chat <project>`)가 가장 lightweight 옵션이고 next에 ship 가능성 높음.
+- **Activity heatmap.** entry kind별 색칠된 calendar view. 데이터는 있음, 렌더링만 필요.
+- **Monthly architecture snapshot 의식.** `period: "YYYY-MM"` `kind: snapshot`을 월 경계에서 작성, 그 달 변경 + in-flight 상태 capture.
+- **Stop hook의 tier 자동 감지.** 현재는 작성자가 `:tier-1` / `:tier-2`를 커밋 제목에 수동. positive-trigger output 기반으로 hook이 제안할 수 있음 — 근데 mis-classification은 사용자가 override해야 하는 friction. 실제 mis-classification 패턴 보기 전엔 defer.
+- **Global hook 패턴.** workflow가 multi-machine 되면 factory script 방식 깨짐. `~/.claude/global-hooks/stop-check.sh` + 각 satellite의 local hook이 그걸 `exec`하면 됨. defer.
+- **Chat-capture 브라우저/데스크탑 helper.** 지금 `kind: discussion` writer는 사람이 transcribe 가정. claude.ai 대화를 MDX draft로 직접 export하는 helper가 loop 닫음.
+
+## 이 시스템이 아닌 것
+
+- CMS 아님. Log는 MDX 파일, 렌더링 레이어는 그냥 읽음.
+- Sync 시스템 아님. hub가 satellite log를 pull on demand; second source of truth 없음.
+- 관료주의 아님. Tier 3는 "그냥 commit, entry 없음" — 대부분 commit이 거기 머무름.
+- 코드 리뷰 대체 아님. 추론을 기록하지, 평가하지는 않음.
+
+## 정직한 betting
+
+가정 중 틀릴 수도 있는 것:
+
+1. **`.human.mdx` annotation 습관이 형성될 것.** audit 데이터에 따르면 아직 reliably 못 하고 있음. AI/human dual-author surface 전체가 *사람이 실제로 human column 채우는 것*에 의존. 안 채우면 "REVIEW NEEDED" placeholder 영원히 쌓여 noise가 됨. mitigation: 일요일 아침 1시간 annotation 의식 캘린더에 박기.
+2. **Tier 1 결정이 burn out 안 시킬 것.** T1 entry 당 20-30분 × 월 3-5개 = 월 1.5-2.5시간. 이론상 manageable. 실무에선 slot 채우는 게 *숙제처럼* 느껴질 수 있음. mitigation: tier가 *바로 그 이유로* 존재함 — T1이 rare하도록.
+3. **`learning-gap` kind가 *performative humility*의 vehicle이 안 될 것.** "오늘 진짜 많이 배움!" 같은 게 실제 failure mode. discipline은 작성자에서 와야 함.
+4. **Recruiter가 portfolio 읽으면서 *판단 trail*을 *프로젝트 출하*보다 가중함.** 경험적 검증 안 됨. 반대 evidence: 대부분 recruiter는 skim하고 click-through 안 함.
+
+## Repo + spec
+
+- hub: [daseon-blog](https://github.com/Daeseon-AI-Factory/daseon-blog).
+- blueprint: [`docs/project-log-system-v1-blueprint.md`](https://github.com/Daeseon-AI-Factory/daseon-blog/blob/main/docs/project-log-system-v1-blueprint.md) — 외부 review 가능 형태, framework 인용 + honest betting + open questions 섹션 포함. 외부 비판 환영.
+- install kit: [/posts/install-claude-code-project-log](/posts/install-claude-code-project-log) — 새 satellite repo에 1 URL handoff.
