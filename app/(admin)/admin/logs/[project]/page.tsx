@@ -5,17 +5,17 @@ import { listProjectLogs, listHumanCompanions } from "@/lib/logs";
 
 export const dynamic = "force-dynamic";
 
-type Params = Promise<{ slug: string }>;
+type Params = Promise<{ project: string }>;
 
 export default async function AdminProjectLogsPage({ params }: { params: Params }) {
-  const { slug } = await params;
-  const project = (await getProject("en", slug)) ?? (await getProject("ko", slug));
+  const { project: projectSlug } = await params;
+  const project = (await getProject("en", projectSlug)) ?? (await getProject("ko", projectSlug));
   if (!project) notFound();
 
   // Pull every entry the satellite has (or this repo for daseon-ai), no locale filter
   // — admin needs to see everything so a companion can be added to either-language entry.
-  const entries = await listProjectLogs(slug, project.frontmatter.logSourceRepo);
-  const haveCompanion = await listHumanCompanions(slug);
+  const entries = await listProjectLogs(projectSlug, project.frontmatter.logSourceRepo);
+  const haveCompanion = await listHumanCompanions(projectSlug);
 
   const withCount = entries.filter((e) => haveCompanion.has(e.slug)).length;
 
@@ -40,7 +40,7 @@ export default async function AdminProjectLogsPage({ params }: { params: Params 
           return (
             <li key={e.slug} className="py-3">
               <Link
-                href={`/admin/projects/${slug}/logs/${encodeURIComponent(e.slug)}`}
+                href={`/admin/logs/${projectSlug}/${encodeURIComponent(e.slug)}`}
                 className="group flex items-center justify-between gap-4"
               >
                 <div className="min-w-0 flex-1">

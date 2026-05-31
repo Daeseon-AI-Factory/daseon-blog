@@ -113,7 +113,7 @@ export function ProjectsList({ projects }: { projects: ProjectRow[] }) {
                 Edit
               </Link>
               <Link
-                href={`/admin/projects/${p.slug}/logs`}
+                href={`/admin/logs/${p.slug}`}
                 className="text-xs text-ink-muted hover:text-accent"
                 title="Manage hand-written companions for this project's log entries"
               >
