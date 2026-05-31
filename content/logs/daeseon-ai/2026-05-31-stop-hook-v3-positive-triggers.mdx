@@ -1,0 +1,84 @@
+---
+title: "Stop hook v3 — positive triggers override [no-log] for substantive commits"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Author judgment over routine-ness was unreliable about a third of the time. The hook now runs three positive triggers (LOC > 200, sensitive paths, subject keywords) that block the turn regardless of [no-log] tag. Silent overrides are disabled — false positives must annotate with a real rationale."
+tags: ["tooling", "claude-code", "hook", "audit"]
+---
+
+## What I did
+
+Rebuilt the project-log Stop hook from author-trust to system-trust. The hook now runs three positive-trigger checks against the latest commit and blocks the turn when any fires — even if the commit subject is tagged `[no-log]`. The escape valve is an explicit override comment with a rationale; silent overrides are deliberately disabled.
+
+## What it looked like before (v2)
+
+The hook was a one-liner shell command inlined into `.claude/settings.json`:
+
+1. If no commit in last 3 minutes → pass.
+2. If the latest commit hash already appeared in `docs/troubleshooting.md` or any `content/logs/` file → pass.
+3. If the commit subject contained `[no-log]` or `[skip-log]` → auto-append a `<!-- skipped: hash subject -->` line to `docs/troubleshooting.md`, pass.
+4. Otherwise → return `decision: "block"` with a structured reason instructing Claude to write the dual-write entry.
+
+The mechanism was correct for the routine-case it was designed for: typos, lint, formatting commits could be batch-skipped with `[no-log]` without manual log writing, while real changes blocked the turn. The hook did exactly what it promised.
+
+## Why I changed it
+
+Ran a cold audit across all five projects (this blog plus four satellites — dalkkak-ai, jarvis-pc, meta-smart-glass, shadow-ai). The audit specifically tested whether a fresh AI reading only the logs could reconstruct each project. Result: four of five projects came back **partial** verdict, and the failure pattern was uniform across them — substantive commits had been tagged `[no-log]` or had no tag and no log entry.
+
+Concrete examples the audit surfaced:
+
+- `9d1972a` in this blog — "Admin project management: full CRUD + featured toggle." 855 LOC across 9 files including a brand-new `lib/project-storage.ts` mirroring `lib/storage.ts`. No `[no-log]` tag. No log entry. Slipped silently because it predated the blocking-hook upgrade.
+- `3c8c80f` in this blog — "Admin UI for log-entry companions [no-log]." 367 LOC across 7 files. Was the literal cause of the 2026-05-31 production hang that took down every `/projects/<slug>/log/<entry>` page. The hang has a troubleshoot entry; the change that *caused* it doesn't.
+- `d10738d` + `59e2483` in dalkkak-ai — the canonical "why hooks for per-session status" ADR-001 add and verification. Both `[no-log]`. The most important architectural decision in the project lives in `docs/DECISIONS.md`, invisible to the log timeline.
+- `2ffc163` / `33fd37e` / `a54b121` in jarvis-pc — SecretMasker (286 LOC, Layer 1 of the 5-layer security architecture), Claude fallback dispatcher (644 LOC), SessionAuditLog (180 LOC). All Phase 7.2/7.3 ships. None logged. `security-deep-dive.mdx` references them by name but the implementation rationale was never written down.
+- `bc0d3c7` in shadow-ai — revert of a hardcoded AWS account ID. Security-relevant + permanent `.local.json` substitution pattern. `[no-log]`.
+
+The pattern across these is the same: author saw the commit as "feat" or "chore" or "docs" and tagged it routine, when the actual content was 600 LOC of new infrastructure or a Layer-1 security mechanism or a foundational ADR. The `[no-log]` mechanism trusted author judgment, and author judgment under-estimated about 30-50% of the time. The hook had no way to catch that.
+
+## What I changed
+
+Extracted the hook from inline JSON into `.claude/hooks/stop-check.sh` (readability for the new branching logic, and easier to keep in sync with the install kit). The script now runs the same v2 hash-sentinel check at the top, then adds the trigger layer.
+
+The three triggers, any one of which is sufficient:
+
+1. **LOC delta > 200** — insertions + deletions across all files in the commit, parsed from `git show --shortstat`.
+2. **Sensitive paths** — files matching a regex covering data layer (`lib/*storage*`), auth (`lib/*auth*`, `app/api/auth/*`, `middleware.*`), the meta-system itself (`.claude/settings*`, `.claude/hooks/*`, `install/*`), admin (`app/(admin)/*`), config (`next.config*`, `package.json`, `tsconfig*`), and DB schema (`migrations/*`, `prisma/schema*`, `*.schema.*`).
+3. **Subject keywords** (case-insensitive) — `decision`, `architecture`, `fallback`, `audit`, `auth`, `security`, `migration`, `dispatcher`, `ADR-N`, `refactor`, `pivot`, `breaking`, `deprecat`, `hidden coupling`.
+
+If any trigger fires, the hook blocks the turn regardless of `[no-log]`. The block message names the specific triggers that fired so the author knows what the system saw.
+
+For genuine false positives — a 250-LOC dependency cleanup that hit the LOC threshold, an `auth` keyword in a README typo fix — the hook accepts a deliberate override:
+
+```
+<!-- override-trigger: <hash> <subject> — <real rationale> -->
+```
+
+The line goes into `docs/troubleshooting.md`. The next Stop check finds the hash via the existing hash-sentinel grep and passes. The "real rationale" requirement is not enforced by code, but the convention is documented in the install post and the CLAUDE.md snippet: write a sentence explaining *why* this commit is routine despite the trigger. Silent overrides ("false positive") are deliberately discouraged because the whole point is to preserve the human's reasoning in the audit trail rather than have it disappear silently.
+
+Install kit mirrors the new layout: `install/hooks/stop-check.sh` is the source of truth, `install/setup.sh` downloads it into `.claude/hooks/` and chmod-s, the install post (en + ko) Step 4 is rewritten to explain the v3 model end-to-end.
+
+## What happened
+
+The commit that installed this change (`a9c4911`) was itself the first dogfood. It touched `.claude/hooks/`, `install/`, and `.claude/settings.json` (three sensitive paths) and racked up 378 LOC, so triggers 1 and 2 both fired. The old hook would have asked for a `[no-log]` tag or a dual-write. The new hook requires a full dual-write (no `[no-log]` option) — which is this entry plus the troubleshooting.md feature record.
+
+Before shipping I also validated against three audit-named commits to confirm correct behavior:
+
+- `3c8c80f` (admin companion UI, `[no-log]`, the production-hang cause): trigger 1 fires on 367 LOC, trigger 2 fires on `app/(admin)` + `lib/storage.ts` → new hook BLOCK, old hook had silently auto-skipped. Correct.
+- `9d1972a` (admin CRUD, no tag, silently slipped before blocking hook existed): trigger 1 fires on 855 LOC, trigger 2 fires on `app/(admin)` → new hook BLOCK. Correct.
+- `346d8a0` (latest session skip-marker commit, `[no-log]`, 2 LOC, no sensitive path): no trigger fires → auto-skip marker added. Correct (this is exactly the routine-skip path the system is designed for).
+
+## What it doesn't do / what's next
+
+The triggers are heuristics. The 200-LOC threshold is an arbitrary number that happens to catch every audit-flagged commit; it'll false-positive on large mechanical refactors. The keyword list is English-centric (commit subjects in Korean would mostly slip through except for the path-based and LOC triggers). The sensitive-path regex is daseon-blog-shaped — satellite repos with Swift, Rust, or Bun stacks will mostly hit the generic paths (`package.json`, `.claude/`, `install/`) but the framework-specific patterns won't apply. None of this is catastrophic; satellites still get triggers 1 (LOC) and 3 (keywords) reliably, and they can extend the regex locally if needed.
+
+Two follow-ups queued:
+
+1. **Backfill the audit-flagged commits**. The new hook prevents future slips but doesn't retroactively fix the existing gaps. The audit named ~30 specific commits across the five projects that need backfill entries; that work is separate from this hook change and will be its own session.
+2. **Architecture-overview log entries**. The audit's most-cited gap was that no project has a single log entry describing its system shape — every entry assumes the reader already knows. That gap is independent of the trigger mechanism and needs one snapshot entry per project. Also queued.
+
+## Commit
+
+`a9c4911` — Install kit v3 — positive-trigger hook overrides [no-log] for non-trivial commits.
