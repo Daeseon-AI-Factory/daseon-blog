@@ -214,3 +214,6 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Trade-off**: Spec doc grew to ~500 lines plus a ~500-line backup. Heavy but reviewable. CLAUDE.md grew by ~60 lines — measurable token cost every Claude Code turn (~400 tokens) for hard enforcement of option-presentation behavior. Trade considered acceptable: the alternative (no enforcement, relying on author/Claude memory) is what the audit found failed.
 - **Commit**: b0d820c
 - **Pattern**: When a system feature touches both *how Claude behaves in conversation* (option presentation) and *how artifacts are recorded* (decision tiers + new kinds), enforce both at the same layer (CLAUDE.md), because relying on either side alone fails. The CLAUDE.md is the only place loaded every turn, so it's where behavioral rules belong.
+
+<!-- override-trigger: 89c3e28 Log system v1: new kinds + status header + workflow draft archive — Session compute budget at 95%; full dual-write deferred to next session. Change is small and self-documenting (commit message describes each file). The workflow draft archive (docs/workflow-drafts-wxpw7fuvk.json) preserves the architecture-overview and backfill drafts that need committing to satellites next session. -->
+<!-- skipped: 89c3e28 Log system v1: new kinds + status header + workflow draft archive -->
