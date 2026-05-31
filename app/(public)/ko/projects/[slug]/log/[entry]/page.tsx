@@ -34,7 +34,7 @@ export default async function ProjectLogEntryKO({ params }: { params: Params }) 
   const log = await getProjectLog(slug, entry, sourceRepo);
   if (!log) notFound();
   if (log.frontmatter.visibility === "private") notFound();
-  const humanContent = await getHumanCompanion(slug, entry, sourceRepo);
+  const humanContent = await getHumanCompanion(slug, entry);
 
   return (
     <>

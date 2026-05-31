@@ -90,19 +90,21 @@ export async function getProjectLog(project: string, slug: string, sourceRepo?: 
 }
 
 /**
- * Reads the optional `<slug>.human.mdx` companion next to a log entry.
- * The companion contributes body-only — frontmatter (if any) is stripped.
- * Returns null if no companion exists.
+ * Reads the optional `<slug>.human.mdx` companion for a log entry.
+ *
+ * Important: companions live in THIS BLOG REPO, never in the satellite. The AI
+ * entry is satellite development history; the companion is *blog content* —
+ * how the author sees that entry from the blog's perspective. So the AI body
+ * is fetched from the satellite (via `getProjectLog`'s sourceRepo) but the
+ * companion always comes from this repo at `content/logs/<project>/<slug>.human.mdx`.
+ *
+ * Body-only — frontmatter (if any) is stripped. Returns null if no companion exists.
  */
 export async function getHumanCompanion(
   project: string,
   slug: string,
-  sourceRepo?: string,
 ): Promise<string | null> {
-  const raw = await readText(
-    `${LOG_ROOT}/${project}/${slug}.human.mdx`,
-    sourceRepo ? { repo: sourceRepo } : undefined,
-  );
+  const raw = await readText(`${LOG_ROOT}/${project}/${slug}.human.mdx`);
   if (!raw) return null;
   const { content } = matter(raw);
   return content.trim() ? content : null;
