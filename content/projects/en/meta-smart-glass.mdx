@@ -1,0 +1,47 @@
+---
+title: "Meta Smart Glass — English Assistant"
+description: "A real-time English assistant for Koreans on working-holiday visas, targeting Meta Ray-Ban Display. iPhone app + Bun backend + Gemini vision; building against a Mock Device Kit while Display SDK access is pending."
+date: "2026-05-25"
+language: "en"
+translationKey: "meta-smart-glass"
+status: "active"
+featured: false
+url: "https://github.com/Daeseon-AI-Factory/meta-smart-glass"
+repo: "https://github.com/Daeseon-AI-Factory/meta-smart-glass"
+logSourceRepo: "Daeseon-AI-Factory/meta-smart-glass"
+tags: ["ar", "llm", "ios", "accessibility", "language-learning"]
+stack: ["Swift / iOS", "Bun", "Node.js", "Gemini 2.5 Flash (vision)", "BLE", "Mock Device Kit"]
+role: "Solo"
+---
+
+A wearable English assistant for Koreans on working-holiday visas. You point your glasses at a sign, a menu, or an object in front of you, and you get a labeling, a translation, or a phrasing suggestion in real time — discreetly, hands-free.
+
+## What it does (Phase 1, in progress)
+
+- **Scan & translate** — point the camera at any printed text and get a translation overlaid on the glasses' display.
+- **Live camera scan** — continuous object recognition; the model labels what you're looking at.
+- **Look (object labeling)** — point-at-something workflow: tap to lock the frame, get the English label and a sample sentence.
+- **Suggest endpoint** — context-aware "what should I say next" prompts when you're stuck in a conversation.
+- **iPhone bridge** — glasses ↔ BLE ↔ iOS app ↔ HTTPS ↔ backend ↔ LLM; the phone is the brain, the glasses are the surface.
+
+## Architecture
+
+```
+[Meta Ray-Ban Display] <-BLE-> [iPhone app] <-HTTPS-> [Bun backend] -> [Gemini 2.5 Flash]
+```
+
+A Mock Device Kit stands in for the real glasses during validation, so the iOS + backend path is fully exercisable without waiting on Meta Wearables SDK approval.
+
+## Why this exists
+
+I moved from Korea to Toronto on a working-holiday visa and watched the same friction happen to other Koreans around me: the gap between *reading English at home* and *using English in the moment* — at a counter, on a bus, in a casual conversation — is a different muscle, and traditional apps don't help once your hands and eyes are on something else. Glasses do.
+
+## What's not in it
+
+- **No Display SDK access yet.** Phase 1 is the validation prototype on the Mock Device Kit. Real-glasses integration is Phase 2.
+- **No on-device inference.** The LLM call goes to Gemini over the network — that's a latency target to validate, not a hidden constraint.
+- **Privacy boundary not yet drawn.** What audio/video leaves the device, what's retained, what's redacted — design decisions on the next page of the roadmap, not in v1.
+
+## Status
+
+Phase 1 — Validation. Backend endpoints + iOS scaffold + four user flows working against the Mock Device Kit. Next: real-glasses prototype, latency budget, privacy model.

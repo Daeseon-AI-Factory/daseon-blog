@@ -1,0 +1,41 @@
+---
+title: "ScreenBridge"
+description: "A macOS desktop tool that translates abstract AI instructions ('open VS Code, edit X') into concrete pointer actions on your actual screen — via ScreenCaptureKit + Accessibility APIs + a vision LLM."
+date: "2026-05-26"
+language: "en"
+translationKey: "jarvis-pc"
+status: "active"
+featured: false
+url: "https://github.com/Daeseon-AI-Factory/jarvis-pc"
+repo: "https://github.com/Daeseon-AI-Factory/jarvis-pc"
+logSourceRepo: "Daeseon-AI-Factory/jarvis-pc"
+tags: ["macos", "accessibility", "llm-agent", "screen-capture", "native"]
+stack: ["Swift 6.3", "SwiftUI + AppKit", "ScreenCaptureKit", "AXUIElement", "Vision OCR", "Anthropic Claude Sonnet 4.6 (vision)", "Gemini 2.5 Flash"]
+role: "Solo"
+---
+
+LLM agents give abstract instructions ("open VS Code, click the file tree, find the test file…"). On a real screen, those map to specific coordinates: where exactly *is* the file tree right now? ScreenBridge is the layer in between — it watches your actual screen, understands the abstract instruction, and produces the concrete action to take.
+
+## What it does
+
+- **Screen capture** via `ScreenCaptureKit` — real-time frames of what you're seeing, not screenshots after the fact.
+- **Coordinate resolution** via `AXUIElement` (the macOS Accessibility API) as the primary source of truth — gets the actual bounding box of "the file tree" from the OS, not from pixel guessing. Vision/OCR is the fallback when Accessibility isn't exposed (most Electron apps, custom-rendered surfaces).
+- **Vision LLM** translates the abstract instruction + the current screen into a concrete pointer action. Anthropic Claude Sonnet 4.6 (with vision) is the default; Gemini 2.5 Flash is the cheaper alternative — selected via env var.
+- **Native macOS shell** — SwiftUI + AppKit, runs as a menu-bar app. No Electron, no browser runtime.
+
+## Why native, not Tauri
+
+The first attempt was Tauri. Three weeks in, the limits surfaced: `ScreenCaptureKit` integration is awkward through Tauri's IPC; `AXUIElement` needs deep AppKit interop that fights the Rust/Tauri boundary; macOS HUDs have native behaviors that don't translate to webview-rendered surfaces. Swapped to native Swift in commit `2026-05-27-tauri-to-swift-swap` — the Tauri attempt is archived on the `tauri-archive` branch + `v0.1-tauri-attempt` tag for the record.
+
+The lesson is in `content/logs/jarvis-pc/2026-05-27-tauri-to-swift-swap.mdx` — it's a tech-retro on when "cross-platform first" stops being a virtue.
+
+## What's not in it (yet)
+
+- **Not an agent runner.** ScreenBridge translates one instruction at a time; it doesn't loop, plan, or self-correct. Pair it with whatever loop you want.
+- **macOS only.** Native Swift is the choice; Windows / Linux are explicitly off-roadmap.
+- **No automation execution layer.** The translated action is *emitted* (coordinates, intent); actually clicking is the caller's responsibility. The boundary is deliberate — many agent frameworks want to own execution.
+- **No signing / distribution yet.** Run from source via `swift run` for now.
+
+## Status
+
+Phase 0.2 — Swift menu-bar shell working, ScreenCaptureKit + AXUIElement wired, vision dispatcher benchmarked. Next: a real agent integration to validate the end-to-end loop, then signing + distribution.

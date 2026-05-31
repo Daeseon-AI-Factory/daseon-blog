@@ -1,0 +1,41 @@
+---
+title: "ScreenBridge"
+description: "AI가 시키는 추상적 지시('VS Code 열고 X 수정해')를 실제 화면 위의 구체적 포인터 액션으로 실시간 번역하는 macOS 도구. ScreenCaptureKit + Accessibility API + 비전 LLM."
+date: "2026-05-26"
+language: "ko"
+translationKey: "jarvis-pc"
+status: "active"
+featured: false
+url: "https://github.com/Daeseon-AI-Factory/jarvis-pc"
+repo: "https://github.com/Daeseon-AI-Factory/jarvis-pc"
+logSourceRepo: "Daeseon-AI-Factory/jarvis-pc"
+tags: ["macos", "accessibility", "llm-agent", "screen-capture", "native"]
+stack: ["Swift 6.3", "SwiftUI + AppKit", "ScreenCaptureKit", "AXUIElement", "Vision OCR", "Anthropic Claude Sonnet 4.6 (vision)", "Gemini 2.5 Flash"]
+role: "Solo"
+---
+
+LLM 에이전트가 주는 지시는 추상적이다 ("VS Code 열고 file tree 클릭해서 테스트 파일 찾아"). 실제 화면에서 그건 구체적 좌표로 매핑돼야 한다 — *지금 file tree가 정확히 어디 있지?* ScreenBridge가 그 사이 레이어 — 실제 화면을 보고, 추상적 지시를 이해하고, 구체적 액션을 만들어낸다.
+
+## 무엇을 하는가
+
+- **화면 캡처** `ScreenCaptureKit`으로 실시간 프레임. 스크린샷 사후 처리 아님.
+- **좌표 해석** `AXUIElement` (macOS Accessibility API)가 1차 진실 — "file tree"의 실제 bounding box를 OS에서 직접 받음, 픽셀 추측 아님. Vision/OCR은 Accessibility가 노출 안 된 경우 fallback (대부분 Electron 앱, custom-rendered surface).
+- **비전 LLM**이 추상적 지시 + 현재 화면 → 구체적 포인터 액션으로 번역. Anthropic Claude Sonnet 4.6 (vision) 기본, Gemini 2.5 Flash가 저렴 대안 — env var로 선택.
+- **네이티브 macOS 셸** — SwiftUI + AppKit, 메뉴바 앱으로 실행. Electron·브라우저 런타임 없음.
+
+## 왜 Tauri 아니고 네이티브
+
+첫 시도는 Tauri였음. 3주 들어가서 한계가 드러남: `ScreenCaptureKit` 통합이 Tauri IPC 통해선 어색함, `AXUIElement`는 깊은 AppKit interop 필요한데 Rust/Tauri 경계와 싸움, macOS HUD는 webview 위에선 작동 안 하는 네이티브 동작 가짐. 커밋 `2026-05-27-tauri-to-swift-swap`에서 네이티브 Swift로 갈아탐 — Tauri 시도는 기록용으로 `tauri-archive` 브랜치 + `v0.1-tauri-attempt` 태그에 영구 보존.
+
+회고는 `content/logs/jarvis-pc/2026-05-27-tauri-to-swift-swap.mdx` — "cross-platform 우선"이 미덕이 아니게 되는 지점에 대한 tech-retro.
+
+## 아직 없는 것
+
+- **에이전트 러너 아님.** ScreenBridge는 지시 한 번에 하나 번역. 루프·계획·자기수정 안 함. 원하는 루프와 페어링하세요.
+- **macOS 전용.** 네이티브 Swift가 선택. Windows/Linux는 명시적으로 로드맵 밖.
+- **자동화 실행 레이어 없음.** 번역된 액션은 *방출*됨 (좌표, 의도). 실제 클릭은 caller 책임. 경계 의도적 — 많은 에이전트 프레임워크가 실행을 직접 갖고 싶어함.
+- **서명·배포 아직.** `swift run`으로 소스에서 실행.
+
+## 상태
+
+Phase 0.2 — Swift 메뉴바 셸 동작, ScreenCaptureKit + AXUIElement 연결됨, vision dispatcher 벤치마크 끝남. 다음: end-to-end 루프 검증할 실제 에이전트 통합, 그다음 서명 + 배포.
