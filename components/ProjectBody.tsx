@@ -22,7 +22,7 @@ export async function ProjectBody({
 }) {
   const rendered = await renderMdx(project.content);
   const fm = project.frontmatter;
-  const allLogs = await listProjectLogs(project.slug, fm.logSourceRepo);
+  const allLogs = await listProjectLogs(project.slug, fm.logSourceRepo, locale);
   const publicLogs = allLogs.filter((e) => e.frontmatter.visibility === "public");
   return (
     <article className="mx-auto max-w-3xl px-5 py-12">

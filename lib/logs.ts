@@ -61,7 +61,11 @@ async function readLogFile(project: string, fileName: string, sourceRepo?: strin
   };
 }
 
-export async function listProjectLogs(project: string, sourceRepo?: string): Promise<LogEntry[]> {
+export async function listProjectLogs(
+  project: string,
+  sourceRepo?: string,
+  locale?: Locale,
+): Promise<LogEntry[]> {
   const entries = await listFiles(`${LOG_ROOT}/${project}`, sourceRepo ? { repo: sourceRepo } : undefined);
   // Exclude `.human.mdx` companion files — they attach to a sibling entry, not stand alone.
   const items = await Promise.all(
@@ -69,9 +73,16 @@ export async function listProjectLogs(project: string, sourceRepo?: string): Pro
       .filter((f) => !f.endsWith(".human.mdx"))
       .map((f) => readLogFile(project, f, sourceRepo)),
   );
-  return items
-    .filter((e): e is LogEntry => Boolean(e))
-    .sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? -1 : 1));
+  const all = items.filter((e): e is LogEntry => Boolean(e));
+  // Locale filter: bilingual satellites pair `<event>.en.mdx` + `<event>.ko.mdx`
+  // (or use `language` frontmatter). Show only entries matching the requested locale.
+  // Fallback: if the satellite has no entries in the requested locale, show everything
+  // (covers English-only satellites being viewed on a KO project page).
+  const filtered = locale
+    ? all.filter((e) => (e.frontmatter.language ?? "en") === locale)
+    : all;
+  const result = filtered.length > 0 ? filtered : all;
+  return result.sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? -1 : 1));
 }
 
 export async function getProjectLog(project: string, slug: string, sourceRepo?: string): Promise<LogEntry | null> {
