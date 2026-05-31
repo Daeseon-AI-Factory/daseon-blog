@@ -176,3 +176,18 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Pattern**: Two dynamic param names at the same directory level is a hard Next.js error, but `npm run build` reports it inconsistently — it can succeed locally and break runtime on Vercel. When you add a new dynamic admin route under `app/(admin)/admin/projects/`, always run `npm run dev` (not just `npm run build`) before pushing — dev's startup check catches what build silently lets through. Also: ISR-cached pages masking a broken SSR runtime is a real failure mode — when only "dynamic" (ƒ) routes break in prod while "static" (○/●) work, suspect a Next.js routing/structure issue, not a content issue.
 
 <!-- skipped: 2005bd4 Log ecf33fc (Next.js dynamic-param hang) — dual-write per CLAUDE.md rules -->
+<!-- skipped: 5dc46dd Mark 2005bd4 (dual-write housekeeping) as routine [no-log] -->
+<!-- skipped: d27d6b7 Add Resume PDF link in 3 surfaces (ProfileCard CTA / SocialGrid / about) [no-log] -->
+<!-- skipped: 931f199 Add industry-retro backlog — 8 candidates surfaced + voice rules + fingerprint checklist [no-log] -->
+<!-- skipped: b64dc80 Backlog: add #9 'works on my machine' / no-staging incident [no-log] -->
+
+---
+
+## Install kit v2 — fold post-v1 lessons into single-URL handoff (feature record)
+
+- **Context**: After four satellites (shadow-ai, dalkkak-ai, meta-smart-glass, jarvis-pc) went through cross-repo onboarding, the original install post + snippet had four reproducible gotchas that needed ad-hoc addenda each time. Author wanted one URL handoff with zero manual addenda.
+- **Choice**: Integrate the four lessons + an explicit Writing voice section into the existing post structure (not a separate "addenda" section — readers shouldn't have to mentally merge sources). Mirror in `install/claude-md-snippet.md` so the satellite's CLAUDE.md inherits the rules locally as well as the post-time guidance.
+- **Files changed**: `install/claude-md-snippet.md` — added Format requirements (quoted YAML dates, slug ≠ repo name), Bilingual logs (pair vs single-file with `language:`), Writing voice (anti-LinkedIn-guru, no industry-jargon dressing), and "If this repo is a portfolio satellite" (`.human.mdx` lives in portfolio repo, not satellite). `content/posts/en/install-claude-code-project-log.mdx` — Step 1 slug-detection block, Step 3 format-requirements + voice subsections inside the snippet, Step 7 companion-in-portfolio + bilingual patterns. `content/posts/ko/install-claude-code-project-log.mdx` — mirror.
+- **Trade-off**: Snippet grew ~52 → ~85 lines, which means more text in every satellite's CLAUDE.md (read every turn). Acceptable cost — one URL now covers slug detection + date quoting + companion location + bilingual support + voice rules in a single shot, no per-satellite addendum paste, no drift from inconsistent addenda.
+- **Commit**: 4a327b7
+- **Pattern**: A guide written for v1 accumulates hard-won corrections within the first ~5 real users. Fold them back into the canonical guide proactively rather than letting addenda accumulate — addenda paste-time always drifts (someone forgets, someone gets a stale snippet, the canonical URL link goes stale relative to memory). Single source of truth wins.

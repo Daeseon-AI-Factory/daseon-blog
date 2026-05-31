@@ -1,0 +1,48 @@
+---
+title: "Install kit v2 — one URL now covers four hard-won satellite-onboarding gotchas"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Folded four post-v1 lessons (slug ≠ repo name, quoted YAML dates, companion-in-portfolio-not-satellite, bilingual logs) plus an explicit Writing voice section into the install post and CLAUDE.md snippet. One URL handoff now suffices — no per-satellite addenda."
+tags: ["tooling", "documentation", "claude-code", "spec-update"]
+---
+
+## What I did
+
+Updated the canonical install guide (`/posts/install-claude-code-project-log`) and its companion CLAUDE.md snippet (`install/claude-md-snippet.md`) to fold in four reproducible gotchas that had been paste-d as ad-hoc addenda for each new satellite. Plus an explicit Writing voice block enforcing the plain-description stance.
+
+## What it looked like before
+
+After four satellites onboarded (shadow-ai, dalkkak-ai, meta-smart-glass, jarvis-pc), the original guide was systematically missing four things, each one paste-d as a separate addendum to the satellite's Claude:
+
+1. **Slug ≠ repo name.** The satellite's slug must match the portfolio's `content/projects/<slug>.mdx` filename, which can diverge from the repo name (`ddalkkak` → `dalkkak-ai`).
+2. **YAML dates must be quoted.** Unquoted ISO dates get parsed as `Date` objects by js-yaml and broke the portfolio's MDX build (commit `c3517f5` was the fix).
+3. **`.human.mdx` companions live in the portfolio repo, not the satellite.** Originally written as "save next to the AI entry," corrected in `7f46643` after realizing the companion is *portfolio content* about the AI artifact, not satellite development history.
+4. **Bilingual logs supported as either `<event>.{en,ko}.mdx` pairs or single-file with `language:` frontmatter.** Added when meta-smart-glass adopted the pair convention (`2fe5a87`).
+
+Each addendum had to be remembered and pasted manually. With more satellites coming, the addenda would drift — someone gets a stale paste, someone forgets one, the canonical URL silently disagrees with the de-facto practice.
+
+## What I changed
+
+Integrated all four into the existing post structure (not as a separate "addenda" section, so a first-time reader gets one coherent guide):
+
+- **Step 1 (directories):** added the slug-detection block — explicit instruction to check the portfolio's `content/projects/*.mdx` files for a matching `repo:` and use that filename as the slug.
+- **Step 3 (CLAUDE.md snippet):** added a "Format requirements" subsection (quoted dates, slug match) and a "Writing voice" subsection (anti-LinkedIn-guru rules: no `I learned that...` conclusions, no industry-jargon dressing, system structure described as boxes-and-arrows in prose).
+- **Step 7 (cross-repo aggregation):** added two new subsections — one explaining `.human.mdx` companion files live in the portfolio repo with a description of the side-by-side render and the "Review needed" placeholder; one explaining the two bilingual log patterns.
+- **`install/claude-md-snippet.md`** got the same content mirrored into its own sections so the satellite's CLAUDE.md inherits these rules locally (read every turn).
+- **`content/posts/ko/install-claude-code-project-log.mdx`** got the parallel additions in Korean.
+
+## What happened
+
+Snippet grew from ~52 to ~85 lines; the en post from 324 lines to ~360. The author now hands one URL to a satellite Claude — `daeseon.ai/posts/install-claude-code-project-log` — and the satellite gets the full updated guide with no extra addenda paste.
+
+## What it doesn't do / what's next
+
+- The `install/setup.sh` script wasn't updated (it just creates dirs and downloads three files); slug detection is documented in the post but not enforced by the script. Could add an interactive slug-detect prompt later.
+- The rules now live in three places: the post, the snippet, and `cross-repo-log-aggregation` memory. Next-up satellites get them from all three, but if any of those drifts the others won't auto-correct.
+
+## Commit
+
+`4a327b7` — Install kit v2 — fold post-v1 lessons into single-URL handoff.
