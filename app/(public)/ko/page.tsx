@@ -26,8 +26,8 @@ export default async function HomeKO() {
           <div className="space-y-12">
             <HomeSection id="about" title="소개">
               <p className="text-base leading-relaxed text-ink">
-                제조·물류·금융 분야의 미션크리티컬 엔터프라이즈 시스템을 5년
-                이상 만들고 현대화해온 백엔드 엔지니어. 지금은 Java/Spring
+                제조·물류·금융 분야의 미션크리티컬 엔터프라이즈 시스템을 6년간
+                만들고 현대화해온 소프트웨어 엔지니어. 지금은 Java/Spring
                 백엔드 플랫폼과 AI 보조 제품 엔지니어링에 집중하고 있습니다 —
                 견고한 백엔드와 실제로 쓰이는 AI 도구를 함께 만듭니다. 현재
                 토론토 거주, Senior / Staff 백엔드 또는 AI 엔지니어 포지션을

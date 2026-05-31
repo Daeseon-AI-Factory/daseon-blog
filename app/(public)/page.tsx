@@ -26,7 +26,7 @@ export default async function HomeEN() {
           <div className="space-y-12">
             <HomeSection id="about" title="About">
               <p className="text-base leading-relaxed text-ink">
-                Backend engineer with 5+ years building and modernizing
+                Software engineer with 6 years building and modernizing
                 mission-critical enterprise systems across manufacturing,
                 warehouse, and financial operations. Currently focused on
                 Java/Spring backend platforms and AI-assisted product
