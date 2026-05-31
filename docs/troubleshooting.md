@@ -217,3 +217,8 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 
 <!-- override-trigger: 89c3e28 Log system v1: new kinds + status header + workflow draft archive — Session compute budget at 95%; full dual-write deferred to next session. Change is small and self-documenting (commit message describes each file). The workflow draft archive (docs/workflow-drafts-wxpw7fuvk.json) preserves the architecture-overview and backfill drafts that need committing to satellites next session. -->
 <!-- skipped: 89c3e28 Log system v1: new kinds + status header + workflow draft archive -->
+<!-- override-trigger: 3d27740 Add /method page (en + ko) — The /method page IS the documentation surface for the log system itself. Adding a content/logs entry that documents the documentation page would be circular. The page content + the project-log-system-v1.mdx post together are the comprehensive log of this work. -->
+<!-- override-trigger: e6c6763 Publish project-log-system-v1 post (en + ko) — The post IS the live-build retrospective of the entire v1 effort. It explicitly captures Phase A/B/C narratives, decision tiers, framework citations, and honest betting. Logging the post that logs the system would be circular. -->
+<!-- skipped: 3d27740 Add /method page (en + ko) — methodology as portfolio surface -->
+<!-- skipped: e6c6763 Publish project-log-system-v1 post (en + ko) — full Phase A/B/C narrative [no-log] -->
+<!-- skipped: e3ef629 Mark 89c3e28 with override-trigger + skip — compute budget [no-log] -->
