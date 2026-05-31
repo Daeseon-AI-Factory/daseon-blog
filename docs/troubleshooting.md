@@ -151,3 +151,12 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 
 <!-- skipped: 043185a Log 78368f2 (side-by-side human companion) — dual-write per CLAUDE.md rules -->
 <!-- skipped: 8fb746e Mark 043185a (companion dual-write) as routine [no-log] -->
+<!-- skipped: d096295 Record skip marker for 8fb746e [no-log] -->
+<!-- skipped: 54eb58a Add docs/blog-guide.md — authoring handbook with live screenshots [no-log] -->
+<!-- skipped: d0e614b blog-guide: English default, rename Korean to .ko.md, cross-link both [no-log] -->
+<!-- skipped: 60a8063 Add meta-smart-glass + jarvis-pc projects with logSourceRepo wiring [no-log] -->
+<!-- skipped: 2fe5a87 Filter project log timeline by locale — bilingual satellites are now first-class [no-log] -->
+<!-- skipped: 16d27c3 Remove docvault project pages (EN+KO) — pulled from public surface [no-log] -->
+<!-- skipped: d74bb87 Always render log entries as two columns — empty right side = "review needed" [no-log] -->
+<!-- skipped: d21c0b2 Update authoring guide: companion files live in blog repo, not satellites [no-log] -->
+<!-- skipped: 3c8c80f Admin UI for log-entry companions [no-log] -->
