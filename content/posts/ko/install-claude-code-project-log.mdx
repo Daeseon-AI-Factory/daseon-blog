@@ -62,7 +62,11 @@ repo 루트에서:
 mkdir -p docs content/logs/$(basename $PWD) .claude
 ```
 
-`$(basename $PWD)`는 현재 폴더 이름을 프로젝트 slug로 씀. 원하는 슬러그로 교체 — 보통 `my-awesome-app` 같은 거. kebab-case 유지, 공백 없음.
+`$(basename $PWD)`는 현재 폴더 이름을 프로젝트 slug로 씀. 단독으로 쓸 거면 그대로 OK.
+
+**포트폴리오 사이트가 이 repo를 aggregate 할 거면**, 슬러그가 *repo 이름이 아닐 수도 있음*. 포트폴리오의 `content/projects/<slug>.mdx` 파일들을 확인해서 frontmatter `repo:` 필드가 이 repo의 `git remote get-url origin`과 매칭되는 것의 파일명(`.mdx` 제외)을 슬러그로 씀. repo 이름과 슬러그가 다를 수 있음 (예: repo `ddalkkak` → slug `dalkkak-ai`). 포트폴리오에 entry가 아직 없으면 `$(basename $PWD)`를 기본으로 쓰고 나중에 같은 이름으로 wire하면 됨.
+
+뭘 고르든: kebab-case, 공백 없음, 디렉토리 이름과 모든 entry의 `project:` frontmatter 필드에 동일하게 사용.
 
 ## 2단계 — `docs/troubleshooting.md` 시드
 
@@ -178,6 +182,23 @@ git log -1 --format=%H | cut -c1-7
 - source repo는 표준 install (1-4단계) 외에 추가 셋업 필요 없음. `content/logs/<slug>/*.mdx` 파일만 있으면 됨.
 - visibility는 entry별. `public`은 timeline에 보임. `private`은 포트폴리오 어디에도 안 나옴. `unlisted`는 직링크로만 접근.
 - 각 포트폴리오는 단일 owner. 친구는 *자기* 포트폴리오가 *자기* repo를 fetch하게 셋업. 중앙 aggregator 없음.
+
+### AI entry 옆 사람 commentary (`.human.mdx`)
+
+포트폴리오의 로그 entry 상세 페이지는 데스크탑에서 두 컬럼을 나란히 렌더 — 왼쪽 AI 버전 (source repo에서), 오른쪽 선택적 사람 commentary. commentary가 없으면 우측 컬럼에 "Review needed" 표시 — *공백 자체가 가시화*.
+
+commentary 파일은 `<event>.human.mdx`, 본문만 (frontmatter 불필요). **이 파일은 *포트폴리오* repo에 살고 source repo에 안 들어감.** 경로: `<portfolio>/content/logs/<slug>/<event>.human.mdx`. 작성자가 자기 voice로 — 보통 AI entry 며칠~몇 주 뒤에 — 병행 read-through로 적음. 포트폴리오가 둘을 같이 렌더하고 source repo는 절대 안 건드림.
+
+이 구조로 각 AI artifact는 AI가 만든 영구 기록으로 유지되고 사람 commentary는 additive. source repo에 `.human.mdx` 파일 만들지 말 것.
+
+### 이중언어 로그 (선택)
+
+두 패턴 모두 지원:
+
+- **언어별 페어:** `<event>.en.mdx` + `<event>.ko.mdx` 같은 `content/logs/<slug>/` 안에 나란히. 둘 다 `project:` 일치, 각자 해당 `language:` 박음. 포트폴리오는 방문자 locale에 맞춰 렌더.
+- **단일 파일 + frontmatter language:** `<event>.mdx`에 `language: "en"`. 영어만 쓸 거면 더 단순.
+
+포트폴리오가 timeline entry를 visitor locale로 자동 필터. 영어만 쓰는 satellite는 같은 entry가 `/projects/<slug>`와 `/ko/projects/<slug>` 양쪽에 보임 (fallback).
 
 ## 과거 일 backdating
 

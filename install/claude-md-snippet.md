@@ -42,6 +42,35 @@ DON'T LOG: routine renames, lint fixes, typo fixes, dependency bumps with no beh
 
 Override per entry in frontmatter.
 
+### Format requirements (non-negotiable)
+
+- **Quoted YAML dates.** Always `date: "2026-05-31"`. Never `date: 2026-05-31` (unquoted). Unquoted ISO date literals get parsed as `Date` objects by some YAML libraries and break downstream MDX rendering on portfolio sites.
+- **Slug ≠ repo name (sometimes).** The `project:` value must match wherever this repo is aggregated. If this repo is the satellite of a portfolio, check the portfolio's `content/projects/<slug>.mdx` files — the slug is the one whose `repo:` frontmatter matches this repo's `git remote get-url origin`. Lock that slug here and use it in both the `project:` field and the `content/logs/<slug>/` directory name. Repo name and slug can diverge (e.g. repo `ddalkkak` → slug `dalkkak-ai`).
+
+### Bilingual logs (optional)
+
+If you want the same event in two languages:
+
+- Pair as `<event>.en.mdx` + `<event>.ko.mdx`, both with matching `project:` and the corresponding `language:` set inside each.
+- Or keep one file (`<event>.mdx`) with `language: "en"` and skip the suffix.
+- A portfolio site that aggregates this repo will filter by visitor locale.
+
+### Writing voice
+
+Log entries are *plain descriptions of what happened*, not essays:
+
+- No `I learned that...` / `the lesson here is...` conclusions. No engagement bait. No performative wisdom.
+- No industry-jargon dressing — don't reframe a basic bug as "primitive obsession" or rename `data acquisition server` to "ISA-95 Level 2 SCADA layer" unless that's already how you'd say it in conversation.
+- Describe system structure with simple boxes-and-arrows in prose (A → B → C), not domain vocabulary.
+- Frustration in the moment is fine to describe; don't dress it up as "the lesson here was patience".
+
+### If this repo is a satellite of a portfolio site
+
+(Skip if this repo's logs are read locally only.)
+
+- **Human commentary belongs in the portfolio repo, NOT here.** A portfolio may render a `<slug>.human.mdx` file alongside each AI entry — those files live in the *portfolio* repo's `content/logs/<slug>/`, never in this satellite. Don't create `.human.mdx` files in this repo.
+- **Project mdx wiring is on the portfolio side.** The portfolio's `content/projects/<slug>.mdx` needs `logSourceRepo: "owner/name"` pointing at this repo. That's the human author's job in the portfolio; it's not something Claude in this satellite needs to set up.
+
 ### Skip rule for routine commits
 
 The Stop hook blocks the turn until the most recent commit is either logged OR explicitly marked routine. To skip without writing an entry:

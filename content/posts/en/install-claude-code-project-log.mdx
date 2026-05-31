@@ -62,7 +62,11 @@ In your repo root:
 mkdir -p docs content/logs/$(basename $PWD) .claude
 ```
 
-`$(basename $PWD)` uses your repo folder name as the project slug. Replace with whatever slug you want — usually `my-awesome-app` or whatever shows up on your homepage. Just keep it kebab-case, no spaces.
+`$(basename $PWD)` uses your repo folder name as the project slug. That's fine for standalone use.
+
+**If this repo is going to be aggregated by a portfolio site,** the slug must match what the portfolio expects — which is *not necessarily the repo name*. Check the portfolio's `content/projects/<slug>.mdx` files for one whose frontmatter `repo:` matches this repo's `git remote get-url origin`. Use that filename (minus `.mdx`) as your slug. Repo name and slug can diverge (e.g. repo `ddalkkak` → slug `dalkkak-ai`). If no portfolio entry exists yet, `$(basename $PWD)` is a sensible default and the portfolio can be wired later with the same name.
+
+Whatever you pick: kebab-case, no spaces, used identically in the directory name and in every entry's `project:` frontmatter field.
 
 ## Step 2 — Seed `docs/troubleshooting.md`
 
@@ -158,6 +162,20 @@ DON'T LOG: routine renames, lint fixes, typo fixes, dependency bumps with no beh
 - Everything else → `public`
 
 Override per entry in frontmatter.
+
+### Format requirements (non-negotiable)
+
+- **Quoted YAML dates.** Always `date: "2026-05-31"`. Never `date: 2026-05-31` (unquoted). Unquoted ISO date literals get parsed as `Date` objects by some YAML libraries and break downstream MDX rendering on portfolio sites.
+- **Slug = portfolio's expectation.** The `project:` value must match wherever this repo is aggregated (see Step 1).
+
+### Writing voice
+
+Log entries are plain descriptions, not essays:
+
+- No `I learned that...` / `the lesson here is...` conclusions. No engagement bait. No performative wisdom.
+- No industry-jargon dressing — don't reframe a basic bug as "primitive obsession" or rename `data acquisition server` to "ISA-95 Level 2 SCADA layer" unless that's already how you'd say it in conversation.
+- Describe system structure as simple boxes-and-arrows in prose (A → B → C), not domain vocabulary.
+- Frustration in the moment is fine to describe; don't dress it up as "the lesson here was patience".
 ````
 
 This is the instruction Claude reads at the start of every turn (via `CLAUDE.md`), so it now has a permanent rule that says "log everything non-trivial, in two files, with verified facts."
@@ -251,6 +269,23 @@ Notes:
 - Source repos don't need any extra setup beyond the standard install (steps 1-4). They just need `content/logs/<slug>/*.mdx` files.
 - Visibility is per-entry. `visibility: public` shows in the timeline. `private` doesn't appear anywhere on the portfolio. `unlisted` is reachable by direct URL only.
 - Each portfolio is single-owner. Friends adopting the spec render their *own* portfolio fetching their *own* repos. There's no central aggregator.
+
+### Human commentary alongside AI entries (`.human.mdx`)
+
+The portfolio detail page for each log entry renders two columns side-by-side on desktop: the AI version (from the source repo) on the left, and an optional human commentary on the right. If no commentary exists, the right column shows "Review needed" — making the gap visible.
+
+The commentary file is `<event>.human.mdx`, body-only (no frontmatter required). **It lives in the *portfolio* repo, not the source repo.** Path: `<portfolio>/content/logs/<slug>/<event>.human.mdx`. The author writes it in their own voice — typically days or weeks after the AI entry — as a parallel read-through. The portfolio renders both together; the source repo is never edited.
+
+This means each AI artifact stays as a permanent record of what AI produced, and the human commentary is additive. Don't create `.human.mdx` files in source repos.
+
+### Bilingual logs (optional)
+
+Two patterns both supported:
+
+- **Pair per language:** `<event>.en.mdx` + `<event>.ko.mdx` next to each other in `content/logs/<slug>/`, with matching `project:` and the respective `language:` set in each. The portfolio renders the file matching the visitor's locale.
+- **Single file + frontmatter language:** `<event>.mdx` with `language: "en"`. Simpler for English-only.
+
+The portfolio filters timeline entries by visitor locale automatically. A satellite that only writes English shows the same entries on both `/projects/<slug>` and `/ko/projects/<slug>` (fallback).
 
 ## Backdating an entry
 
