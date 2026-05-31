@@ -90,6 +90,22 @@ export async function getProjectLog(project: string, slug: string, sourceRepo?: 
 }
 
 /**
+ * Lists every slug that has a `<slug>.human.mdx` companion in this blog repo
+ * for the given project. Used by the admin UI to mark "has companion / add companion."
+ * Returns a Set of slugs (without `.human.mdx`).
+ */
+export async function listHumanCompanions(project: string): Promise<Set<string>> {
+  const files = await listFiles(`${LOG_ROOT}/${project}`);
+  const slugs = new Set<string>();
+  for (const f of files) {
+    if (f.endsWith(".human.mdx")) {
+      slugs.add(f.replace(/\.human\.mdx$/, ""));
+    }
+  }
+  return slugs;
+}
+
+/**
  * Reads the optional `<slug>.human.mdx` companion for a log entry.
  *
  * Important: companions live in THIS BLOG REPO, never in the satellite. The AI

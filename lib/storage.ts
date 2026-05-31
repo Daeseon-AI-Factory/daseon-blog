@@ -103,4 +103,58 @@ export async function saveBinaryAsset({
   return { path: rel, via: "local" };
 }
 
+/**
+ * Saves a `<slug>.human.mdx` companion in this blog repo at
+ * `content/logs/<project>/<slug>.human.mdx`. Companions live here, not in the
+ * satellite repo (see lib/logs.ts:getHumanCompanion).
+ */
+export async function saveHumanCompanion({
+  project,
+  slug,
+  body,
+  message,
+}: {
+  project: string;
+  slug: string;
+  body: string;
+  message: string;
+}): Promise<SaveResult> {
+  const rel = `content/logs/${project}/${slug}.human.mdx`;
+
+  if (githubConfigured()) {
+    const result = await commitFile({ path: rel, content: body, message });
+    return { path: rel, via: "github", commitUrl: result.commitUrl };
+  }
+
+  const abs = path.join(process.cwd(), rel);
+  await fs.mkdir(path.dirname(abs), { recursive: true });
+  await fs.writeFile(abs, body, "utf-8");
+  return { path: rel, via: "local" };
+}
+
+export async function deleteHumanCompanion({
+  project,
+  slug,
+  message,
+}: {
+  project: string;
+  slug: string;
+  message: string;
+}): Promise<SaveResult> {
+  const rel = `content/logs/${project}/${slug}.human.mdx`;
+
+  if (githubConfigured()) {
+    await deleteFile({ path: rel, message });
+    return { path: rel, via: "github" };
+  }
+
+  const abs = path.join(process.cwd(), rel);
+  try {
+    await fs.unlink(abs);
+  } catch {
+    /* may already be gone */
+  }
+  return { path: rel, via: "local" };
+}
+
 export { TYPE_DIRS };
