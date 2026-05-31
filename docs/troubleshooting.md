@@ -191,3 +191,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Trade-off**: Snippet grew ~52 → ~85 lines, which means more text in every satellite's CLAUDE.md (read every turn). Acceptable cost — one URL now covers slug detection + date quoting + companion location + bilingual support + voice rules in a single shot, no per-satellite addendum paste, no drift from inconsistent addenda.
 - **Commit**: 4a327b7
 - **Pattern**: A guide written for v1 accumulates hard-won corrections within the first ~5 real users. Fold them back into the canonical guide proactively rather than letting addenda accumulate — addenda paste-time always drifts (someone forgets, someone gets a stale snippet, the canonical URL link goes stale relative to memory). Single source of truth wins.
+
+<!-- skipped: b034119 Log 4a327b7 (install kit v2) — dual-write per CLAUDE.md rules -->
