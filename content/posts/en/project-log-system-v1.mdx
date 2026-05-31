@@ -1,0 +1,93 @@
+---
+title: "Building a project log system for AI-pair-programmed work"
+date: "2026-05-31"
+language: "en"
+translationKey: "project-log-system-v1"
+status: "draft"
+visibility: "public"
+handwritten: false
+tags: ["methodology", "claude-code", "logging", "infrastructure"]
+summary: "A two-day live build of the logging system that records every substantive decision Claude Code makes on my behalf — including the trigger layer that catches author-judgment slips, the cross-repo aggregation that pulls multiple satellite projects into one timeline, and the human-annotation surface that keeps me in the loop without forcing me to write every entry."
+---
+
+This post is being written *while* the system is built. The goal is to capture not just what shipped but the decisions and trade-offs in real time — so a reader (or future me) can reconstruct why the system looks the way it does.
+
+The deadline is two days. The scope is narrowed accordingly; visual surfaces and chat-capture writers are deferred to a separate sprint. What's in scope: stop the bleeding, fill the audit-found gaps, document the system itself as a project worth pointing at.
+
+## What I'm building
+
+A logging system designed for someone who delegates substantial code work to AI and still wants every decision visible, queryable, and annotatable. The system has four properties I care about:
+
+1. **Nothing missed by default.** Author-judgment slips were the largest source of gaps in the prior version; a positive-trigger layer overrides them now.
+2. **AI-author + human-annotator.** Every AI-written entry has a sibling `.human.mdx` slot. Empty slots render as "REVIEW NEEDED" so absence is visible.
+3. **Cross-repo aggregation.** Five projects (one hub + four satellites) feed one portfolio timeline via pull-on-demand. No sync, no second source of truth.
+4. **Methodology as portfolio.** The system itself is documented as a project, not buried in process docs. This post is part of that.
+
+## Why this post exists
+
+Reading other people's logging systems, I noticed the same gap: they document the *finished* system, not the build. The build is where the actual decisions live — what was tried, what was rejected, which trade-offs hurt. So this is the build, not the polish.
+
+## Status as of writing
+
+- Phase A1 (positive triggers in hub) **shipped** — commit `a9c4911`.
+- Phase A2 (4 satellite propagation) **in flight** — the factory script (`scripts/propagate-hook.sh`) is written; satellites get the new hook via a manual one-liner per repo (deliberately, so the human stays in the loop the first time).
+- Phase A3 (skip marker reconciliation across satellites) **scripted but unrun** — runs once all satellites are on v3.
+- Phase B (architecture overviews for 5 projects + audit-flagged commit backfill) **next**, fan-out via workflow.
+- Phase C (status header on each project page) **next**.
+
+What's deferred to a separate sprint: activity heatmap, monthly architecture snapshot cadence, chat-capture writer (claude.ai → log entry). Not because they're unimportant — because compressing them into 48 hours would mean shipping each at v0.3 instead of v1.
+
+## Phase A — Stop the bleeding (today)
+
+### Positive triggers
+
+The system had a `[no-log]` mechanism that trusted author judgment. An audit found that judgment was unreliable about 30-50% of the time. A 855-LOC admin CRUD with no log entry. A 367-LOC change that caused a production hang, tagged routine. An ADR record (the canonical "why hooks" decision in another project) buried in a `[no-log]` commit.
+
+The fix: positive triggers that override `[no-log]` when one of three conditions fires.
+
+- LOC delta > 200 (insertions + deletions across all files)
+- Sensitive paths touched (lib/*storage*, lib/*auth*, lib/*hooks*, middleware, app/(admin), app/api/auth, .claude/settings, .claude/hooks/, install/, next.config, package.json, tsconfig, migrations, prisma/schema, *.schema.*)
+- Subject keywords (decision, architecture, fallback, audit, auth, security, migration, dispatcher, ADR-N, refactor, pivot, breaking, deprecat, hidden coupling)
+
+Override mechanism for false positives: a deliberate `<!-- override-trigger: hash subject — real rationale -->` line in `docs/troubleshooting.md`. Silent overrides are disabled because the whole point is to preserve human reasoning in the audit trail.
+
+Verification before shipping: ran the trigger logic against three known-bad commits from the audit (admin companion UI, admin CRUD, latest routine skip-marker). All three classified correctly. The commit that installed the change (a9c4911) was itself the first dogfood — 378 LOC plus three sensitive paths fired triggers 1 and 2, requiring a full dual-write entry rather than the `[no-log]` tag the message would have allowed under the v2 hook.
+
+### Propagation across satellites
+
+The hook lives in the hub repo but needs to run in four satellite repos too. A factory script (`scripts/propagate-hook.sh`) copies the current source-of-truth hook into each satellite, commits, and pushes — skipping any satellite with a dirty working tree to avoid surprising local work.
+
+The trade-off: this assumes a known set of satellite paths on one machine. A multi-machine setup would need a global-hook pattern (one file at `~/.claude/global-hooks/`, all satellites `exec` it). Deferred — solo dev on one machine is the current shape, and the factory script is enough.
+
+### Skip marker reconciliation
+
+The audit also found that three of four satellites had zero `<!-- skipped: -->` markers despite dozens of `[no-log]` commits in their history. The Stop hook's auto-recording wasn't installed in those repos at all, so the audit trail of *deliberate* skips was missing.
+
+A sync script (`scripts/sync-skip-markers.sh`) walks each satellite's git log, finds every `[no-log]`/`[skip-log]` commit whose hash isn't already in `docs/troubleshooting.md`, and appends the missing markers in one batch. Then commits + pushes.
+
+The result: every historical `[no-log]` commit now has its corresponding marker. The audit trail is complete — you can grep for any historical hash and see whether it was deliberately skipped or genuinely forgotten.
+
+## Phase B — Architecture overviews and backfill (tomorrow)
+
+[To be written as it ships]
+
+## Phase C — Status header on each project page (tomorrow)
+
+[To be written as it ships]
+
+## What this doesn't do
+
+- Doesn't auto-update satellite hooks on schedule. Propagation is a deliberate action.
+- Doesn't replace human reading. The point of `.human.mdx` and the "REVIEW NEEDED" placeholder is that empty annotation is visible — not that the system fills it for you.
+- Doesn't catch *intent* drift. If you set out to refactor X and end up rewriting Y, the system records the commits but not the original intent. Goals and roadmaps live elsewhere (the project's own `BLUEPRINT.md` / `DECISIONS.md` / equivalent), not in the log timeline.
+
+## What's queued for next sprint
+
+- **Chat-capture writer.** Claude.ai (chat) conversations currently leave no trace on daseon.ai. A new `kind: discussion` content type plus an admin form (or CC slash command) to drop in chat summaries.
+- **Activity heatmap.** Calendar view colored by log entry kind. Data is already there; just needs a render.
+- **Monthly architecture snapshot.** A `kind: snapshot` entry written at month boundaries, capturing the current state of each project (so the *delta* logs have a reference state to delta against).
+- **`/method` page.** A surface dedicated to the methodology itself, linked from About, so the system shows up as a portfolio piece on its own merit.
+
+## Repo
+
+`daseon-blog` — the hub. The install kit lives at [/posts/install-claude-code-project-log](/posts/install-claude-code-project-log) for anyone who wants to drop this into their own repo (it's set up so one URL handoff suffices for satellite onboardings).

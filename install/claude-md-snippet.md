@@ -94,3 +94,62 @@ If any trigger fires, the hook BLOCKS the turn regardless of `[no-log]`. To unbl
 - Append a `<!-- override-trigger: <hash> <subject> — <real rationale> -->` line to `docs/troubleshooting.md`. The override is human-visible (silent overrides are not allowed) and the rationale must be a real sentence — "false positive" alone is not enough; explain *why* this commit is routine despite the trigger.
 
 Override should be rare. If you find yourself overriding often, the threshold/regex is wrong — propose tightening or loosening it instead.
+
+### Decision-class log kinds
+
+Beyond `troubleshoot` / `tech-retro` / `ux-retro` / `business` / `monetization` / `update`, two kinds capture the judgment-layer artifacts that are the AI engineer's actual differentiating output:
+
+- **`kind: decision`** (ADR-style): the owner weighed multiple options and chose one. Required frontmatter: `status: "proposed" | "accepted" | "superseded"`, `reversibility: "easy" | "hard" | "one-way"`. Required body sections: Context · Options considered (with pros/cons each) · Chosen + Why · Trade-off accepted · Reversibility · Verified by · Discussion artifacts · Commit.
+- **`kind: discussion`**: a conversation (with Claude.ai chat, a person, brainstorm) that produced or surfaced options. Required frontmatter: `source: "<where>"`, `participants: ["..."]`, optional `linked_decision: "<filename>"`. Required body sections: Context · What we discussed · What I rejected from AI suggestion (if any) · Outcome · Why this matters · Next steps.
+
+There's also `kind: snapshot` for architecture overviews and monthly state captures (optional `period: "YYYY-MM"`).
+
+### Presenting options to the human (non-negotiable)
+
+When you present multiple options to the user for them to choose, NEVER list options bare. Always include for **each** option:
+
+1. **Why this option exists** — what need or constraint it addresses
+2. **Trade-off** — what is given up by choosing it (be specific, not "some downsides")
+3. **Reversibility** — easy / hard / one-way
+4. **Evidence available** — measured data, dogfood result, expert consensus, OR an honest `unverified`. Never invent evidence.
+5. **What information is missing** — what would tighten the decision if known
+
+If presenting a single recommendation (no options), still surface:
+- Alternatives you considered + why each was rejected
+- The trade-off accepted by the recommendation
+- What new information would flip the recommendation
+
+When the decision is non-trivial (architecture, vendor choice, UX direction, data model, monetization, security posture, major refactor), propose creating a `kind: decision` log entry *in the same turn* to capture the choice + reasoning permanently. Don't ask "should we log this?" — just do it as part of the response.
+
+The owner's value as an AI engineer is the judgment layer above generated code. Stripping that layer of inputs (presenting options without reasoning, recommendations without alternatives) trains the wrong reflex. This rule exists to keep judgment exercised, not delegated.
+
+Examples of what NOT to write:
+- "Two options: (a) ... (b) ... Which?" → forbidden; missing reasoning per option
+- "I'd recommend X." → forbidden alone; must include alternatives + trade-off
+- "Easy / hard, your call." → forbidden; must surface what makes each easy/hard
+
+If you find yourself about to write a bare option list, stop and expand it. If you genuinely can't articulate the reasoning, say so explicitly ("I don't have enough information to weigh these — what I'd need: ...") rather than serve a thin list.
+
+### Decision tiers
+
+When proposing a `kind: decision` log entry, suggest the appropriate tier:
+
+- **Tier 1 (substantial)** — architecture / vendor / monetization / security / data model / major refactor / LOC > 500 / positive triggers ≥2. Required slots: Context & constraints · Goals (ranked) · Options considered (≥3 including "do nothing") with Cost/Reversibility/Risk/Evidence each · Trade-off accepted · Pre-mortem (3 failure scenarios at 6 months) · Second-order effects (enables / forecloses) · Stakeholders (DACI-lite Decider/Informed) · Decision criteria to flip · Success measure · Verified by · Reversal plan. ~20-30 min to author thoroughly.
+- **Tier 2 (notable)** — feature direction / UX call / dependency upgrade / LOC 200-500 / 1 positive trigger. Required slots: Context · Options considered (≥2) · Chosen + Why · Trade-off · Reversibility · Verified by. ~5-10 min.
+- **Tier 3 (trivial)** — rename / style / typo / formatting / dep bump without behavior change. No decision entry; just commit, optionally a `tech-retro` entry.
+
+Use `:tier-1` / `:tier-2` / `:tier-3` in the commit subject to override auto-suggestion. Overrides require a one-line reason if downgrading from auto-T1 or upgrading from auto-T3.
+
+`reversibility` uses Bezos two-way / one-way door framing: `two-way` (easy revert), `hard` (effortful revert), `one-way` (committed irreversibly).
+
+### `kind: learning-gap` — record what you didn't initially understand
+
+When the owner says "I didn't get that earlier" / re-asks a question in a different form / acknowledges a knowledge gap, propose a `kind: learning-gap` log entry in the same turn. Required slots:
+
+- What I (initially) didn't understand
+- Where the gap came from (prior assumption, missing context, mental model)
+- What clicked
+- Still confused (if anything remains)
+- Related wiki entries to update
+
+Why: anyone records what they learned. Almost no one records what they *didn't know* and the path their understanding took. That path is the AI engineer's growth artifact.
