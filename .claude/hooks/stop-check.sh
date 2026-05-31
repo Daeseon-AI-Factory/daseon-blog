@@ -64,6 +64,34 @@ if [ "$triggered" = "1" ]; then
   trigger_summary=$(printf -- '  - %s\n' "${triggers[@]}")
 fi
 
+# ---------- Tier auto-detection ----------
+# T1 if any strong signal: 2+ triggers, LOC > 500, or "heavy" keyword.
+# T2 if 1 trigger or LOC 200-500.
+# T3 otherwise (no entry needed, no message shown).
+heavy_keyword_re='(architecture|security|monetization|migration|breaking|fallback|dispatcher|ADR-?[0-9]+|pivot)'
+matched_heavy=$(echo "$s" | grep -iEo "$heavy_keyword_re" | head -1 || true)
+suggested_tier=""
+if [ "$triggered" = "1" ]; then
+  if [ ${#triggers[@]} -ge 2 ] || [ "$loc" -gt 500 ] || [ -n "$matched_heavy" ]; then
+    suggested_tier="1"
+  else
+    suggested_tier="2"
+  fi
+fi
+
+tier_hint=""
+if [ -n "$suggested_tier" ]; then
+  if [ "$suggested_tier" = "1" ]; then
+    tier_hint="
+Suggested tier: T1 (substantial). Required slots: Context & constraints · Goals (ranked) · Options considered (≥3 incl. 'do nothing') · Trade-off accepted · Pre-mortem (3 failure scenarios at 6 months) · Decision criteria to flip · Success measure · Reversal plan. ~20-30 min.
+"
+  else
+    tier_hint="
+Suggested tier: T2 (notable). Required slots: Context · Options considered (≥2) · Chosen + Why · Trade-off · Reversibility · Verified by. ~5-10 min.
+"
+  fi
+fi
+
 has_skip_tag=0
 echo "$s" | grep -qE '\[(no|skip)-log\]' && has_skip_tag=1
 
@@ -75,10 +103,10 @@ if [ "$triggered" = "1" ]; then
     reason="Commit $h ($s) was tagged [no-log] but the positive trigger fired:
 $trigger_summary
 Author judgment is overridden by these triggers. Per CLAUDE.md, this kind of change must be logged regardless of tag — the [no-log] mechanism is for genuinely routine commits (typos, lint, formatting, dep bumps without behavior change).
-
+$tier_hint
 Write BOTH:
   1. docs/troubleshooting.md entry (terse Symptom/Cause/Fix/Commit/Pattern, anchored on hash $h)
-  2. content/logs/<project>/<date>-<slug>.mdx narrative entry
+  2. content/logs/<project>/<date>-<slug>.mdx narrative entry — if this is a kind:decision entry, follow the tier template above
 
 If you believe this is a false positive, append this line to docs/troubleshooting.md (replace 'reason here' with a real justification — silent overrides are not allowed):
 
@@ -89,7 +117,7 @@ Then commit. The hash in that line satisfies the next Stop check."
     reason="Commit $h ($s) is not yet logged AND fired the positive trigger:
 $trigger_summary
 This means the system judges the commit non-trivial regardless of how the message is framed. Write BOTH a docs/troubleshooting.md entry and a content/logs/<project>/<date>-<slug>.mdx narrative entry following the 7 anti-hallucination rules in CLAUDE.md.
-
+$tier_hint
 If you believe this is a false positive, append this line to docs/troubleshooting.md (with a real reason):
 
     <!-- override-trigger: $h $s — reason here -->
