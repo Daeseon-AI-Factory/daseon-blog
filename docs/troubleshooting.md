@@ -160,3 +160,17 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: d74bb87 Always render log entries as two columns — empty right side = "review needed" [no-log] -->
 <!-- skipped: d21c0b2 Update authoring guide: companion files live in blog repo, not satellites [no-log] -->
 <!-- skipped: 3c8c80f Admin UI for log-entry companions [no-log] -->
+<!-- skipped: 2a9725b Record skip markers for recent session commits [no-log] -->
+
+---
+
+## All `/projects/<slug>/log/<entry>` pages hang indefinitely on Vercel
+
+- **Symptom**: `curl -s --max-time 60 https://www.daeseon.ai/projects/shadow-ai/log/2026-05-23-yt-dlp-transcript-self-healing` → `code=000 time=60.009s size=0` (server never started responding). Same hang on every project's log entry detail across all 5 projects. Project index pages (`/projects/<slug>`) still served 200 from ISR cache, hiding the breakage at first. Local `npm run build` reported success. Local `npm run dev` produced the actual smoking gun in its startup log:
+  ```
+  [Error: You cannot use different slug names for the same dynamic path ('locale' !== 'slug').]
+  ```
+- **Cause**: Yesterday's admin companion UI (`3c8c80f`) added `app/(admin)/admin/projects/[slug]/logs/page.tsx` + `[slug]/logs/[entry]/page.tsx`. At the same routing level there already existed `app/(admin)/admin/projects/[locale]/[slug]/edit/page.tsx`. Next.js does not allow two different dynamic param names (`[locale]` and `[slug]`) at the same directory level. The production build silently succeeded but emitted a runtime app that broke SSR for *all* dynamic routes — including the unrelated public `/projects/[slug]/log/[entry]`. Cached pages (ISR-backed project indexes) kept serving stale 200s while uncached SSR routes hung forever.
+- **Fix**: Moved the admin companion subtree out of the conflict: `app/(admin)/admin/projects/[slug]/logs/` → `app/(admin)/admin/logs/[project]/`. The conflicting `[slug]/` directory is gone. Param renamed from `slug` to `project` for clarity. `ProjectsList.tsx` link updated from `/admin/projects/<slug>/logs` → `/admin/logs/<slug>`. Both `backHref` and the page-internal links also updated. Verified: typecheck clean, production build emits `/admin/logs/[project]` and `/admin/logs/[project]/[entry]` alongside the existing `/admin/projects/[locale]/[slug]/edit` with no errors; dev server starts without the routing error.
+- **Commit**: ecf33fc
+- **Pattern**: Two dynamic param names at the same directory level is a hard Next.js error, but `npm run build` reports it inconsistently — it can succeed locally and break runtime on Vercel. When you add a new dynamic admin route under `app/(admin)/admin/projects/`, always run `npm run dev` (not just `npm run build`) before pushing — dev's startup check catches what build silently lets through. Also: ISR-cached pages masking a broken SSR runtime is a real failure mode — when only "dynamic" (ƒ) routes break in prod while "static" (○/●) work, suspect a Next.js routing/structure issue, not a content issue.

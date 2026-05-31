@@ -1,0 +1,65 @@
+---
+title: "Every project log entry detail page hung in production — Next.js dynamic-param collision"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "All /projects/<slug>/log/<entry> pages were timing out indefinitely (curl: 60s, 0 bytes). The cause turned out to be the prior day's admin companion UI introducing a `[slug]` directory at the same level as the existing `[locale]` directory under app/(admin)/admin/projects/ — a Next.js dynamic-param-name conflict that production build silently emits and runtime then breaks SSR on. Fixed by moving the admin companion routes to app/(admin)/admin/logs/[project]/."
+tags: ["nextjs", "routing", "vercel", "ssr", "production-bug"]
+---
+
+## What I did
+
+Diagnosed and fixed a production outage in which every log entry detail page hung silently for visitors.
+
+## What it looked like before
+
+Visiting any `/projects/<slug>/log/<entry>` returned no response — the server never started replying. `curl -s --max-time 60 ...` produced `code=000 time=60.009s size=0` consistently across all five satellites. Confusingly, the project index pages (`/projects/shadow-ai`, etc.) still served fine — they were ISR-cached from earlier successful builds (`age: 1728s`). So the issue stayed invisible until I tried clicking into the timeline.
+
+GitHub raw fetches for the underlying mdx files returned in ~150ms; the bottleneck wasn't in the data layer.
+
+## What I changed
+
+Reproduced locally with `npm run dev`, which surfaced the smoking gun:
+
+```
+[Error: You cannot use different slug names for the same dynamic path ('locale' !== 'slug').]
+```
+
+Yesterday's admin companion UI (commit `3c8c80f`) had added:
+
+```
+app/(admin)/admin/projects/
+├ [locale]/[slug]/edit/page.tsx   (existing)
+├ [slug]/logs/page.tsx            (new — companion list)
+├ [slug]/logs/[entry]/page.tsx    (new — companion editor)
+├ new/page.tsx
+└ page.tsx
+```
+
+Two different dynamic-param names (`[locale]` and `[slug]`) at the same routing level. Next.js doesn't allow that. `npm run build` reported "Compiled successfully," but the emitted production app then breaks SSR for *all* dynamic routes — including the unrelated public `/projects/[slug]/log/[entry]`. The cascade meant cached ISR pages kept serving while uncached SSR paths timed out forever.
+
+Fix: moved the companion subtree to its own top-level admin path.
+
+```
+app/(admin)/admin/projects/[slug]/logs/*  →  app/(admin)/admin/logs/[project]/*
+```
+
+The `[slug]` directory under `projects/` is gone, killing the conflict. Param renamed `slug` → `project` for clarity. `components/admin/ProjectsList.tsx` link and the two pages' internal `backHref` updated. Typecheck clean, production build now emits both `/admin/logs/[project]` and `/admin/logs/[project]/[entry]` alongside the surviving `/admin/projects/[locale]/[slug]/edit`.
+
+## What happened
+
+Production unbroken. Vercel rebuilt on push; log entry detail pages now respond.
+
+## What it doesn't do / what's next
+
+Build-time validation gap remains: `npm run build` silently accepts the conflict while `npm run dev` catches it. A pre-push hook running `next dev`'s startup check would catch this earlier — not done yet. Until that exists, the rule: run `npm run dev` before any push that adds or rearranges dynamic admin routes.
+
+## Pattern
+
+ISR-cached pages can mask a broken SSR runtime for hours — when only dynamic (`ƒ`) routes are failing while static/SSG ones still load, suspect a Next.js routing/structure issue, not data or environment. And `npm run build`'s "success" is not authoritative; dev-server startup catches structural errors build can miss.
+
+## Commit
+
+`ecf33fc` — Fix production hang: move admin companion UI out of [locale]/[slug] conflict.
