@@ -46,9 +46,10 @@ curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main
 
 스크립트가 하는 일:
 
-- `docs/`, `.claude/`, `content/logs/<your-repo-name>/` 생성
+- `docs/`, `.claude/hooks/`, `content/logs/<your-repo-name>/` 생성
 - `docs/troubleshooting.md` (시드 파일) 다운로드
-- `.claude/settings.json` (Stop hook) 다운로드
+- `.claude/hooks/stop-check.sh` (positive-trigger v3 hook 스크립트) 다운로드
+- `.claude/settings.json` (스크립트를 Claude Code Stop 이벤트에 연결) 다운로드
 - `CLAUDE.md` 스니펫을 *콘솔에 출력* — 너가 읽고 직접 paste
 - 기존 파일은 덮어쓰지 않음 (idempotent)
 
@@ -59,7 +60,7 @@ curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main
 repo 루트에서:
 
 ```bash
-mkdir -p docs content/logs/$(basename $PWD) .claude
+mkdir -p docs content/logs/$(basename $PWD) .claude/hooks
 ```
 
 `$(basename $PWD)`는 현재 폴더 이름을 프로젝트 slug로 씀. 단독으로 쓸 거면 그대로 OK.
@@ -116,22 +117,73 @@ curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main
 
 ## 4단계 — Stop hook 추가
 
-한 줄 다운로드:
+두 파일: hook 스크립트 본체 + 그걸 Claude Code Stop 이벤트에 연결하는 settings. 스크립트가 별도 파일인 이유 — positive-trigger 체크 세 개가 들어가서 inline JSON으로 유지보수 어려움.
 
 ```bash
+curl -fsSL -o .claude/hooks/stop-check.sh \
+  https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/hooks/stop-check.sh
+chmod +x .claude/hooks/stop-check.sh
+
 curl -fsSL -o .claude/settings.json \
   https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/settings.json
 ```
 
-hook이 하는 일:
+`.claude/settings.json`이 다른 설정과 함께 이미 있으면 덮어쓰지 말고 이 hook entry만 머지:
 
-- 매 commit 후 commit hash + 제목을 git에서 읽음
-- 그 hash가 `docs/troubleshooting.md` 또는 `content/logs/`에 이미 있는지 grep
-- 있으면 → 조용히 종료 (이미 로그됨)
-- commit 메시지에 `[no-log]` 또는 `[skip-log]` 있음 → 자동으로 skipped 마커 추가 후 종료
-- 그 외 → `decision: "block"` + reason 반환 → Claude가 이번 turn에 dual-write 처리
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/stop-check.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
-루프는 hash가 로그 파일에 들어가는 즉시 자연 종료.
+### hook 작동 방식
+
+Claude가 turn을 마치면 스크립트 실행. 최근 commit(3분 이내)을 보고 block / pass 결정.
+
+**5 단계 분기 (순서대로):**
+
+1. **최근 3분 안에 commit 없음** → 조용히 pass. stale repo 거짓 양성 방지.
+2. **최근 commit 해시가 `docs/troubleshooting.md` 또는 `content/logs/` 어딘가에 이미 있음** → pass. 로그됨.
+3. **Positive trigger 발동** → BLOCK. 세 개 중 하나라도 걸리면:
+   - LOC delta > 200 (insertion + deletion 합)
+   - 민감 경로: `lib/*storage*`, `lib/*auth*`, `lib/*hooks*`, `middleware.*`, `app/(admin)/*`, `app/api/auth/*`, `.claude/settings*`, `.claude/hooks/*`, `install/*`, `next.config*`, `package.json`, `tsconfig*`, `migrations/*`, `prisma/schema*`, `*.schema.*`
+   - 제목 키워드 (대소문자 무관): `decision`, `architecture`, `fallback`, `audit`, `auth`, `security`, `migration`, `dispatcher`, `ADR-N`, `refactor`, `pivot`, `breaking`, `deprecat`, `hidden coupling`
+4. **`[no-log]` 또는 `[skip-log]` 있고 trigger 미발동** → `<!-- skipped: <hash> <subject> -->`를 `docs/troubleshooting.md`에 자동 추가, pass.
+5. **그 외 기본값** → BLOCK. dual-write entry 작성 또는 `[no-log]` 태그 필요.
+
+### positive trigger를 둔 이유 (v3)
+
+이전 버전은 작성자의 `[no-log]` 판단을 그대로 신뢰. 시스템 5개월 사용 후 audit 결과: 800-LOC admin 기능, 300-LOC 보안 추가, ADR급 아키텍처 결정 같은 *실제로는 non-trivial한* 커밋들이 작성자 판단 미스로 `[no-log]` 태그 받고 사라짐. `[no-log]` 자체는 필요한 메커니즘 (대부분 커밋은 진짜 routine), 근데 작성자 판단은 미끄러지고 시스템이 그걸 잡을 방법이 없었음.
+
+v3는 작성자 판단을 *override*하는 positive trigger 추가. 민감 경로 건드림, 200 LOC 초과, 아키텍처스러운 키워드 — 이 중 하나라도 걸리면 commit이 어떻게 framing 됐든 hook이 block함. 이게 작성자 판단이 놓치는 걸 잡는 안전망.
+
+### 거짓 양성 — override 메커니즘
+
+가끔 진짜 routine commit에 trigger가 발동할 수 있음 (250-LOC 의존성 그래프 정리, `auth` README의 typo 수정 등). full dual-write 없이 unblock하려면 `docs/troubleshooting.md`에 이 라인 추가:
+
+```
+<!-- override-trigger: <hash> <subject> — <실제 사유> -->
+```
+
+override는 사람 눈에 보임. 사유는 한 문장 — "false positive"만으론 부족, *왜 trigger 발동했음에도 routine인지* 적어야 함. silent override는 의도적으로 차단.
+
+override가 잦으면 trigger 기준/regex가 잘못된 것. `.claude/hooks/stop-check.sh`에서 조정.
+
+### hook commit
+
+두 파일 모두 의도적으로 commit. 다른 머신에서 clone하면 같은 hook 자동 적용.
 
 ## 5단계 — 첫 실제 entry trigger
 

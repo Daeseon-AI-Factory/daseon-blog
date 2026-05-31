@@ -79,3 +79,18 @@ The Stop hook blocks the turn until the most recent commit is either logged OR e
 - Option B — append the same `<!-- skipped: <hash> <subject> -->` line yourself, then commit. Same effect.
 
 Routine = typo fix, lint fix, formatting commit, dep bump without behavior change, file rename. Anything else: write the entry.
+
+### Positive triggers (v3) — `[no-log]` does NOT always silence the hook
+
+To prevent author-judgment slips where a substantive commit gets tagged `[no-log]` and silently disappears, the hook also runs three POSITIVE TRIGGERS. If any fire, `[no-log]` is overridden and a full dual-write entry is required:
+
+1. **LOC delta > 200** — insertions + deletions across all files in the commit.
+2. **Sensitive paths** — touching `lib/*storage*`, `lib/*auth*`, `lib/*hooks*`, `middleware.*`, `app/(admin)/*`, `app/api/auth/*`, `.claude/settings*`, `.claude/hooks/*`, `install/*`, `next.config*`, `package.json`, `tsconfig*`, `migrations/*`, `prisma/schema*`, or any `*.schema.*` file.
+3. **Subject keywords** (case-insensitive) — `decision`, `architecture`, `fallback`, `audit`, `auth`, `security`, `migration`, `dispatcher`, `ADR-N`, `refactor`, `pivot`, `breaking`, `deprecat`, `hidden coupling`.
+
+If any trigger fires, the hook BLOCKS the turn regardless of `[no-log]`. To unblock you must EITHER:
+
+- Write the full dual-write entry (recommended path), OR
+- Append a `<!-- override-trigger: <hash> <subject> — <real rationale> -->` line to `docs/troubleshooting.md`. The override is human-visible (silent overrides are not allowed) and the rationale must be a real sentence — "false positive" alone is not enough; explain *why* this commit is routine despite the trigger.
+
+Override should be rare. If you find yourself overriding often, the threshold/regex is wrong — propose tightening or loosening it instead.

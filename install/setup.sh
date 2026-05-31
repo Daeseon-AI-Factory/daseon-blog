@@ -31,14 +31,22 @@ fi
 
 echo "→ Project slug: $SLUG"
 
-mkdir -p docs ".claude" "content/logs/$SLUG"
-green "✓ Created docs/, .claude/, content/logs/$SLUG/"
+mkdir -p docs ".claude/hooks" "content/logs/$SLUG"
+green "✓ Created docs/, .claude/hooks/, content/logs/$SLUG/"
 
 if [ -f docs/troubleshooting.md ]; then
   yellow "⚠ docs/troubleshooting.md exists — leaving alone"
 else
   curl -fsSL "$REPO_RAW/troubleshooting-starter.md" -o docs/troubleshooting.md
   green "✓ Wrote docs/troubleshooting.md"
+fi
+
+if [ -f .claude/hooks/stop-check.sh ]; then
+  yellow "⚠ .claude/hooks/stop-check.sh exists — leaving alone"
+else
+  curl -fsSL "$REPO_RAW/hooks/stop-check.sh" -o .claude/hooks/stop-check.sh
+  chmod +x .claude/hooks/stop-check.sh
+  green "✓ Wrote .claude/hooks/stop-check.sh (positive-trigger v3 hook)"
 fi
 
 if [ -f .claude/settings.json ]; then

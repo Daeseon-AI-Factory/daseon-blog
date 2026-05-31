@@ -46,9 +46,10 @@ curl -fsSL https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main
 
 What it does:
 
-- Creates `docs/`, `.claude/`, and `content/logs/<your-repo-name>/`
+- Creates `docs/`, `.claude/hooks/`, and `content/logs/<your-repo-name>/`
 - Downloads `docs/troubleshooting.md` (the seed file)
-- Downloads `.claude/settings.json` (the Stop hook)
+- Downloads `.claude/hooks/stop-check.sh` (the positive-trigger v3 hook script)
+- Downloads `.claude/settings.json` (wires the script to Claude Code's Stop event)
 - Prints the `CLAUDE.md` snippet so you can read and paste it manually
 - Leaves your existing files alone (idempotent — won't overwrite)
 
@@ -59,7 +60,7 @@ If you'd rather see each step explicitly, keep going below.
 In your repo root:
 
 ```bash
-mkdir -p docs content/logs/$(basename $PWD) .claude
+mkdir -p docs content/logs/$(basename $PWD) .claude/hooks
 ```
 
 `$(basename $PWD)` uses your repo folder name as the project slug. That's fine for standalone use.
@@ -182,14 +183,18 @@ This is the instruction Claude reads at the start of every turn (via `CLAUDE.md`
 
 ## Step 4 — Add the Stop hook
 
-One-line download (skip if you already have `.claude/settings.json` with other settings — merge manually instead):
+Two files: the hook script itself, and the Claude Code settings that wire it to the Stop event. The script is in a separate file (rather than inline JSON) because it has three positive-trigger checks and is easier to maintain that way.
 
 ```bash
+curl -fsSL -o .claude/hooks/stop-check.sh \
+  https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/hooks/stop-check.sh
+chmod +x .claude/hooks/stop-check.sh
+
 curl -fsSL -o .claude/settings.json \
   https://raw.githubusercontent.com/Daeseon-AI-Factory/daseon-blog/main/install/settings.json
 ```
 
-Or save this content manually:
+If `.claude/settings.json` already exists with other settings, merge in this single hook entry rather than overwriting:
 
 ```json
 {
@@ -199,8 +204,8 @@ Or save this content manually:
         "hooks": [
           {
             "type": "command",
-            "command": "recent=$(git log --since=\"2 minutes ago\" --oneline 2>/dev/null | head -1); [ -z \"$recent\" ] && exit 0; jq -n --arg c \"$recent\" '{systemMessage: (\"⚠ Recent commit: \" + $c + \"\\n\\nLog this in docs/troubleshooting.md + content/logs/ (problem + cause + fix + commit hash).\")}'",
-            "timeout": 5
+            "command": "bash .claude/hooks/stop-check.sh",
+            "timeout": 10
           }
         ]
       }
@@ -209,11 +214,42 @@ Or save this content manually:
 }
 ```
 
-What it does: after Claude finishes a turn, this checks `git log` for any commit in the last 2 minutes. If there is one, it prints a reminder ("⚠ Recent commit: …. Log this in …") visible to you in the UI. No commit = silent.
+### What the hook does
 
-The reminder shows the commit message verbatim so Claude (and you) can verify the next log entry's fix description matches what was actually committed.
+After Claude finishes a turn, the script runs. It checks the latest commit (if any in the last 3 minutes) and decides whether to block or pass.
 
-If `.claude/` is brand new, also add it to `.gitignore` or commit it deliberately — your call. Committing makes the hook part of the repo (every machine that clones it gets the same reminder). Gitignoring keeps it local-only.
+**The five branches, in order:**
+
+1. **No recent commit (>3 min ago)** → pass silently. Avoids stale-repo false positives.
+2. **Latest commit hash already appears in `docs/troubleshooting.md` or any `content/logs/` file** → pass. The work is logged.
+3. **Positive trigger fires** → BLOCK. Three triggers, any of which is enough:
+   - LOC delta > 200 (insertions + deletions across all files)
+   - Touches sensitive paths: `lib/*storage*`, `lib/*auth*`, `lib/*hooks*`, `middleware.*`, `app/(admin)/*`, `app/api/auth/*`, `.claude/settings*`, `.claude/hooks/*`, `install/*`, `next.config*`, `package.json`, `tsconfig*`, `migrations/*`, `prisma/schema*`, `*.schema.*`
+   - Subject keywords (case-insensitive): `decision`, `architecture`, `fallback`, `audit`, `auth`, `security`, `migration`, `dispatcher`, `ADR-N`, `refactor`, `pivot`, `breaking`, `deprecat`, `hidden coupling`
+4. **`[no-log]` or `[skip-log]` in commit subject AND no trigger fired** → auto-append `<!-- skipped: <hash> <subject> -->` to `docs/troubleshooting.md`, pass.
+5. **Default** → BLOCK. Require either a full dual-write entry or a `[no-log]` tag on the commit.
+
+### Why positive triggers (v3)
+
+Earlier versions of this hook trusted the author's `[no-log]` tag. Auditing the system after five months of use revealed dozens of commits where the author had tagged `[no-log]` on changes that were genuinely non-trivial — 800-LOC admin features, 300-LOC security additions, ADR-level architecture decisions buried in `docs/`. The `[no-log]` mechanism is *necessary* (most commits really are routine), but author judgment slips, and the system has no way to catch that.
+
+The v3 hook adds positive triggers that override `[no-log]`. If a commit touches a sensitive path, exceeds 200 LOC, or carries an architecture-flavored keyword, the hook blocks the turn regardless of how the commit was framed. This is the layer that catches what author judgment misses.
+
+### False positives — the override mechanism
+
+Triggers will sometimes fire on genuinely routine commits (a 250-LOC dependency-graph cleanup, an `auth`-keyword commit that's really just a typo fix in an auth README). To unblock without a full dual-write entry, append this line to `docs/troubleshooting.md`:
+
+```
+<!-- override-trigger: <hash> <subject> — <real rationale> -->
+```
+
+The override is human-visible and the rationale must be a real sentence — "false positive" alone isn't enough; explain why this commit is routine despite the trigger. Silent overrides are deliberately blocked.
+
+If overrides become frequent, the trigger threshold or regex is wrong. Tighten or loosen it in `.claude/hooks/stop-check.sh`.
+
+### Committing the hook
+
+Commit both files to the repo deliberately. Other machines that clone get the same hook automatically.
 
 ## Step 5 — Trigger the first real entry
 
