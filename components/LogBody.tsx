@@ -18,14 +18,16 @@ export async function LogBody({
   const humanRendered = humanContent ? await renderMdx(humanContent) : null;
   const fm = entry.frontmatter;
   const hasCompanion = humanRendered !== null;
-  const containerClass = hasCompanion
-    ? "mx-auto max-w-6xl px-5 py-12"
-    : "mx-auto max-w-3xl px-5 py-12";
   const aiLabel = locale === "ko" ? "AI 버전" : "AI version";
   const humanLabel = locale === "ko" ? "직접" : "By hand";
+  const reviewLabel = locale === "ko" ? "리뷰 필요" : "Review needed";
+  const reviewHint =
+    locale === "ko"
+      ? "내 시각이 아직 안 들어간 entry."
+      : "No human review on this entry yet.";
 
   return (
-    <article className={containerClass}>
+    <article className="mx-auto max-w-6xl px-5 py-12">
       <Link
         href={localizedPath(locale, `/projects/${entry.project}`)}
         className="font-mono text-xs uppercase tracking-widest text-ink-subtle hover:text-ink"
@@ -50,6 +52,12 @@ export async function LogBody({
               <span>{humanLabel}</span>
             </>
           ) : null}
+          {!hasCompanion && !fm.handwritten ? (
+            <>
+              <span>·</span>
+              <span>{reviewLabel}</span>
+            </>
+          ) : null}
         </div>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink md:text-4xl">
           {fm.title}
@@ -59,24 +67,24 @@ export async function LogBody({
         ) : null}
       </header>
 
-      {hasCompanion ? (
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
-          <section>
-            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
-              {aiLabel}
-            </h2>
-            <div className="prose">{aiRendered}</div>
-          </section>
-          <section className="md:border-l md:border-paper-line md:pl-12">
-            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
-              {humanLabel}
-            </h2>
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
+        <section>
+          <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+            {aiLabel}
+          </h2>
+          <div className="prose">{aiRendered}</div>
+        </section>
+        <section className="md:border-l md:border-paper-line md:pl-12">
+          <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+            {hasCompanion ? humanLabel : reviewLabel}
+          </h2>
+          {hasCompanion ? (
             <div className="prose">{humanRendered}</div>
-          </section>
-        </div>
-      ) : (
-        <div className="prose">{aiRendered}</div>
-      )}
+          ) : (
+            <p className="text-sm text-ink-subtle">{reviewHint}</p>
+          )}
+        </section>
+      </div>
     </article>
   );
 }
