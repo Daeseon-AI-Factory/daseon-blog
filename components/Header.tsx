@@ -27,6 +27,9 @@ export function Header({ locale, currentPath = "/" }: { locale: Locale; currentP
           <Link href={localizedPath(locale, "/wiki")} className="hover:text-ink">
             {t(locale, "nav.wiki")}
           </Link>
+          <Link href={localizedPath(locale, "/method")} className="hover:text-ink">
+            {t(locale, "nav.method")}
+          </Link>
           <Link href={localizedPath(locale, "/now")} className="hover:text-ink">
             {t(locale, "nav.now")}
           </Link>
