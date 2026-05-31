@@ -118,12 +118,11 @@ Lives at [/method](/method).
 
 ## What's queued for the next sprint
 
-- **`kind: discussion` writer.** The kind is defined and renders correctly, but the *write* path (an admin form or CC slash command for "I just had this strategy chat, here's the summary") needs UX design. A CC slash command (`/log-chat <project>`) is the most lightweight option and probably what ships next.
 - **Activity heatmap.** Calendar view colored by entry kind. Data is already there; just needs a render.
 - **Monthly architecture snapshot ritual.** A scheduled `kind: snapshot` with `period: "YYYY-MM"` written at month boundaries, capturing what changed and what's in flight.
-- **Tier auto-detection in the Stop hook.** Currently the author types `:tier-1` / `:tier-2` in the commit subject. The hook could suggest based on positive-trigger output, but a misclassification is friction the author has to override. Deferred until I see real misclassification patterns.
 - **Global hook pattern.** When/if the workflow goes multi-machine, the factory script approach breaks. A `~/.claude/global-hooks/stop-check.sh` with each satellite's local hook `exec`ing it solves it. Deferred.
-- **Chat-capture browser/desktop helper.** Right now the `kind: discussion` writer assumes the human transcribes. A helper that exports a claude.ai conversation directly to an MDX draft would close the loop.
+- **Chat-capture browser/desktop helper.** Right now `scripts/new-discussion.sh` produces a stub that the human fills. A helper that exports a claude.ai conversation directly to an MDX draft would close the loop.
+- **Decision graph visualization.** A DAG view of `kind: decision` entries linked by `linked_decision` frontmatter. v2.
 
 ## What this isn't
 
