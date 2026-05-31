@@ -238,12 +238,15 @@ AI가 쓴 entry는 그대로 두고, 옆에 본인 시각을 **사이드바이�
 
 ### 어디
 
-기존 entry 옆 같은 이름 + `.human.mdx`:
+**항상 이 블로그 repo 안에**, 위성 repo 아님. AI 글은 위성의 개발 history, companion은 블로그 콘텐츠(그 글에 대한 본인의 관점). repo 하나만 편집하면 됨.
 
 ```
-content/logs/shadow-ai/
-├ 2026-05-23-yt-dlp-transcript-self-healing.mdx          ← AI 글 (안 건드림)
-├ 2026-05-23-yt-dlp-transcript-self-healing.human.mdx    ← 본인 글 (새로 만듦)
+daseon-blog/content/logs/shadow-ai/
+└ 2026-05-23-yt-dlp-transcript-self-healing.human.mdx   ← 본인 글 (이 repo, 새로 만듦)
+
+# AI 글은 자기 repo에 그대로:
+shadow-ai/content/logs/shadow-ai/
+└ 2026-05-23-yt-dlp-transcript-self-healing.mdx          ← 안 건드림
 ```
 
 ### 작성

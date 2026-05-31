@@ -234,12 +234,15 @@ The AI entry stays untouched; your perspective sits **side by side** with it.
 
 ### Where
 
-Same directory as the existing entry, same name + `.human.mdx`:
+**Always in this blog repo**, not in the satellite. The AI entry is satellite history; the companion is blog content (your view of it). One repo to edit, regardless of which satellite the AI entry came from.
 
 ```
-content/logs/shadow-ai/
-├ 2026-05-23-yt-dlp-transcript-self-healing.mdx          ← AI (don't touch)
-├ 2026-05-23-yt-dlp-transcript-self-healing.human.mdx    ← your take (new file)
+daseon-blog/content/logs/shadow-ai/
+└ 2026-05-23-yt-dlp-transcript-self-healing.human.mdx   ← your take (this repo, new file)
+
+# The AI entry stays in its own repo:
+shadow-ai/content/logs/shadow-ai/
+└ 2026-05-23-yt-dlp-transcript-self-healing.mdx          ← don't touch
 ```
 
 ### Writing
