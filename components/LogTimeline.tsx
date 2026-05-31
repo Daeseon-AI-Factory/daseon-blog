@@ -16,9 +16,13 @@ const KIND_COLOR: Record<LogKind, string> = {
   update: "bg-paper-line/60 text-ink",
   troubleshoot: "bg-accent/15 text-accent",
   "tech-retro": "bg-ink/8 text-ink",
+  "ux-retro": "bg-ink/8 text-ink",
+  decision: "bg-ink/10 text-ink border border-ink/20",
+  discussion: "bg-paper-line/40 text-ink-muted italic",
+  "learning-gap": "bg-accent/8 text-accent/90 italic",
   business: "bg-paper-line/60 text-ink-muted",
   monetization: "bg-paper-line/60 text-ink-muted",
-  "ux-retro": "bg-ink/8 text-ink",
+  snapshot: "bg-ink/15 text-ink font-medium",
 };
 
 export function LogTimeline({ project, entries, locale }: Props) {

@@ -4,6 +4,7 @@ import { type Locale, localizedPath } from "@/lib/i18n";
 import type { Project } from "@/lib/projects";
 import { listProjectLogs } from "@/lib/logs";
 import { LogTimeline } from "@/components/LogTimeline";
+import { ProjectStatusHeader } from "@/components/ProjectStatusHeader";
 import Link from "next/link";
 
 const STATUS_COPY = {
@@ -94,6 +95,11 @@ export async function ProjectBody({
                 ? "이 프로젝트를 만들면서 남긴 트러블슈팅 · 회고 · 업데이트의 시간순 기록."
                 : "Chronological record of troubleshooting, retros, and updates while building this."}
             </p>
+            <ProjectStatusHeader
+              project={project.slug}
+              entries={publicLogs}
+              locale={locale}
+            />
           </header>
           <LogTimeline project={project.slug} entries={publicLogs} locale={locale} />
         </section>
