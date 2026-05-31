@@ -70,6 +70,21 @@ async function readContentFile(type: ContentType, locale: Locale, fileName: stri
   const fm = data as Partial<PostFrontmatter>;
   if (!fm.title || !fm.date) return null;
 
+  // Junk-content guard: drop placeholder entries (e.g. title "asdasd" + body "asd")
+  // from public surfaces. Only kicks in for status=published AND visibility=public,
+  // so wiki/notes/drafts are unaffected. Bypass with longer title (incl. spaces)
+  // or `visibility: "unlisted"`/`"private"`.
+  const status: PostStatus = fm.status ?? "published";
+  const visibility: Visibility = (fm.visibility as Visibility) ?? defaultVisibility(type);
+  if (status === "published" && visibility === "public") {
+    const titleTrimmed = fm.title.trim();
+    const bodyTrimmed = content.trim();
+    const titleLooksLikeFiller =
+      !/\s/.test(titleTrimmed) && /^[A-Za-z0-9]{1,12}$/.test(titleTrimmed);
+    const bodyIsShort = bodyTrimmed.length < 100;
+    if (titleLooksLikeFiller && bodyIsShort) return null;
+  }
+
   const frontmatter: PostFrontmatter = {
     title: fm.title,
     description: fm.description,
