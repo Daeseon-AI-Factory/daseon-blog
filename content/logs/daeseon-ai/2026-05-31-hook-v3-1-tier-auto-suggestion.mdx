@@ -1,0 +1,36 @@
+---
+title: "Hook v3.1 — auto-suggest decision tier in block message"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "tech-retro"
+visibility: "public"
+language: "en"
+summary: "Stop hook now classifies a triggered commit as T1 or T2 and prints the matching template slot list in the block message, so the author doesn't have to remember which template fits this commit."
+tags: ["claude-code", "hook", "tier"]
+---
+
+## What I did
+
+Added a `suggested_tier` calculation to `.claude/hooks/stop-check.sh`. When a commit fires positive triggers, the hook now classifies it as Tier 1 or Tier 2 and embeds the matching template slot list directly in the block message.
+
+## Before
+
+Author had to remember which template to use. CLAUDE.md described the tier system but the hook block message only said "write a dual-write entry" — no hint about which template's slots to fill.
+
+## Change
+
+Tier rules added to the hook:
+
+- **T1** when any of: ≥2 triggers fired, LOC > 500, or subject matches "heavy" keyword (`architecture|security|monetization|migration|breaking|fallback|dispatcher|ADR-N|pivot`)
+- **T2** when only one trigger fires and none of the T1 conditions
+- **T3** when no triggers (hook doesn't block, so no message shown)
+
+The block message now includes the suggested tier's slot list verbatim so the author can copy it into the new entry.
+
+## What I left out
+
+The `:tier-1` / `:tier-2` author-override in the commit subject is still parsed by the human writing the entry — the hook doesn't enforce it yet. If misclassification turns out to be common in practice, future work would either (a) parse the override from the commit subject and use it instead of the auto-classification, or (b) tighten the heavy-keyword list. Deferred until I see real misclassification.
+
+## Commit
+
+`4842b46`

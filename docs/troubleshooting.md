@@ -221,4 +221,11 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- override-trigger: e6c6763 Publish project-log-system-v1 post (en + ko) — The post IS the live-build retrospective of the entire v1 effort. It explicitly captures Phase A/B/C narratives, decision tiers, framework citations, and honest betting. Logging the post that logs the system would be circular. -->
 <!-- skipped: 3d27740 Add /method page (en + ko) — methodology as portfolio surface -->
 <!-- skipped: e6c6763 Publish project-log-system-v1 post (en + ko) — full Phase A/B/C narrative [no-log] -->
+
+## Hook v3.1 — tier auto-suggestion (feature record)
+- **Symptom**: Block message under v3 said "write a dual-write entry" but didn't tell the author which tier template fit the commit. Author had to flip back to CLAUDE.md or the blueprint to recall slot lists.
+- **Cause**: v3 hook had no tier classification logic — tier was author-only.
+- **Fix**: Added `suggested_tier` calc to `.claude/hooks/stop-check.sh`. T1 if ≥2 triggers OR LOC>500 OR "heavy" keyword. T2 if 1 trigger. Block message now embeds the matching template slot list.
+- **Commit**: `4842b46`
+- **Pattern**: When the block message is what the author reads in the moment, surface the canonical info inline rather than linking to it. Saves a context switch.
 <!-- skipped: e3ef629 Mark 89c3e28 with override-trigger + skip — compute budget [no-log] -->
