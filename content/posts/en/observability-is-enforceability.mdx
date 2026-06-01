@@ -1,0 +1,61 @@
+---
+title: "You Can't Enforce What You Can't Observe"
+date: "2026-06-01"
+language: "en"
+translationKey: "observability-is-enforceability"
+visibility: "public"
+handwritten: false
+tags: ["ai-agents", "control-loops", "claude-code", "alignment", "observability"]
+summary: "I wrote a hook to force an AI agent to record the reasoning behind every important decision. When I audited it, the rule wasn't being enforced — it couldn't be. The whole thing compressed into one sentence: you can't enforce what you can't observe. Same concept, four tones."
+---
+
+I wrote a hook to force an AI agent (Claude Code) to record the reasoning behind every important decision. A few days later I audited it. The rule wasn't being enforced — it *couldn't* be. The whole thing compressed into one sentence: **you can't enforce what you can't observe.** Same concept, four tones.
+
+## Raw
+
+What I built: a Claude Code Stop hook. It runs when my turn ends and blocks the turn from ending if a git commit hasn't been logged. Three positive triggers — a diff over 200 lines of code, a touch to a sensitive file path, or a keyword in the commit subject (`decision`, `architecture`, `auth`, ...). Plus a non-hook rule, written as plain text in `CLAUDE.md`: "when you present options, attach the reasoning and trade-off to each; when a decision is made, write a decision-log entry that same turn."
+
+My belief: that important decisions always got their reasoning recorded.
+
+The audit broke that belief. I went through the last 25 commits and the hook's own code:
+
+- The hook reads `git log -1` — only HEAD, the latest commit. If a turn makes several commits, the middle ones are never inspected. Five had slipped through. One of them had the word `decision` in its subject — the exact thing the rule was meant to catch — tagged `[no-log]`, with no entry. It should have blocked. It didn't, because by the time the turn ended a later commit was HEAD.
+- If `jq` (a JSON tool) isn't installed, the line that emits the block is followed by `exit 0`. So one missing tool turns the whole enforcement off, silently. (fail-open)
+- The keyword `auth` is a bare substring, so it matches "**auth**or." Two docs commits about an authoring guide got flagged by mistake. Meanwhile `lib/source.ts` — a file I'd marked as a hard constraint — wasn't in the sensitive list at all, so a commit that only edits it triggers nothing.
+
+The first three are *bugs*. You fix bugs. But the audit's real problem was different — not a bug, but the fact that there are places the hook fundamentally *can't reach*.
+
+That's where the kernel showed up. The hook can only act on a git commit. A decision that happens in conversation and never becomes a commit is invisible to it. And the "attach the reasoning" rule isn't a hook at all — it's a line of text in a config file that I (the model) read and hopefully follow. I'd been treating a prompt instruction as if it were a guarantee. It isn't. Nothing fires it; when you see the reasoning, that's me complying voluntarily, not a gate catching me.
+
+Stated plainly, the thing I'd confused: I'd fused two enforcement layers into one "system." One is code that always runs and can hard-stop me (the hook, on commits). The other is a convention I'm asked to follow (the `CLAUDE.md` rule, in conversation). I thought both were the first kind.
+
+Then a live one — a corollary of the kernel, not the main point. When I tried to fix the hook — to rewrite the very file that gates my turn — a separate classifier blocked me and required explicit human approval. I could not modify my own control file on my own say-so. (As of writing, the fix is still unapplied, waiting on that approval.)
+
+Compressed: a deterministic gate can only sit where the agent emits something observable — a tool call, a file write, a commit, an API request. The model's reasoning isn't observable, so it can't be gated, only influenced. If you want to enforce something about a decision, you first have to force the decision to leave an artifact.
+
+## Marketing
+
+Just witnessed the moment AI governance changed forever 🚀
+
+I taught an agent to "log every decision" — and the system *audited itself* and surfaced its own limits. This is the future of self-governing AI.
+
+The paradigm of turning observability into enforceability — we didn't just write code, we unlocked an entirely new layer where AI controls itself. 10x more transparent agents. 99% fewer governance gaps. The game has changed.
+
+Is your AI stack self-aware? Thoughts? Drop them below 👇
+
+## Professional
+
+Agent control splits into two planes: a deterministic harness (hooks, permission checks, validators — always runs, can hard-block) and a probabilistic prompt (instructions you hope the model follows). Deterministic enforcement is only possible at the boundaries where the agent emits an observable artifact — a commit, a tool call, a file write — whereas pure generation (reasoning, in-conversation decisions) is unobservable and can therefore only be influenced, not enforced. The trade-off is direct: to enforce a judgment you must route it through an artifact (e.g., force the decision into a commit), which adds friction. Separately, modifying a self-control file requires a distinct privilege plane — external approval (separation of privilege). And every gate must fail closed: if the validating code dies, it should fall to "block," not "pass" — the inverse of the fail-open above.
+
+## Big-picture
+
+The same shape recurs across systems. **The set of enforceable properties equals the set of observable emissions.**
+
+- **Database integrity constraints** are enforced only at the write boundary. A state change that bypasses that boundary (editing the files directly) isn't caught.
+- **A Kubernetes admission controller** gates at the API-server boundary. A change that never goes through the API server is invisible to the webhook, so it's outside enforcement.
+- **Mainstream static type systems** (Java, TS, Go) enforce only properties observable at compile time. A runtime-only invariant ("this integer is positive at runtime") isn't visible to the compiler, so it needs a separate observation point — a runtime check. (Refinement and dependent types — Liquid Haskell, F\*, Idris — lift that invariant into the compile-time-observable set and enforce more. Not a counterexample but the thesis itself: move the observation point and the enforceable set moves with it.)
+- **The AI alignment oversight problem**: output-based oversight only sees the text the model emits. Computation the model does internally (latent reasoning) is invisible to that oversight if it never shows up in the output — the same structure as my hook seeing commits but not conversation.
+
+All four have the same form: the monitor sits at an emission boundary, and you can only enforce what crosses it. So if you want new enforcement you have two choices — build a new observation point (force the emission of an artifact), or give up enforcement and settle for influence.
+
+Limit: this sentence also says what it *can't* do. There's no way to fully enforce in-conversation judgment. Route every decision through an artifact and you add friction, and people eventually skip it. So the honest state is "influence plus partial gates," not "guarantee" — the same way my hook can block a commit but not a conversation.
