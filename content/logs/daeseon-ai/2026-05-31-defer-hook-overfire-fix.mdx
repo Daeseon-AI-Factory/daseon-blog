@@ -1,0 +1,78 @@
+---
+title: "Defer hook over-fire fix to v2 — accept override noise for now"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "decision"
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "Hook keyword trigger fires on commits that ARE the kind:decision artifact (recursive case). Two options: accept the per-commit override-trigger overhead, or refine the hook to detect decision-entry diffs. Chose to accept the noise for now to close v1 and learn from real usage before refining."
+tags: ["hook", "scope", "v1-close"]
+linked_decision: "2026-05-31-decision-drop-heatmap-from-v1.mdx"
+---
+
+## Context
+
+While dogfooding the v1 system, two consecutive commits hit Stop-hook blocks: `b1daa1c` (writing a Tier-2 decision entry) and `ff9f78c` (override-trigger commit referencing the prior decision). Both had "decision" in the subject, which is a keyword trigger; both were *already* doing the system's intended work (one creating the artifact, the other annotating). The trigger over-fires on its own meta-commits.
+
+This is the recursive corner case the override-trigger mechanism was designed to handle, but it now occurs *systematically* on every kind:decision commit rather than rarely.
+
+## Options considered
+
+### A. Accept the noise (chosen)
+- Cost: ~30 seconds per decision commit to add an override-trigger line
+- Value: zero code change, v1 closes
+- Reversibility: easy — can ship fix anytime later
+- Evidence: noise accumulates over time in `docs/troubleshooting.md`, but each line is human-readable and grep-able
+
+### B. Hook v3.2 — auto-exempt decision-entry diffs
+- Cost: 30-45 minutes (regex on diff to detect content/logs/<slug>/*decision*.mdx adds OR docs/troubleshooting.md-only diffs with override-trigger lines)
+- Value: permanent — keyword trigger stops over-firing on its own meta-commits
+- Reversibility: easy — code change in `.claude/hooks/stop-check.sh`, can revert
+- Evidence: two recursive blocks in one session indicate this is a non-trivial pattern, not a rare edge case
+
+### C. Drop "decision" from the keyword regex
+- Cost: 0
+- Value: stops over-firing, but also stops trigger from firing on genuine decision-starting commits that don't include a decision entry
+- Reversibility: easy
+- Evidence: weakens trigger sensitivity in exchange for noise reduction — wrong trade
+
+### D. Naming convention — avoid "decision" in decision-commit subjects
+- Cost: 0
+- Value: works but pollutes grep semantics (can't find decision commits by subject keyword anymore)
+- Reversibility: easy
+- Evidence: fragile, requires author discipline rather than system enforcement
+
+## Chosen + Why
+
+**A — accept the noise.**
+
+The author explicitly wants v1 closed and the system used before adding more refinement. Building option B without first observing real usage patterns risks designing the fix against an assumed pattern instead of an observed one. Two recursive blocks in one session is suggestive but not yet sufficient evidence — if it happens 20 more times across a week of actual decision authoring, the case for B becomes strong. If it only happens twice more, the override overhead is acceptable.
+
+## Trade-off accepted
+
+- Noise in `docs/troubleshooting.md` will accumulate over time
+- Per-decision commit overhead of ~30 seconds for the override line
+- Audit difficulty rises slightly as override lines mix with genuine false-positive overrides
+
+## Reversibility
+
+`two-way`. The fix (option B) is a small isolated change to the hook script. Can be shipped at any time without touching anything else. The hook's modular design makes this trivial.
+
+## Decision criteria to flip (when to revisit)
+
+- If override-trigger lines exceed 10 instances in `docs/troubleshooting.md` within a month → ship option B
+- If a single audit pass spends more than 5 minutes filtering override-trigger noise → ship option B
+- If recruiter feedback indicates the audit trail looks cluttered → ship option B
+
+## Verified by
+
+- Two live dogfood incidents in the same session (b1daa1c, ff9f78c) confirmed the pattern is real, not theoretical
+- Conversation with the author confirmed the v1-close preference over additional refinement
+- The override-trigger mechanism is itself proof that the corner case is handle-able without code change
+
+## Commit
+
+This entry is the artifact. No code change — the decision is the "do nothing" outcome.
