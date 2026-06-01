@@ -1,0 +1,78 @@
+---
+title: "Decision — drop activity heatmap from v1 scope"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "decision"
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "Activity heatmap (calendar grid colored by entry kind) was in the v1 plan but dropped after evaluation. Status header carries the bulk of the portfolio signal; heatmap is self-reflection tooling that does not need to be public-surface."
+tags: ["scope", "v1", "visualization"]
+linked_decision: "2026-05-31-log-system-spec-revisions-a-through-d.mdx"
+---
+
+## Context
+
+v1 plan included a 13th criterion: an activity heatmap on `/projects/<slug>` showing calendar-style density colored by entry kind. After completing the status header and judgment-kind counts, the user asked specifically why the heatmap is needed.
+
+## Options considered
+
+### A. Public heatmap on `/projects/<slug>` (original v1 plan)
+- Public-facing calendar grid, kind-colored, interactive tooltip
+- Cost: 4-6 hours (SVG/Canvas viz + tooltip + mobile responsive)
+- Value: would give recruiters a visual at-a-glance density signal; secondary signal for self-reflection
+- Reversibility: easy
+
+### B. Admin-only heatmap on `/admin/heatmap`
+- Same viz but gated behind admin auth
+- Cost: 2-3 hours (no mobile/marketing polish needed)
+- Value: self-reflection tool only; portfolio surface unaffected
+- Reversibility: easy
+
+### C. Skip entirely (chosen)
+- No heatmap at all
+- Cost: 0
+- Value: nothing visible, but status header already carries the portfolio signal — the *judgment-layer counts* (decisions / discussions / learning-gaps) are the differentiating numbers, not entry frequency
+- Reversibility: easy — can add later
+
+### D. Different temporal view (timeline strip with kind markers)
+- Linear strip instead of calendar grid
+- Cost: 3-4 hours
+- Value: marginal over status header
+- Reversibility: easy
+
+## Chosen + Why
+
+**C — skip entirely.**
+
+The recruiter-facing portfolio signal is *judgment artifact density*, not commit frequency. Status header already shows `N decisions · M discussions · K learning-gaps` which is the actual differentiator. A heatmap adds visual chrome but no new signal.
+
+For self-reflection (when did I crank, when did I burn out), the user said it was not a primary use case. Heatmap as admin-only tool (option B) is defensible but mid-priority compared to forming the `.human.mdx` annotation habit and writing first real Tier-1 decision entries.
+
+## Trade-off accepted
+
+- No visual density indicator on project pages — recruiters with no patience for reading entries don't get the at-a-glance graphic
+- Loss of self-reflection "when was I most active" surface — must fall back to `git log` if curious
+- v1 ships with 12 criteria fully done instead of 13 partially done
+
+## Reversibility
+
+`two-way`. The underlying log data already supports the visualization. Adding a heatmap later is a pure UI task with no schema or data-layer dependencies.
+
+## Verified by
+
+- Conversation in this session: user explicitly questioned whether heatmap was needed
+- Audit data: status header counts (decision / discussion / learning-gap) emerged as the differentiating portfolio signal; heatmap is secondary
+- Compared to other v1 items: heatmap was the only criterion explicitly deferrable without breaking the system
+
+## Decision criteria to flip (when to add it back)
+
+- If 1 month of usage shows user repeatedly asking "when was I most active" — admin-only heatmap (option B) becomes worth shipping
+- If recruiter feedback indicates the project pages feel "text-heavy" — public heatmap (option A) worth reconsidering
+- If a v2 sprint has slack capacity (4-6 hours unallocated) — easy add
+
+## Commit
+
+This entry is the artifact. The decision is content, not code — no implementation change accompanies it.
