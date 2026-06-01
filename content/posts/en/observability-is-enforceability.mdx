@@ -5,57 +5,94 @@ language: "en"
 translationKey: "observability-is-enforceability"
 visibility: "public"
 handwritten: false
-tags: ["ai-agents", "control-loops", "claude-code", "alignment", "observability"]
-summary: "I wrote a hook to force an AI agent to record the reasoning behind every important decision. When I audited it, the rule wasn't being enforced — it couldn't be. The whole thing compressed into one sentence: you can't enforce what you can't observe. Same concept, four tones."
+tags: ["ai-agents", "control-loops", "claude-code", "backend", "observability"]
+summary: "I gave an AI coding assistant a rule: always record why you made each important decision. A few days later I checked — it wasn't being enforced, and it was the kind of thing that couldn't be. Written for someone with zero AI-engineering background, bridged to backend primitives (DB constraints, middleware, IAM), start to finish."
 ---
 
-I wrote a hook to force an AI agent (Claude Code) to record the reasoning behind every important decision. A few days later I audited it. The rule wasn't being enforced — it *couldn't* be. The whole thing compressed into one sentence: **you can't enforce what you can't observe.** Same concept, four tones.
+I gave an AI coding assistant a rule: "when you make an important decision, always record why." I was sure it was enforced. A few days later I checked — it wasn't, and it was the kind of thing that *couldn't* be. You can't enforce what you can't observe.
 
-## Raw
+This is written so you can follow it with zero AI-engineering background. I'll lay down each concept with a backend analogy as it comes up. Read it in order.
 
-What I built: a Claude Code Stop hook. It runs when my turn ends and blocks the turn from ending if a git commit hasn't been logged. Three positive triggers — a diff over 200 lines of code, a touch to a sensitive file path, or a keyword in the commit subject (`decision`, `architecture`, `auth`, ...). Plus a non-hook rule, written as plain text in `CLAUDE.md`: "when you present options, attach the reasoning and trade-off to each; when a decision is made, write a decision-log entry that same turn."
+## 0. First, what an AI agent actually is (in backend terms)
+
+Four terms, then we start.
+
+- **AI agent** = a large language model (LLM) put in a loop. You send one message; it repeats *think → act → look at the result → think again* on its own until the work is done, then stops. That "one message until it stops" is one **turn**. In backend terms: a worker that takes a request and loops until it's fully processed.
+- **tool / tool call** = the *only* channel the agent has to touch the outside world. Here's the key thing: **the model only ever emits tokens (text).** That's all it does. Some of that text is a *tool-call request* ("run this command," "write this file"), and the thing that reads the request and actually performs the I/O (writing files, shell commands, git commits) is not the model but the **harness**. Backend analogy: a pure function can't touch disk or network itself — it just asks the runtime to, and the runtime does it. So the model's *thinking* and its *tool-call requests* are both just text it emitted; the difference is which of them the harness acts on. **Remember this — it's the spine of the whole post.**
+- **hook** = a script that runs automatically on a specific event. Like a git pre-commit hook, a DB trigger, a webhook. The **Stop hook** here runs the moment the agent tries to end its turn. If it says "no," the agent can't stop and has to keep working.
+- **system prompt / `CLAUDE.md`** = the standing instruction text the agent reads every turn. In backend terms: a config file plus a team-convention doc. The important part: it's **text, not code** — it doesn't execute and block anything; the agent reads it and is *asked* to follow it.
+
+One more bit of the big picture. There are exactly two ways to control an agent:
+
+1. **harness** — *code* like hooks and permission checks. Always runs, can actually block (hard-block).
+2. **prompt** — *text* like `CLAUDE.md`. Asks the agent to comply; no enforcement.
+
+Don't confuse the two. I did, and that's where this starts.
+
+## 1. What I built
+
+Two things, so the reasoning behind a decision always survives:
+
+- **Stop hook (code = harness)**: when I make a git commit and try to end the turn, it checks whether that commit was recorded in a separate log file (where you write down *why* you did it). If not, it blocks the turn and says "go write the log." Triggers, for example: the diff is over 200 lines, a sensitive file was touched, or the commit subject contains a word like `decision`.
+- **`CLAUDE.md` rule (text = prompt)**: "when you present options, attach the reasoning and trade-off to each; when you make a decision, write a decision log that same turn."
 
 My belief: that important decisions always got their reasoning recorded.
 
-The audit broke that belief. I went through the last 25 commits and the hook's own code:
+## 2. The audit
 
-- The hook reads `git log -1` — only HEAD, the latest commit. If a turn makes several commits, the middle ones are never inspected. Five had slipped through. One of them had the word `decision` in its subject — the exact thing the rule was meant to catch — tagged `[no-log]`, with no entry. It should have blocked. It didn't, because by the time the turn ended a later commit was HEAD.
-- If `jq` (a JSON tool) isn't installed, the line that emits the block is followed by `exit 0`. So one missing tool turns the whole enforcement off, silently. (fail-open)
-- The keyword `auth` is a bare substring, so it matches "**auth**or." Two docs commits about an authoring guide got flagged by mistake. Meanwhile `lib/source.ts` — a file I'd marked as a hard constraint — wasn't in the sensitive list at all, so a commit that only edits it triggers nothing.
+A few days later I dug through recent commits and the hook's own code. A few bugs first — and to say it up front, these *aren't* the point; fixing every one of them leaves the real problem untouched, so skim them:
 
-The first three are *bugs*. You fix bugs. But the audit's real problem was different — not a bug, but the fact that there are places the hook fundamentally *can't reach*.
+- The hook only looks at the single latest commit. Make several commits in one turn and the middle ones go unchecked → a few slipped past.
+- If one JSON tool (`jq`) isn't installed, the blocking code just falls through to "pass" → one missing tool turns the whole thing off.
+- The keyword `auth` is a fragment, so it matches "**auth**or" → the wrong posts get blocked.
 
-That's where the kernel showed up. The hook can only act on a git commit. A decision that happens in conversation and never becomes a commit is invisible to it. And the "attach the reasoning" rule isn't a hook at all — it's a line of text in a config file that I (the model) read and hopefully follow. I'd been treating a prompt instruction as if it were a guarantee. It isn't. Nothing fires it; when you see the reasoning, that's me complying voluntarily, not a gate catching me.
+Those are *bugs*. You fix bugs. But the real problem the audit found was different — not a bug, but the fact that there are places the hook fundamentally *can't reach*.
 
-Stated plainly, the thing I'd confused: I'd fused two enforcement layers into one "system." One is code that always runs and can hard-stop me (the hook, on commits). The other is a convention I'm asked to follow (the `CLAUDE.md` rule, in conversation). I thought both were the first kind.
+The hook only acts on a git commit. If I make a decision purely in conversation and never commit it, the hook can't see it. And the "attach the reasoning" rule wasn't a hook at all — it was text in `CLAUDE.md`. Not something stopping me; something I'm *asked* to follow. I'd been mistaking a request for a guarantee. When you saw options with reasoning attached, that wasn't code catching me — it was me complying.
 
-Then a live one — a corollary of the kernel, not the main point. When I tried to fix the hook — to rewrite the very file that gates my turn — a separate classifier blocked me and required explicit human approval. I could not modify my own control file on my own say-so. (As of writing, the fix is still unapplied, waiting on that approval.)
+## 3. The core — why "can't observe = can't enforce" (with a DB)
 
-Compressed: a deterministic gate can only sit where the agent emits something observable — a tool call, a file write, a commit, an API request. The model's reasoning isn't observable, so it can't be gated, only influenced. If you want to enforce something about a decision, you first have to force the decision to leave an artifact.
+This is the whole thing, in something you use every day.
 
-## Marketing
+A DB `NOT NULL` constraint. Someone tries to insert a null; the DB *sees* that write and rejects it. Why can it? Because **every write has to go through the DB.** The DB is a checkpoint sitting on the path.
 
-Just witnessed the moment AI governance changed forever 🚀
+"Users shouldn't share passwords," on the other hand, a DB can't enforce. It never *sees* the sharing. All you can do is put it in a policy doc and hope. **No checkpoint (no observation point) = no enforcement.** That's the title, literally.
 
-I taught an agent to "log every decision" — and the system *audited itself* and surfaced its own limits. This is the future of self-governing AI.
+Middleware is the same. API validation middleware filters because every request passes through it. But if some code writes to the DB without going through the middleware? Not caught. **Only what passes the checkpoint is enforced.**
 
-The paradigm of turning observability into enforceability — we didn't just write code, we unlocked an entirely new layer where AI controls itself. 10x more transparent agents. 99% fewer governance gaps. The game has changed.
+Now map it onto the AI:
 
-Is your AI stack self-aware? Thoughts? Drop them below 👇
+- I make a git commit = a write arrives at the DB. The hook sits on that path and checks it → "log your commits" **is enforced.**
+- I decide purely in conversation = an action that doesn't pass any checkpoint. The hook can't see it → "attach reasoning to decisions" is just like the no-password-sharing rule. **A request, not enforcement.**
 
-## Professional
+You might balk here — doesn't conversation text also leave the model? It does. But the checkpoint, the hook, looks *only* at git commits. Conversation doesn't pass through it. So from an enforcement standpoint, a decision made only in conversation is just as invisible as a private thought — it doesn't cross the checkpoint.
 
-Agent control splits into two planes: a deterministic harness (hooks, permission checks, validators — always runs, can hard-block) and a probabilistic prompt (instructions you hope the model follows). Deterministic enforcement is only possible at the boundaries where the agent emits an observable artifact — a commit, a tool call, a file write — whereas pure generation (reasoning, in-conversation decisions) is unobservable and can therefore only be influenced, not enforced. The trade-off is direct: to enforce a judgment you must route it through an artifact (e.g., force the decision into a commit), which adds friction. Separately, modifying a self-control file requires a distinct privilege plane — external approval (separation of privilege). And every gate must fail closed: if the validating code dies, it should fall to "block," not "pass" — the inverse of the fail-open above.
+Compressed: **the set of things you can enforce = the set of things that cross a checkpoint (that are observable).** The checkpoint (the hook) only sees commits; everything else — private reasoning or conversation text — doesn't cross it, so it's out of reach. Which puts the most important thing, *judgment*, exactly where it's hardest to enforce.
 
-## Big-picture
+## 4. A side note — you can't fix yourself
 
-The same shape recurs across systems. **The set of enforceable properties equals the set of observable emissions.**
+I tried to improve this hook by rewriting the very file that gates my turn. I got blocked — not by my hook, but by a **permission step in the harness** (the layer that decides which actions need human sign-off; another checkpoint, in the §0 sense) that stopped and said "editing a control file needs the human's explicit approval." I can't change my own control file on my own call.
 
-- **Database integrity constraints** are enforced only at the write boundary. A state change that bypasses that boundary (editing the files directly) isn't caught.
-- **A Kubernetes admission controller** gates at the API-server boundary. A change that never goes through the API server is invisible to the webhook, so it's outside enforcement.
-- **Mainstream static type systems** (Java, TS, Go) enforce only properties observable at compile time. A runtime-only invariant ("this integer is positive at runtime") isn't visible to the compiler, so it needs a separate observation point — a runtime check. (Refinement and dependent types — Liquid Haskell, F\*, Idris — lift that invariant into the compile-time-observable set and enforce more. Not a counterexample but the thesis itself: move the observation point and the enforceable set moves with it.)
-- **The AI alignment oversight problem**: output-based oversight only sees the text the model emits. Computation the model does internally (latent reasoning) is invisible to that oversight if it never shows up in the output — the same structure as my hook seeing commits but not conversation.
+It's a principle backend already has: a service can't grant itself its own IAM permissions; you can't merge your own PR (four-eyes). **The side being checked can't also be the checker.** So an outside human's approval is required. (Which is why this fix is still unapplied as I write — waiting on that approval.)
 
-All four have the same form: the monitor sits at an emission boundary, and you can only enforce what crosses it. So if you want new enforcement you have two choices — build a new observation point (force the emission of an artifact), or give up enforcement and settle for influence.
+## 5. Where else it shows up
 
-Limit: this sentence also says what it *can't* do. There's no way to fully enforce in-conversation judgment. Route every decision through an artifact and you add friction, and people eventually skip it. So the honest state is "influence plus partial gates," not "guarantee" — the same way my hook can block a commit but not a conversation.
+The same shape recurs. **Enforceable = observable.** From your world first:
+
+- **DB constraints**: only at the write path. Bypass the path (edit the files directly) and it isn't caught.
+- **API middleware / gateway**: only when the request passes through. Doesn't pass = can't block.
+- **IAM / separation of privilege**: the act of granting a permission lives on a separate control plane.
+
+Further afield (skip it and the post still stands):
+
+- **Static type systems**: enforce only what the compiler can see. A value that only shows up at runtime is invisible to the compiler, so it needs a separate checkpoint — a runtime check.
+- **The alignment oversight problem**: oversight that only reads the output can't see computation the model did internally if it never surfaces in the output → it can't constrain it. The same structure as my hook seeing commits but not conversation.
+
+## 6. Conclusion, and the limit
+
+Want new enforcement? There are only two roads:
+
+1. **Build a new checkpoint** — force the action to leave an observable artifact (a commit, a file, a tool call). E.g., make every decision get committed.
+2. **Give up enforcement and settle for influence** — ask in text and hope.
+
+And the limit is real: there's no way to *fully* enforce in-conversation judgment. Route every decision through a commit and the friction climbs and people skip it. So the honest state isn't "guarantee," it's **"partial checkpoints plus requests"** — the way my hook can block a commit but never a conversation.
