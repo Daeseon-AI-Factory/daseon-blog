@@ -1,0 +1,120 @@
+---
+title: "Close v1 of the project-log system — safety boundary codified"
+date: "2026-05-31"
+project: "daeseon-ai"
+kind: "decision"
+tier: "1"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "v1 of the project-log system is shipped — 11 of 13 criteria fully done (1 dropped: heatmap; 1 user-state-blocked: 2 satellite hook upgrades pending dirty-tree cleanup). Author committed to a stronger safety boundary: the log system must never affect a satellite project's primary work. Codifies the boundaries the system already has and forbids future changes that violate them."
+tags: ["v1", "milestone", "safety", "boundary"]
+linked_decision: "2026-05-31-defer-hook-overfire-fix.mdx"
+---
+
+## Context & constraints
+
+The 48-hour v1 sprint reached 11 of 13 explicit criteria: positive-trigger hook, propagation script, skip-marker sync, 5 architecture overviews, 6 audit backfills, status header with judgment-layer counts, new `decision` / `discussion` / `learning-gap` / `snapshot` kinds, tier auto-detection (hook v3.1), `/method` page, bilingual posts, and discussion writer script. Heatmap was explicitly dropped after evaluation. Satellite hook propagation reached 2 of 4 — the remaining 2 are blocked by the author's in-flight work in those repos, recoverable in one command once those trees are clean.
+
+During the sprint the author voiced a stronger constraint than initially codified: the log system, when adopted into a satellite project, must *never* affect that project's primary work. Surprise side-effects on satellite repos are unacceptable. This was a reaction to incidents where the log-system tooling touched satellite repos in ways the author had not fully understood at the moment.
+
+## Goals (ranked)
+
+1. Close v1 cleanly so the system can be used and observed under real conditions before any v2 work
+2. Make explicit and permanent the safety boundary: log system can never disrupt host project's primary work
+3. Preserve a clear v2 entry point — the deferred items (chat-capture writer, decision-entry diff exemption in hook, heatmap reconsideration) stay queued, not lost
+4. Record the close itself as a Tier-1 artifact so the milestone is grep-able later
+
+## Options considered
+
+### A. Close v1 here and stop (chosen)
+- Cost: 0 additional code; one Tier-1 entry to record the close
+- Reversibility: easy — v1.x patches anytime
+- Risk: leaves 2 satellite hook upgrades and 1 untouched architecture overview pending — but those are blocked by author's in-flight work, not by code
+- Evidence: 11 of 13 done; the remaining is user-state, not system-state
+
+### B. Push for 13 of 13 by waiting on author to clean dirty satellite trees, then re-running propagation
+- Cost: author has to commit/stash in-flight work in two satellites, then run two scripts
+- Reversibility: trivial
+- Risk: pushes the close-out into a multi-step user dependency; author has expressed end-of-energy
+- Evidence: scripts are idempotent and tested
+
+### C. Continue to v2 immediately (chat-capture writer)
+- Cost: 3-5 additional hours of authoring
+- Reversibility: easy
+- Risk: builds new infrastructure on top of an untested v1 — assumes the v1 usage patterns will validate v2 design
+- Evidence: counter — the entire v1 has not yet been used through a single real-world week
+
+### D. Continue to v2 (smaller: monthly snapshot template + cadence)
+- Cost: ~1 hour
+- Reversibility: easy
+- Risk: smaller version of C's risk — still adds infrastructure before observing usage
+- Evidence: monthly snapshot requires habit, not code
+
+## Chosen + Why
+
+**A — close v1 here.**
+
+The system needs *usage testing* before more refinement. Two recursive hook over-fires occurred in a single session, which the author chose to leave unfixed (see `2026-05-31-defer-hook-overfire-fix.mdx`) — exactly because the right answer requires observing how often the pattern arises in real authoring. Adding chat-capture or monthly-snapshot tooling before learning whether the v1 habits form risks designing v2 against assumed patterns instead of observed ones. Better to close, use, then refine.
+
+The safety boundary is codified now (see "Safety boundary" section below) so that any future v1.x or v2 work is bound by it.
+
+## Safety boundary (constraint, not optional)
+
+**The log system MUST NOT affect a satellite project's primary work.** Concrete properties this implies:
+
+1. **Stop hook is local to its own repo.** It cannot reach across repos, cannot trigger remote actions, cannot block work in a different repo.
+2. **Stop hook acts at turn end on the latest commit only.** It does not interrupt mid-work; the author always has a chance to finish the in-progress commit before the hook applies.
+3. **Cross-repo aggregation is read-only.** The hub pulls satellite logs via GitHub Contents API + ISR cache. It never writes back.
+4. **Propagation/sync scripts skip dirty satellites.** `propagate-hook.sh` and `sync-skip-markers.sh` both check working tree state and skip if dirty. They never stash or overwrite user work.
+5. **No scheduled jobs, no CI, no webhooks.** The system has no background process that touches satellites without explicit author invocation.
+6. **No autonomous commits to satellite repos from outside.** Claude Code, when running in the hub, will not commit to a satellite repo without an explicit instruction to do so. When running in a satellite, it acts only on that satellite per its own Stop hook.
+7. **If a script touches a satellite at the author's invocation, the author sees and approves the commit message before push.** No silent pushes from automation. Scripts log every action.
+
+Any future v1.x or v2 change that violates these properties requires its own Tier-1 decision entry justifying the violation.
+
+## Trade-off accepted
+
+- 2 satellites (`ddalkkak`, `meta-smart-glass`) remain on the pre-v3 hook until the author cleans their working trees. The system advertised "11 of 13" as "v1 closed" rather than waiting for 13 of 13.
+- The deferred items (chat-capture writer, decision-entry diff exemption, heatmap) sit as v2 candidates without committed schedules.
+- The safety boundary's wording makes some future automations harder to justify — but that's by design.
+
+## Pre-mortem (6 months out)
+
+1. **Failure: `.human.mdx` annotation habit never forms.** The author never sits down for a weekly annotation pass. "REVIEW NEEDED" placeholders accumulate forever as noise. The dual-author premise of the system breaks. Mitigation: weekly calendar block; if it doesn't stick, revisit whether the surface even makes sense.
+2. **Failure: hook over-fires drive author to disable triggers entirely.** If the recursive false-positives compound and the author starts overriding habitually, the trigger loses meaning. Mitigation: option B from the prior deferral decision (`6008575`) — ship hook v3.2 to auto-exempt decision-entry diffs. Threshold to act: 10+ recursive overrides in any single month, or visible audit-trail clutter.
+3. **Failure: safety boundary gets violated by a "small convenience" automation that seems harmless at the time.** Drift. Mitigation: any change that touches satellites without explicit author invocation must produce a Tier-1 entry against this safety boundary — process discipline.
+
+## Decision criteria to flip (when to revisit v1 close)
+
+- After 1 month of real usage: if `.human.mdx` annotation rate stays below 10% of entries, dual-author surface needs redesign (not just discipline)
+- After 1 month: if the hook over-fire override line count exceeds 10 in `docs/troubleshooting.md`, ship hook v3.2
+- After any safety-boundary violation event: a Tier-1 audit entry must justify the violation and restore the boundary
+
+## Success measure
+
+- 1 month: 3+ real (non-backfilled) Tier-1 decision entries written
+- 1 month: 5+ `.human.mdx` annotations completed (any project)
+- 1 month: 0 safety-boundary violation events
+- 1 month: 1+ learning-gap entry written contemporaneously (not in a backfill batch)
+
+## Reversal plan
+
+If the author concludes the system itself is wrong (not just unfinished), reversal is straightforward:
+
+1. Delete `.claude/hooks/stop-check.sh` and the Stop entry in `.claude/settings.json` in each repo. No code change needed elsewhere.
+2. The MDX log entries themselves stay readable as static content; they remain valuable as records even if the enforcement system is removed.
+3. The blueprint doc (`docs/project-log-system-v1-blueprint.md`) becomes the historical record of the attempt.
+4. Estimated time to revert: under 1 hour.
+
+## Verified by
+
+- 11 of 13 v1 criteria shipped to `main` and live on production (`daseon.ai`)
+- 4 Tier-1 / Tier-2 decision entries chained via `linked_decision` form the visible audit trail of this session's work
+- Two consecutive Stop-hook fires in the same session confirmed the enforcement layer is real
+- Safety boundary is codified above as a Tier-1 artifact — the next change that violates any of the 7 properties must produce its own Tier-1 entry to justify
+
+## Commit
+
+This entry is the milestone artifact. No code change accompanies it.
