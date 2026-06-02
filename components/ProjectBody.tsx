@@ -3,6 +3,7 @@ import { formatDate } from "@/lib/format";
 import { type Locale, localizedPath } from "@/lib/i18n";
 import type { Project } from "@/lib/projects";
 import { listProjectLogs } from "@/lib/logs";
+import { hasProjectReadme } from "@/lib/readme";
 import { LogTimeline } from "@/components/LogTimeline";
 import { ProjectStatusHeader } from "@/components/ProjectStatusHeader";
 import Link from "next/link";
@@ -25,6 +26,7 @@ export async function ProjectBody({
   const fm = project.frontmatter;
   const allLogs = await listProjectLogs(project.slug, fm.logSourceRepo, locale);
   const publicLogs = allLogs.filter((e) => e.frontmatter.visibility === "public");
+  const readmeExists = await hasProjectReadme(project.slug, locale);
   return (
     <article className="mx-auto max-w-3xl px-5 py-12">
       <header className="mb-10">
@@ -55,6 +57,14 @@ export async function ProjectBody({
             >
               GitHub ↗
             </a>
+          ) : null}
+          {readmeExists ? (
+            <Link
+              href={localizedPath(locale, `/projects/${project.slug}/readme`)}
+              className="rounded-md border border-paper-line bg-white px-3 py-1.5 text-ink hover:border-accent"
+            >
+              {locale === "ko" ? "전체 README →" : "Full README →"}
+            </Link>
           ) : null}
           {translation ? (
             <Link
