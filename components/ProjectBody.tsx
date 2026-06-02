@@ -22,7 +22,7 @@ export async function ProjectBody({
   locale: Locale;
 }) {
   const fm = project.frontmatter;
-  const allLogs = await listProjectLogs(project.slug, fm.logSourceRepo, locale);
+  const allLogs = await listProjectLogs(fm.logSourceDir ?? project.slug, fm.logSourceRepo, locale);
   const publicLogs = allLogs.filter((e) => e.frontmatter.visibility === "public");
   const readmeExists = await hasProjectReadme(project.slug, locale);
   return (

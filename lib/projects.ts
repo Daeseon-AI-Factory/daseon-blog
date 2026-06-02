@@ -22,6 +22,12 @@ export type ProjectFrontmatter = {
    * keep its own dual-write log in its own repo while the blog aggregates.
    */
   logSourceRepo?: string;
+  /**
+   * Directory name inside the satellite repo's content/logs/ to read from.
+   * Defaults to the project slug. Set this when the satellite stores its logs
+   * under a name that differs from the blog slug (slug != reponame != logdir).
+   */
+  logSourceDir?: string;
   tags?: string[];
   stack?: string[];
   role?: string;
@@ -67,6 +73,7 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
     repo: fm.repo,
     image: fm.image,
     logSourceRepo: fm.logSourceRepo,
+    logSourceDir: fm.logSourceDir,
     tags: fm.tags,
     stack: fm.stack,
     role: fm.role,

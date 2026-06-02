@@ -9,15 +9,18 @@ import { SITE } from "@/lib/site";
 
 type Params = Promise<{ slug: string; entry: string }>;
 
-async function resolveLogSourceRepo(slug: string): Promise<string | undefined> {
+async function resolveLogSource(slug: string): Promise<{ repo?: string; dir: string }> {
   const project = (await getProject("ko", slug)) ?? (await getProject("en", slug));
-  return project?.frontmatter.logSourceRepo;
+  return {
+    repo: project?.frontmatter.logSourceRepo,
+    dir: project?.frontmatter.logSourceDir ?? slug,
+  };
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug, entry } = await params;
-  const sourceRepo = await resolveLogSourceRepo(slug);
-  const log = await getProjectLog(slug, entry, sourceRepo);
+  const { repo, dir } = await resolveLogSource(slug);
+  const log = await getProjectLog(dir, entry, repo);
   if (!log) return {};
   if (log.frontmatter.visibility === "private") return { robots: { index: false, follow: false } };
   return {
@@ -30,8 +33,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ProjectLogEntryKO({ params }: { params: Params }) {
   const { slug, entry } = await params;
-  const sourceRepo = await resolveLogSourceRepo(slug);
-  const log = await getProjectLog(slug, entry, sourceRepo);
+  const { repo, dir } = await resolveLogSource(slug);
+  const log = await getProjectLog(dir, entry, repo);
   if (!log) notFound();
   if (log.frontmatter.visibility === "private") notFound();
   const humanContent = await getHumanCompanion(slug, entry);
