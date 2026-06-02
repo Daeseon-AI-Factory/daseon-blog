@@ -19,9 +19,9 @@ export function PostList({ posts, locale }: { posts: Post[]; locale: Locale }) {
             <h2 className="text-base font-medium text-ink group-hover:text-accent md:text-lg">
               {post.frontmatter.title}
             </h2>
-            {post.frontmatter.description ? (
+            {post.frontmatter.description ?? post.frontmatter.summary ? (
               <p className="mt-1 text-sm text-ink-muted">
-                {post.frontmatter.description}
+                {post.frontmatter.description ?? post.frontmatter.summary}
               </p>
             ) : null}
             <div className="mt-2 flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-ink-subtle">
