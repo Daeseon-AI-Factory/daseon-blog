@@ -1,6 +1,6 @@
 ---
 title: "Mimi"
-description: "Mimi — YouTube 영상에서 클립 따고 AI 분석 받고 SM-2 간격 반복으로 복습하는 영어 쉐도잉 도구. 개발자와 지식노동자용."
+description: "YouTube 영상 아무거나 간격반복 영어 쉐도잉으로 바꾸고, 저절로는 안 나오는 문장 패턴·콜로케이션·전치사를 매일 드릴로 굳히는 풀스택 영어 학습 앱. Java/Spring + Next.js, 1인 개발."
 date: "2026-05-23"
 language: "ko"
 translationKey: "shadow-ai"
@@ -9,36 +9,33 @@ featured: true
 url: "https://mimi.daeseon.ai"
 logSourceRepo: "Daeseon-AI-Factory/shadow-ai"
 tags: ["english-learning", "shadowing", "youtube", "srs", "ai"]
-stack: ["Java 21", "Spring Boot 3.3", "PostgreSQL", "Next.js 16", "TypeScript", "Tailwind 4", "Claude Haiku"]
-role: "Solo"
+stack: ["Java 21", "Spring Boot 3.3", "PostgreSQL 16", "Next.js 16", "TypeScript", "Gemini / Claude", "AWS ECS"]
+role: "Solo (Claude Code 페어 프로그래밍)"
 ---
 
-YouTube 클립 마이너 + 쉐도잉 트레이너. YouTube URL 붙여넣으면 자막/메타데이터 자동 추출, 자막 더블클릭 또는 수동으로 시작/끝 마커 찍어서 자유롭게 클립 자르고, 태그/덱/SM-2 간격 반복이 있는 개인 라이브러리에 모음.
+영어 문서는 하루 종일 읽는데 막상 *말하거나 쓰려*면 굳는 개발자를 위한 풀스택 영어 학습 앱. Java 21 / Spring Boot API + Next.js / TypeScript 프론트엔드. 핵심은 기능 수가 아니라 마찰 제거 — 이미 소비하는 입력(YouTube)을 피하던 출력 연습으로 바꾼다.
 
-## 무엇을 하는가
+## 서로 먹여주는 두 반쪽
 
-- **임포트**: YouTube URL → `yt-dlp`로 자막+메타데이터 추출. Idempotent self-healing — 다시 임포트하면 일시적 실패 자동 복구.
-- **클립**: 자막 더블클릭 또는 수동 시작/끝. 0.5~1.5x 속도로 무한반복.
-- **라이브러리**: 이름/자막 검색, 태그 필터, 정렬, JSON 내보내기.
-- **AI 분석**: 클립당 Claude Haiku 한 번 호출 (맥락/문법/표현/어휘) → Postgres JSONB에 캐싱. 클립당 평생 LLM 호출 1회.
-- **녹음 + A/B**: MediaRecorder → 업로드 → 원본과 본인 녹음 교차 재생, 시간순 누적.
-- **복습**: SM-2 알고리즘 (Anki식 Again/Hard/Good/Easy), 연속 일수 위젯, 덱 필터.
-- **큐레이션 콘텐츠**: 신규 사용자가 즉시 시작할 수 있는 시작용 영상 컬렉션 (`curated-videos.yml`) 포함.
-- **5개 언어**: next-intl path-based 라우팅 (en 기본 + ko / ja / zh / es).
+- **YouTube 쉐도잉.** URL 붙여넣고 자막 구간을 클립하면, LLM 한 번 호출로 번역 + 직독직해(단어별) + 어휘 + 전치사별 노트 + 연습 시나리오가 돌아와 Postgres JSONB에 캐싱 — 공부할 때마다 API 재과금 없음. SM-2 간격반복이 클립마다 일정을 잡고, 복습은 reveal / write(토큰 단위 diff) / scenario 모드.
+- **Practice hub.** 매일 Leitner 간격 드릴 — 문장 패턴 82개, 단어+전치사 콜로케이션 101개, 애니메이션 전치사 다이어그램, AI 작문 첨삭, 그리고 본인 오답 데이터로 만든 약점 대시보드.
 
 ## 엔지니어링 하이라이트
 
-- **비동기 이벤트 기반 LLM 파이프라인.** 프로바이더 호출을 Spring의 `AFTER_COMMIT` 이벤트에서 `@Async`로 발사 — DB 트랜잭션 바깥에서 실행하므로, 수 초짜리 LLM 왕복이 DB 커넥션을 붙들어 풀을 고갈시키지 않음. 각 클립 분석은 `PENDING → READY / FAILED` 상태 머신을 거쳐 UI가 진행 상태를 보여주고 재시도가 idempotent함.
-- **런타임 교체형 프로바이더.** `AiAnalysisClient` 인터페이스 + `ClaudeClient` / `GeminiClient` 구현을 `@ConditionalOnProperty`로 선택. 벤더 교체가 env var 한 줄 — 빌드 중 Claude 크레딧이 떨어졌을 때 코드 변경 없이 Gemini 2.5 Flash로 폴백한 게 실제 사례.
-- **설계로 비용 제어.** 분석 결과를 Postgres JSONB에 영속화해 클립당 평생 LLM 호출 1회. 자막은 Whisper STT가 아니라 YouTube 캡션에서 가져와 가장 비싼 단계를 통째로 생략.
+- **트랜잭션 안전 비동기 AI 파이프라인.** 클립 생성이 도메인 이벤트를 발행하고, 분석은 `@TransactionalEventListener(AFTER_COMMIT)` + `@Async`로 백그라운드 스레드에서 — 수 초짜리 LLM 호출이 DB 트랜잭션 바깥에서 돌아 커넥션 풀을 붙들지 않음. 트랜잭션은 `PENDING → READY / FAILED`라는 작은 쓰기뿐. 일시적 실패(429 / 5xx / timeout)는 재시도, 영구 실패는 빠르게 실패.
+- **환경변수로 갈리는 가장자리.** 같은 코드가 로컬에서도 실서버에서도 돌고 env var 하나로 전환 — AI 프로바이더(Gemini ↔ Claude)는 `@ConditionalOnProperty`로 호출부 변경 0, 녹음 저장(로컬 디스크 ↔ S3 / R2)도 같은 방식, 바이트는 항상 백엔드를 통해 스트림(공개 URL 아님).
+- **채점 모양에 맞춘 SRS 2개.** 클립 복습은 SM-2(4단계), 이진 드릴(알았음 / 다시)은 Leitner 박스 — 2개 버튼에 SM-2의 0~5 스케일을 욱여넣는 건 틀린 도구라서. 둘 다 I/O 없는 순수 함수.
+- **한계비용 $0 + 남용 방지.** 클립당 LLM 호출 1회, 캐싱. 돈 드는 유일한 엔드포인트(AI 작문 첨삭)는 사용자별 rate-limit, 가입/로그인의 IP별 limiter와 분리.
+- **멀티테넌트 안전.** stateless JWT에 token-version 클레임(비번 변경 시 이전 토큰 폐기), 쿼리 레벨 사용자 격리(`findByIdAndUserId` — 남의 id는 404), BCrypt, 접근 제어된 녹음.
 
-## 스택
+## 스택 & 인프라
 
-백엔드: Java 21 · Spring Boot 3.3 · Gradle Kotlin DSL · PostgreSQL · Flyway · Spring Security + JWT.
-프론트엔드: Next.js 16 (App Router) · TypeScript strict · Tailwind 4 · shadcn/ui · Zustand · TanStack Query.
-AI: Anthropic Claude Haiku 4.5 + prompt caching (Gemini 2.5 Flash도 free-tier용으로 pluggable).
+Java 21 · Spring Boot 3.3 · PostgreSQL 16(Flyway, JSONB, raw-SQL `CHECK`) · Next.js 16 / React 19 / TypeScript strict · Tailwind 4 · shadcn/ui. 관측성: Micrometer + Actuator → Prometheus, MDC 요청/사용자 로깅. Docker(멀티스테이지, ffmpeg + `yt-dlp`); GitHub Actions CI; AWS ECS Fargate + RDS로 keyless OIDC 배포; 프론트는 Vercel. Testcontainers(실제 Postgres) + Vitest + Playwright(14 spec).
 
-## 아직 없는 것
+## 아직 안 하는 것
 
-- BYOAI (사용자가 본인 API 키로 분석): Claude/Gemini/Perplexity용 프롬프트를 사용자가 본인 채팅 도구에 붙여넣는 형태로 일부 구현.
-- 모바일 앱 없음. 브라우저 only, 모바일 반응형까지.
+- 1인, AI 보조 — 제품 방향, 아키텍처(프로바이더 추상화, 트랜잭션 안전 비동기 파이프라인, SRS 2분할), 프롬프트 설계, 콘텐츠 정확도 감수는 내가; Claude Code가 페어.
+- rate-limit과 idempotency가 인메모리 — 단일 인스턴스엔 맞지만 다중 인스턴스는 durable 저장소(Redis) 필요.
+- `ja` / `zh` / `es`는 스캐폴딩만(영문 문자열), `en`·`ko`만 완역.
+- AWS 인프라는 문서화된 런북 + task definition이지 아직 Terraform 아님.
+- 자막 추출에 `yt-dlp` 사용 — YouTube ToS 회색지대라 개인용은 괜찮지만 상업 전엔 재검토.

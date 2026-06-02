@@ -1,6 +1,6 @@
 ---
 title: "Mimi"
-description: "Mimi — a YouTube-based English shadowing tool with clip mining, AI-explained transcripts, and SM-2 spaced repetition. Built for developers and knowledge workers."
+description: "Turn any YouTube video into spaced-repetition English shadowing, plus daily drills for the grammar patterns, collocations, and prepositions that never come automatically. Java/Spring + Next.js, built solo."
 date: "2026-05-23"
 language: "en"
 translationKey: "shadow-ai"
@@ -9,36 +9,33 @@ featured: true
 url: "https://mimi.daeseon.ai"
 logSourceRepo: "Daeseon-AI-Factory/shadow-ai"
 tags: ["english-learning", "shadowing", "youtube", "srs", "ai"]
-stack: ["Java 21", "Spring Boot 3.3", "PostgreSQL", "Next.js 16", "TypeScript", "Tailwind 4", "Claude Haiku"]
-role: "Solo"
+stack: ["Java 21", "Spring Boot 3.3", "PostgreSQL 16", "Next.js 16", "TypeScript", "Gemini / Claude", "AWS ECS"]
+role: "Solo (AI-paired with Claude Code)"
 ---
 
-A YouTube clip miner + shadowing trainer. Paste a YouTube URL, pull subtitles and metadata, cut free clips with start/end markers or double-clicking captions, then put them into a personal library with tags, decks, and SM-2 spaced repetition.
+A full-stack English-learning app for developers who read English fluently but freeze when they have to produce it. Java 21 / Spring Boot API + Next.js / TypeScript frontend. The thesis is friction removal, not feature count: turn the input you already consume (YouTube) into the output practice you avoid.
 
-## What it does
+## Two halves that feed each other
 
-- **Import**: YouTube URL → `yt-dlp` extracts subtitles and metadata. Idempotent self-healing import (re-running fixes transient transcript failures).
-- **Clip**: subtitle double-click or manual start/end. Loop with 0.5–1.5x playback speed.
-- **Library**: search by name or subtitle text, filter by tag, sort, JSON export.
-- **AI analysis**: per-clip Claude Haiku call (context, grammar, expressions, vocab) cached in Postgres JSONB — one LLM call per clip forever.
-- **Record + A/B**: MediaRecorder → upload → original vs your take playback, accumulated over time.
-- **Review**: SM-2 algorithm (Anki-style Again/Hard/Good/Easy), streak widget, deck filter.
-- **Curated content**: shipped with a starter video collection (`curated-videos.yml`) so new users have something to do day one.
-- **Five languages**: next-intl path-based routing (en default + ko / ja / zh / es).
+- **Shadow from YouTube.** Paste a URL, clip a subtitle range, and one LLM call returns a translation, a word-by-word literal gloss, vocabulary, per-preposition notes, and a practice scenario — cached in Postgres JSONB so studying never re-bills the API. SM-2 spaced repetition schedules each clip; review in reveal / write (token-level diff) / scenario modes.
+- **Practice hub.** Daily Leitner-spaced drills over 82 sentence patterns, 101 word + preposition collocations, animated preposition diagrams, an AI composition check, and a weak-spots dashboard built from your own lapse data.
 
 ## Engineering highlights
 
-- **Async event-driven LLM pipeline.** Provider calls fire on Spring's `AFTER_COMMIT` event via `@Async` — outside the DB transaction — so a multi-second LLM round trip never holds a database connection and exhausts the pool. Each clip's analysis moves through a `PENDING → READY / FAILED` state machine, so the UI can show progress and retries are idempotent.
-- **Runtime-selectable provider.** `AiAnalysisClient` interface with `ClaudeClient` / `GeminiClient` implementations chosen by `@ConditionalOnProperty`. Swapping vendors is one env var — used in anger when a Claude credit ran out mid-build and the app fell back to Gemini 2.5 Flash with no code change.
-- **Cost control by design.** Analysis is persisted in Postgres JSONB, so it's one LLM call per clip for its entire lifetime. Transcripts come from YouTube captions, not Whisper STT — skipping the most expensive step entirely.
+- **Transaction-safe async AI pipeline.** Creating a clip publishes a domain event; analysis runs on a background thread via `@TransactionalEventListener(AFTER_COMMIT)` + `@Async`, so the multi-second LLM call runs outside any DB transaction and never pins a connection-pool connection. Only the small `PENDING → READY / FAILED` writes are transactional; transient provider failures (429 / 5xx / timeout) retry, permanent ones fail fast.
+- **Env-gated edges.** The same code runs locally or on real infra by environment variable alone: the AI provider (Gemini ↔ Claude) flips via `@ConditionalOnProperty` with no call-site changes; recording storage (local disk ↔ S3 / R2) flips the same way, bytes always streamed through the backend, never a public URL.
+- **Two SRS algorithms, matched to the grading shape.** Clip review uses SM-2 (four grades); the binary drills (Got it / Again) use a Leitner box instead — forcing SM-2's 0–5 scale onto two buttons is the wrong tool. Both schedulers are I/O-free pure functions.
+- **$0 marginal cost + abuse guards.** One LLM call per clip, cached; every later review reads the cache. The one endpoint that costs money — the AI composition check — is rate-limited per user, separate from the per-IP limiter on signup / login.
+- **Multi-tenant safety.** Stateless JWT with a token-version claim (a password change revokes older tokens), per-user query isolation (`findByIdAndUserId` — another user's id returns 404, not their row), BCrypt, and access-gated recordings.
 
-## Stack
+## Stack & infra
 
-Backend: Java 21 · Spring Boot 3.3 · Gradle Kotlin DSL · PostgreSQL · Flyway · Spring Security + JWT.
-Frontend: Next.js 16 (App Router) · TypeScript strict · Tailwind 4 · shadcn/ui · Zustand · TanStack Query.
-AI: Anthropic Claude Haiku 4.5 with prompt caching (also pluggable Gemini 2.5 Flash for free-tier deployments).
+Java 21 · Spring Boot 3.3 · PostgreSQL 16 (Flyway, JSONB, raw-SQL `CHECK`) · Next.js 16 / React 19 / TypeScript strict · Tailwind 4 · shadcn/ui. Observability: Micrometer + Actuator → Prometheus, MDC request / user logging. Docker (multi-stage, ffmpeg + `yt-dlp`); GitHub Actions CI; keyless OIDC deploy to AWS ECS Fargate + RDS; frontend on Vercel. Tested with Testcontainers (real Postgres) + Vitest + Playwright (14 specs).
 
-## What it doesn't do (yet)
+## What it doesn't do
 
-- BYOAI (Bring Your Own AI) for users without API keys is partially shipped — Claude / Gemini / Perplexity prompts that you paste into your own chat tool.
-- No mobile app. Browser only, mobile-first responsive.
+- Solo, AI-assisted — the product direction, architecture (provider abstraction, the transaction-safe async pipeline, the two-SRS split), prompt design, and the content-accuracy audit are mine; Claude Code was the pair.
+- Rate-limit and idempotency are in-memory — correct for a single instance; multi-instance needs a durable store (Redis).
+- `ja` / `zh` / `es` locales are scaffolded (English strings); only `en` and `ko` are fully translated.
+- AWS infra is a documented runbook + task definition, not yet Terraform.
+- Subtitle extraction uses `yt-dlp`, a YouTube ToS gray area — fine for personal use, revisit before anything commercial.
