@@ -1,0 +1,18 @@
+---
+title: "The TLS Certificate Nobody Was Watching Expired"
+date: "2026-06-02"
+language: "en"
+translationKey: "expired-tls-certificate"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "operations"]
+summary: "A TLS certificate on the link between two systems expired without being renewed, and the integration went down in production. Nothing had been watching the expiry date."
+---
+
+A TLS certificate on the integration between two systems expired, and the link between them went down in production.
+
+The two systems sat on a pipeline on a manufacturing floor — an upstream system pushing operational data, an integration server on the other end receiving it over a TLS link. It had run that way for over a year without anyone touching the certificate. Then the certificate hit its expiry date.
+
+The moment it expired, the handshake started failing. The upstream system could no longer talk to the integration server, and the data that normally flowed through it stopped arriving. It was caught after the data stopped, not before the certificate lapsed.
+
+Certificate expiry should be monitored and renewal automated or alerted on a schedule, so one never silently reaches expiry in production. There was no such step at the time.

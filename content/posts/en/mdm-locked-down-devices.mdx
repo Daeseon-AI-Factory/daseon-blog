@@ -1,0 +1,18 @@
+---
+title: "Locking down a fleet of handheld devices with MDM"
+date: "2026-06-02"
+language: "en"
+translationKey: "mdm-locked-down-devices"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "operations"]
+summary: "We used an MDM tool to remotely lock a fleet of factory-floor handhelds so only approved apps would run. It was a setup task more than an incident — the only correction is that the lockdown should have been part of the standard provisioning step, and at the time it wasn't."
+---
+
+We used a mobile device management tool to remotely control a fleet of handheld devices on a factory floor and lock each one so only the approved apps could run.
+
+Before this, the devices went out to the floor in a near-default state. There were on the order of tens of devices across the line, and any one of them could open whatever the operator tapped — a browser, a store, an unrelated app. The work app was just one of many icons. Once the MDM enrollment was in place, we pushed a profile that hid everything except the approved set and pulled the rest off the home screen. After that, a device that came back from the floor still only showed the apps we allowed.
+
+The lockdown itself was a few configuration screens and one profile push. It worked the first time and didn't really break.
+
+The plain part: the lockdown should be applied during provisioning, before a device ever reaches the floor — not after someone notices an operator on the wrong app. There was no such step at the time.

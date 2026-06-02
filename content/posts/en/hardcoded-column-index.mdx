@@ -1,0 +1,22 @@
+---
+title: "A save button wired to a fixed column index"
+date: "2026-06-02"
+language: "en"
+translationKey: "hardcoded-column-index"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "frontend"]
+summary: "A save button in a data grid read from a hard-coded column index. When the column layout was reconfigured, it saved the wrong column."
+---
+
+A save button in a data-grid screen was wired to a fixed column index. It read column 4, always.
+
+The grid showed maybe a dozen columns of operator-entered values on the factory floor, the kind of screen that gets saved hundreds of times a shift across the line. The save was supposed to write back the value in the editable column. It worked because the editable column happened to sit at index 4, and had since the screen was first built.
+
+Then the layout was reconfigured — a column was added on the left, and everything shifted right by one. The save kept reading index 4. Now index 4 was a different field. So the save wrote the wrong column's value, and nobody noticed until the saved numbers stopped matching what operators had typed.
+
+The code assumed the layout would never change. It never asked which column held the field; it asked which position, and trusted the position to stay put.
+
+> Bind the save to a stable field key, not to a positional column index.
+
+That's the whole correction. The grid knows each column's field key; read by key, and a reorder can't touch you. There was no check that would have caught a position-to-field mismatch before it shipped. That step didn't exist at the time.

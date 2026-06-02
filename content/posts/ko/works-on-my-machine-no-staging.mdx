@@ -1,0 +1,22 @@
+---
+title: "staging이 없어서 배포할 때마다 장애가 났다"
+date: "2026-06-02"
+language: "ko"
+translationKey: "works-on-my-machine-no-staging"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "deployment"]
+summary: "공장 현장의 고처리량 운영 파이프라인에 production과 같은 staging 환경이 없어서, local과 dev에서만 검증한 배포가 검증 없이 prod로 들어갔다. 그 둘이 가렸던 차이가 장애로 드러났다."
+---
+
+local에선 됐다. dev에서도 됐다. 그런데 production에서 깨졌고, 그게 배포할 때마다 거의 매번이었다.
+
+공장 현장의 고처리량 운영 파이프라인이었다. 설비, 연동 서버, DB 사이에 엄격한 트랜잭션 일관성이 걸려 있었다. local과 dev는 더 작고 깔끔한 데이터에 느슨한 설정으로 돌았다 — 애초에 prod 모양이 아니었다. 그 사이에 prod와 같은 모양을 한 세 번째 환경은 없었다.
+
+그래서 local과 dev가 가렸던 것들은 production에서만 드러났다. 다른 설정, dev 데이터로는 닿지 못한 데이터 양, 실제 부하에서만 나오는 타이밍. 매 배포가 코드가 prod 모양의 조건을 처음 만나는 순간이었고, 그 첫 장소가 곧 production이었다. 장애는 거기서 났다.
+
+고쳐야 할 건 한 줄이다:
+
+> production과 같은 설정·데이터를 가진 staging 환경이 있어야 한다. 그래야 배포가 prod에 닿기 전에 prod 모양의 조건에서 검증된다.
+
+그땐 그 단계가 없었다.

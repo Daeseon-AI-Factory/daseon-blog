@@ -1,0 +1,18 @@
+---
+title: "A protocol change on one side, an integration server that never heard about it"
+date: "2026-06-02"
+language: "en"
+translationKey: "equipment-protocol-change"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "integration"]
+summary: "A piece of factory equipment switched its communication mode from push to request-response. The integration server in the middle was never changed to match, so the link broke in production."
+---
+
+A piece of equipment on the factory floor changed how it talked to the rest of the system, and the integration server in the middle never got the memo.
+
+Before the change, the equipment reported its data on its own, pushing readings up whenever it had them. An integration server sat between the equipment and the upstream systems, taking those pushes and passing them along. That had run that way for a long time.
+
+Then the equipment's communication mode was switched to request-response: it would no longer push, it would only answer when asked. Nobody updated the integration server. It kept waiting for pushes that were never coming, and asked for nothing. The data stopped flowing, in production.
+
+There was no step in the process that made the two sides agree before the change went out. There was no such step at the time.

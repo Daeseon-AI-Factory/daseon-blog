@@ -1,0 +1,20 @@
+---
+title: "Building an Android app outside the network it had to run inside"
+date: "2026-06-02"
+language: "en"
+translationKey: "closed-network-android-build"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "build"]
+summary: "An Android app for an air-gapped factory network was built on a machine outside that network, then carried in by hand. When it failed inside, there was no way to see why from where the build happened."
+---
+
+The app targeted a closed network on a factory floor, the kind with no route in or out. The build machine sat outside that network, because that was the machine that had one. So the loop went: build the artifact outside, copy it across the boundary by hand, install it inside, watch it fail, copy it back out in my head, change something, build again.
+
+The artifact behaved differently inside than anything I could reproduce outside. Each pass cost a walk across the boundary and a guess about what the difference was, and a single round could eat most of an afternoon. Nothing about the failure was visible from where the build ran.
+
+The fix is flat enough to state as one line.
+
+> Build inside the network it runs in, or run a reproducible pipeline that targets that network, so "builds outside, runs inside" stops being a guessing loop.
+
+There was no build environment inside the network at the time. So there was no such step.

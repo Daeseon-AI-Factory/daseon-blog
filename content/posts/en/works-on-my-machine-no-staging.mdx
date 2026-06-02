@@ -1,0 +1,22 @@
+---
+title: "No staging, so every deploy was an incident"
+date: "2026-06-02"
+language: "en"
+translationKey: "works-on-my-machine-no-staging"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "deployment"]
+summary: "A high-throughput factory-floor pipeline had no staging environment that matched production, so every deploy validated only on local and dev hit prod untested. The differences those two hid surfaced as incidents."
+---
+
+It worked on local. It worked on dev. Then it broke in production, and that happened on more or less every deploy.
+
+The system was a high-throughput operational pipeline on a factory floor, with strict transactional consistency across the equipment, the integration server, and the database. Local and dev ran on smaller, cleaner data and looser config — they were never shaped like prod. There was no third environment in between that did match prod.
+
+So the things local and dev hid only showed up in production: config that differed, data volumes the dev set never reached, timing that only appeared under real load. Each deploy was the first time the code met production-shaped conditions, and the first place it met them was production. That is where the incidents were.
+
+The corrective is one line:
+
+> There should be a staging environment with production-like config and data, so a deploy is validated against prod-shaped conditions before it touches prod.
+
+That step did not exist at the time.

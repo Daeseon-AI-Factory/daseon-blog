@@ -1,0 +1,22 @@
+---
+title: "When the table said done and the work hadn't happened"
+date: "2026-06-02"
+language: "en"
+translationKey: "erp-interface-false-success"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "transactions"]
+summary: "A transaction interface to an ERP system marked rows as success while the downstream operation had actually failed, and its logs were sometimes missing, sometimes duplicated. A short note on what broke and the one line that wasn't in the code."
+---
+
+A transaction interface to an ERP system was marking rows as "success" while the work downstream hadn't actually gone through.
+
+The setup was an integration server sitting between the factory floor and the ERP, pushing operations across tens of sites — order of thousands of rows a day. For each operation it wrote a row to a status table and flipped a flag to "success." The flag was set when the request was sent, not when the committed result came back. So a row could read "done" while the real operation on the other side had failed.
+
+The logs for those operations didn't help either. Sometimes a log line was missing, sometimes the same operation was logged twice. Reconciling the table against what had really happened meant reading both, and neither could be trusted on its own.
+
+The consequence was the table and the floor disagreeing, and no clean way to tell which rows were the lying ones without going operation by operation.
+
+> The success flag has to be set from the actual committed downstream result, not from "request sent." The logging has to be idempotent — one operation, one reconcilable log line, no matter how many times it retries.
+
+That's two lines. Neither was true at the time. There was no step that checked the committed result before flipping the flag, and nothing keyed the logs so a retry wrote the same line instead of a new one.

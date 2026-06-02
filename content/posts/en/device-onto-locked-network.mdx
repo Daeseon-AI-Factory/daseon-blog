@@ -1,0 +1,16 @@
+---
+title: "Putting a handheld device on a locked factory network"
+date: "2026-06-02"
+language: "en"
+translationKey: "device-onto-locked-network"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "networking"]
+summary: "Getting one handheld scanner onto the plant network meant clearing several access-control layers one at a time. None of it was written down anywhere."
+---
+
+I had to get a handheld scanner talking to the equipment on a locked factory network, and it took most of a day.
+
+The network was default-deny: a device that wasn't already known got nothing. I plugged in and it couldn't reach the upstream server at all. Several independent access-control layers each had to be cleared before the device could associate and reach the server, and each gate was invisible until the one before it was cleared. So I found them one at a time, not all at once.
+
+In the end the scanner reached the server and the work was done. But onboarding a device here should be a written procedure run top to bottom, not figured out fresh each time. There was no such step at the time.

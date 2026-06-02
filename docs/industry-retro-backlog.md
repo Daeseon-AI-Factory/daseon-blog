@@ -6,15 +6,7 @@
 
 ## Surfaced (작성 대기)
 
-- [ ] **Production SELECT lock** — 검증 안 된 20K row SELECT가 라이브러리 캐시 락, US 공장 설비 stop, 본인 세션 살아있던 거 인지·신고에 15-20분 걸림. (가장 강한 후보. 백로그 8번)
-- [ ] **SSL 인증서 미갱신** → 통신 실패
-- [ ] **UI 저장 버튼 컬럼 인덱스 박힘** → 그리드 구성 변경 시 장애
-- [ ] **설비 통신 모드 변경** (report → request-response) → 중간 서버 미반영으로 장애
-- [ ] **폐쇄망 안드로이드 빌드** — 외부 빌드 → 수동 복사 → 에러 → 반복
-- [ ] **PDA FA망 접속** — MAC 예외 → 고정 IP → 방화벽 → SSID 인증
-- [ ] **SOTI MDM** — 원격 통제 + 정해진 앱만 잠그기
-- [ ] **ERP 트랜잭션 인터페이스** — 테이블 성공 표시 vs 실제 실패, 로그 누락·중복
-- [ ] **"내 로컬에선 됩니다" / "dev에선 됩니다"** → 배포하면 매번 사고. 스테이징 환경 없었음.
+(전부 초안 발행됨 — 아래 Shipped. 본인이 더 떠올리면 여기 추가)
 
 ## Drafted (작성 중)
 
@@ -22,7 +14,19 @@
 
 ## Shipped (발행됨)
 
-(없음)
+2026-06-02, AI 초안 9개 EN+KO 동시 발행 (handwritten 미설정 = AI 작성). 본인 검수·수정 대기. translationKey = slug. tag: `industry-retro` + 토픽 태그 1개. URL: `daeseon.ai/posts/tag/industry-retro`.
+
+- [x] **Production SELECT lock** → `production-select-lock` (strong) — 검증 안 된 20K row SELECT, 라이브러리 캐시 락, 해외 공장 설비 stop, 자기 세션 인지에 15-20분.
+- [x] **SSL/TLS 인증서 미갱신** → `expired-tls-certificate` (strong) — 검증 단계서 "mutually authenticated"(mTLS) 보안 디테일 누출 잡아 제거함.
+- [x] **UI 저장 버튼 컬럼 인덱스 박힘** → `hardcoded-column-index` (strong) — positional index vs stable field key.
+- [x] **설비 통신 모드 변경** (push → request-response) → `equipment-protocol-change` (thin — 한 failure mode 평탄 서술, 숫자/탐지 디테일 없음) — 계약 변경 양쪽 미조율.
+- [x] **폐쇄망 안드로이드 빌드** → `closed-network-android-build` (medium).
+- [x] **PDA FA망 접속** → `device-onto-locked-network` (medium) — ⚠️ 원본에 MAC예외→고정IP→방화벽→SSID 인증 *순서 런북*(보안 메커니즘 누출) 있었음 → "독립된 접근 제어 계층 여러 개"로 추상화. fingerprint 위험 제거.
+- [x] **SOTI MDM** → `mdm-locked-down-devices` (**thin — 사건 아니라 셋업 작업, 첫판에 됨. 잘라낼 후보**).
+- [x] **ERP 트랜잭션 인터페이스** → `erp-interface-false-success` (strong) — 플래그 = "요청 보냄" 시점, idempotent 로깅 부재.
+- [x] **"내 로컬/dev에선 됩니다"** → `works-on-my-machine-no-staging` (medium) — staging 부재, 환경 parity.
+
+cut 후보: `mdm-locked-down-devices` (thin, 셋업 작업). 검수 후 약하면 파일 삭제.
 
 ---
 

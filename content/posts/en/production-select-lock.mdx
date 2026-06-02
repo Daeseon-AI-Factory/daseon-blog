@@ -1,0 +1,22 @@
+---
+title: "A SELECT That Stopped a Factory"
+date: "2026-06-02"
+language: "en"
+translationKey: "production-select-lock"
+visibility: "public"
+format: "before-after"
+tags: ["industry-retro", "database"]
+summary: "I ran an unverified SELECT against production. It took a library cache lock and stopped equipment at an overseas site, and it took me 15-20 minutes to realize my own session was holding the lock."
+---
+
+I ran one unverified SELECT against production and equipment at an overseas factory site stopped.
+
+It was a single statement that scanned about 20,000 rows. I didn't check its execution plan, I didn't bound the row count, and I didn't think about where it took locks. It took a library cache lock. The pipeline behind the floor depends on strict transactional consistency, so once the lock sat there, the equipment downstream stopped.
+
+For 15 to 20 minutes I looked everywhere except at myself. I checked the integration server, the upstream feed, the usual suspects. Then I found that the session holding the lock was mine, and I reported it.
+
+The corrective is plain:
+
+> A large SELECT gets checked before production — execution plan, a bound on the rows it touches, where it takes locks.
+
+There was no such step at the time.
