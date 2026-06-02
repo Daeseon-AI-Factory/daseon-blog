@@ -44,6 +44,7 @@ function weekSummary(items: LogEntry[], locale: Locale): string {
 
 export function LogTimeline({ project, entries, locale }: Props) {
   const [activeKind, setActiveKind] = useState<LogKind | "all">("all");
+  const [openWeeks, setOpenWeeks] = useState<Set<string> | null>(null);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: entries.length };
@@ -82,6 +83,18 @@ export function LogTimeline({ project, entries, locale }: Props) {
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([weekStart, items]) => ({ weekStart, items }));
   })();
+
+  // Most recent week open by default; user toggles tracked once they interact.
+  const firstWeek = weeks[0]?.weekStart;
+  const isWeekOpen = (wk: string) =>
+    openWeeks ? openWeeks.has(wk) : wk === firstWeek;
+  const toggleWeek = (wk: string, open: boolean) =>
+    setOpenWeeks((prev) => {
+      const next = new Set(prev ?? (firstWeek ? [firstWeek] : []));
+      if (open) next.add(wk);
+      else next.delete(wk);
+      return next;
+    });
 
   const renderEntry = (e: LogEntry) => (
     <li key={`${e.project}-${e.slug}`} className="relative">
@@ -181,23 +194,30 @@ export function LogTimeline({ project, entries, locale }: Props) {
         ) : null}
         {isAll ? (
           weeks.map(({ weekStart, items }) => (
-            <div key={weekStart} className="space-y-3">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <h4 className="font-mono text-[0.7rem] uppercase tracking-widest text-ink">
+            <details
+              key={weekStart}
+              open={isWeekOpen(weekStart)}
+              onToggle={(e) =>
+                toggleWeek(weekStart, (e.currentTarget as HTMLDetailsElement).open)
+              }
+              className="space-y-3"
+            >
+              <summary className="cursor-pointer select-none">
+                <span className="font-mono text-[0.7rem] uppercase tracking-widest text-ink">
                   {locale === "ko"
                     ? `${formatDate(weekStart, locale)} 주`
                     : `Week of ${formatDate(weekStart, locale)}`}
-                </h4>
-                <span className="font-mono text-[0.6rem] uppercase tracking-widest text-ink-subtle">
+                </span>
+                <span className="ml-3 font-mono text-[0.6rem] uppercase tracking-widest text-ink-subtle">
                   {items.length}{" "}
                   {locale === "ko" ? "개" : items.length === 1 ? "entry" : "entries"} ·{" "}
                   {weekSummary(items, locale)}
                 </span>
-              </div>
-              <ol className="relative ml-3 space-y-5 border-l border-paper-line pl-6">
+              </summary>
+              <ol className="relative ml-3 mt-3 space-y-5 border-l border-paper-line pl-6">
                 {items.map(renderEntry)}
               </ol>
-            </div>
+            </details>
           ))
         ) : (
           <ol className="relative ml-3 space-y-5 border-l border-paper-line pl-6">
