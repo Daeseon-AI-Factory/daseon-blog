@@ -1,0 +1,55 @@
+---
+title: "Recruiter cold-entry pass: surface current status, kill dead links, make the log scannable"
+date: "2026-06-02"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "A cold recruiter-POV audit of every entry surface drove a content/IA pass — home Now block, post bylines, newest-first + grouped project log, live DalkkakAI link, summary rendering fix — all inside the v1 visual freeze. Visual redesign deferred."
+tags: ["ux", "job-hunt", "information-architecture"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+The site's first purpose is the job hunt, but it had never been checked from a recruiter's actual first-30-seconds view. A multi-agent cold-entry audit (8 agents, one per surface: home, a deep-linked post, /posts, /projects, the project-log timeline, /now, /about) scored each on who/what, seniority + stack, availability + action, recency, and scannability.
+
+Verdict: strong on who/what/available/recent, but two self-inflicted wounds bled trust inside the 30-second window — the lead featured project's two links both 404'd, and the real signal was buried (flat oldest-first log; no summaries on post lists; no identity on leaf pages a recruiter reaches from a shared link).
+
+## Options considered
+
+- **Do nothing / write more posts instead** (the v1 design-lock default). Cost low. Rejected: dead links and buried signal are correctness/IA bugs, not aesthetics — the freeze was never meant to protect those.
+- **Full visual redesign** (featured-card treatment, timeline visual hierarchy, sticky hire chip). Cost high; violates the v1 visual freeze; premature before 5+ posts of design signal. Deferred, not rejected — kept as an explicit defer list.
+- **Content/IA pass within the freeze** (chosen). Cost low-med; fixes the bleeding without touching colors, fonts, or the layout system.
+
+## Chosen + Why
+
+The content/IA pass. Shipped this turn:
+
+- **Dead links killed.** DalkkakAI url → its shipped site (ddalkkak.daeseon.ai); blog card repo → correct org. Repos are now private, so public repo buttons were dropped (log aggregation kept via `logSourceRepo`). "Live" no longer mislabels a GitHub repo — it renders only when `url !== repo`.
+- **Current status surfaced.** Home "Now" block (one-line headline pulled from `/now` frontmatter, single source); `/now` gets an identity line and leads with the shipped product.
+- **Signal made legible.** Post lists and detail now render `summary` as a standfirst (the components only read `description`, which the posts don't set); a post byline answers who / level / Toronto / availability on cold leaf landings; the project log is newest-first with a "Decisions & milestones" group above the full build log.
+
+Each item maps to a measured audit deficiency, is reversible, and stays inside the visual freeze.
+
+## Trade-off accepted
+
+Working inside the freeze means the timeline and cards still look uniform — grouping and ordering carry the hierarchy instead of visual weight. Several recruiter-facing gaps stay open as owner-judgment calls: an explicit "Senior" label, one staff-scale metric on the home page, and the three projects whose only link was a now-private repo (no live URL yet).
+
+## Reversibility
+
+two-way — every change is frontmatter, content, or component logic; revert is a commit.
+
+## Verified by
+
+The cold-entry audit workflow (8 agents, this session). Each shipped change built clean (`tsc --noEmit` + `next build`) and deployed to `main`; the dead-link and summary fixes were confirmed against the live site.
+
+## Discussion artifacts
+
+Cold-entry audit workflow run this session; the preceding recruiter-orientation discussion earlier in the same session.
+
+## Commit
+
+6f66484 (summary fallback), 5cb5a0b (home Now block), 0c1ba6b (timeline newest-first + link fixes), 8697468 (post bylines, log grouping, live DalkkakAI, /now).

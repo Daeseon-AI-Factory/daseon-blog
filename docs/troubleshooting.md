@@ -228,6 +228,13 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: Added `suggested_tier` calc to `.claude/hooks/stop-check.sh`. T1 if ≥2 triggers OR LOC>500 OR "heavy" keyword. T2 if 1 trigger. Block message now embeds the matching template slot list.
 - **Commit**: `4842b46`
 - **Pattern**: When the block message is what the author reads in the moment, surface the canonical info inline rather than linking to it. Saves a context switch.
+
+## Post list/detail rendered no summary — component read `description`, posts set `summary`
+- **Symptom**: On `/posts`, `/posts/tag/*`, the home "Recent posts" section, and post detail pages, posts showed a bare title with no blurb — except `install-claude-code-project-log` (the only post that also set `description`). Glaring once 9 industry-retro posts shipped with sentence-style titles and no visible summary.
+- **Cause**: `PostFrontmatter` (lib/posts.ts) carries BOTH `description?` and `summary?` as separate fields. `PostList.tsx` and `PostBody.tsx` rendered only `frontmatter.description`, but every recent post sets `summary` and no `description`. Verified by reading both components and grepping frontmatter (8/9 retros = 0 description / 1 summary).
+- **Fix**: Fall back to `summary` when `description` is absent — `frontmatter.description ?? frontmatter.summary` — in `PostList.tsx` (`6f66484`) and `PostBody.tsx` (`8697468`, which also adds a byline footer). Surfaced by the recruiter cold-entry audit.
+- **Commit**: `6f66484`, `8697468`
+- **Pattern**: When two frontmatter fields mean nearly the same thing (`description` vs `summary`), a renderer that hard-codes one silently drops content authored in the other. Prefer a fallback or consolidate the fields.
 <!-- skipped: e3ef629 Mark 89c3e28 with override-trigger + skip — compute budget [no-log] -->
 <!-- skipped: 0a7cd61 Update v1 post 'queued' section — tier auto-detect + discussion writer are now shipped [no-log] -->
 <!-- override-trigger: b1daa1c Log Tier-2 decision: drop activity heatmap from v1 [no-log] — The commit IS the kind:decision log entry (content/logs/daeseon-ai/2026-05-31-decision-drop-heatmap-from-v1.mdx, Tier 2, all 6 required slots filled — Context, 4 options w/ cost/value/reversibility each, Chosen + Why, Trade-off, Reversibility, Verified by, plus Flip criteria). The "decision" keyword in the subject is the trigger correctly firing on a genuine decision artifact, but the dual-write requirement is structurally satisfied by the commit's own content. troubleshooting.md format (Symptom/Cause/Fix/Pattern) does not fit a decision-class artifact — there is no incident or build error to record, only an option-weighing outcome. The single-write here is appropriate. This override is the exact recursive corner case the override-trigger mechanism was designed for: the commit's content fulfills the trigger's requirement, and adding another log entry to log the log entry would be circular. -->
@@ -240,3 +247,6 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- override-trigger: b406c42 Rewrite observability post (en/ko) — blog content not code; LOC trigger over-fires on prose; the post IS the artifact -->
 <!-- skipped: 08f28d2 Add log-system map doc for external analysis handoff [no-log] -->
 <!-- override-trigger: aaea0af Add 9 industry-retro posts (en/ko) — blog content not code; LOC trigger over-fires on 18 prose files; the posts ARE the artifact -->
+<!-- skipped: 1b8160e Record override-trigger for aaea0af (industry-retro batch) + skip marker for 08f28d2 [no-log] -->
+<!-- skipped: 5cb5a0b Add Now block to home: surface current status on landing [no-log] -->
+<!-- skipped: 0c1ba6b Project log newest-first; fix blog repo link; hide non-demo Live buttons [no-log] -->
