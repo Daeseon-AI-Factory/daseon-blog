@@ -6,13 +6,16 @@ import { ProjectList } from "@/components/ProjectList";
 import { HomeSection } from "@/components/HomeSection";
 import { getPublishedPosts } from "@/lib/posts";
 import { getFeaturedProjects } from "@/lib/projects";
+import { getNow } from "@/lib/now";
+import { formatDate } from "@/lib/format";
 
 export const revalidate = 60;
 
 export default async function HomeKO() {
-  const [posts, projects] = await Promise.all([
+  const [posts, projects, now] = await Promise.all([
     getPublishedPosts("ko"),
     getFeaturedProjects("ko", 3),
+    getNow("ko"),
   ]);
   const recentPosts = posts.slice(0, 5);
 
@@ -24,6 +27,17 @@ export default async function HomeKO() {
           <ProfileCard locale="ko" currentPath="/ko" />
 
           <div className="space-y-12">
+            {now?.headline ? (
+              <HomeSection id="now" title="지금" seeAll="더 보기" seeAllHref="/ko/now">
+                <p className="text-base leading-relaxed text-ink">{now.headline}</p>
+                {now.updated ? (
+                  <p className="mt-2 font-mono text-xs uppercase tracking-widest text-ink-subtle">
+                    최근 갱신 · {formatDate(now.updated, "ko")}
+                  </p>
+                ) : null}
+              </HomeSection>
+            ) : null}
+
             <HomeSection id="about" title="소개">
               <p className="text-base leading-relaxed text-ink">
                 제조·물류·금융 분야의 미션크리티컬 엔터프라이즈 시스템을 6년간

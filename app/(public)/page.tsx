@@ -6,13 +6,16 @@ import { ProjectList } from "@/components/ProjectList";
 import { HomeSection } from "@/components/HomeSection";
 import { getPublishedPosts } from "@/lib/posts";
 import { getFeaturedProjects } from "@/lib/projects";
+import { getNow } from "@/lib/now";
+import { formatDate } from "@/lib/format";
 
 export const revalidate = 60;
 
 export default async function HomeEN() {
-  const [posts, projects] = await Promise.all([
+  const [posts, projects, now] = await Promise.all([
     getPublishedPosts("en"),
     getFeaturedProjects("en", 3),
+    getNow("en"),
   ]);
   const recentPosts = posts.slice(0, 5);
 
@@ -24,6 +27,17 @@ export default async function HomeEN() {
           <ProfileCard locale="en" currentPath="/" />
 
           <div className="space-y-12">
+            {now?.headline ? (
+              <HomeSection id="now" title="Now" seeAll="More" seeAllHref="/now">
+                <p className="text-base leading-relaxed text-ink">{now.headline}</p>
+                {now.updated ? (
+                  <p className="mt-2 font-mono text-xs uppercase tracking-widest text-ink-subtle">
+                    Last updated · {formatDate(now.updated, "en")}
+                  </p>
+                ) : null}
+              </HomeSection>
+            ) : null}
+
             <HomeSection id="about" title="About">
               <p className="text-base leading-relaxed text-ink">
                 Software engineer with 6 years building and modernizing
