@@ -1,0 +1,42 @@
+---
+title: "곁 · Beside"
+description: "나를 아끼는 사람들의 응원 — 목소리·사진·다정한 한마디·짧은 영상 — 을 비공개로 품어두고 무너지는 날 꺼내 보는 설치형 PWA. 같은 코드가 외부 계정 0개 로컬에서 환경변수만으로 완전한 프로덕션 인프라로 전환."
+date: "2026-05-31"
+language: "ko"
+translationKey: "beside"
+status: "active"
+featured: true
+url: "https://beside.daeseon.ai"
+image: "https://beside.daeseon.ai/og.jpg"
+logSourceRepo: "Daeseon-AI-Factory/motivation"
+tags: ["pwa", "web-push", "full-stack"]
+stack: ["Next.js 16", "React 19", "TypeScript", "PostgreSQL", "Drizzle", "PWA", "Web Push", "S3 / R2", "Terraform", "Tailwind v4"]
+role: "Solo (Claude Code 페어 프로그래밍)"
+---
+
+나를 지탱하는 것들 — 사랑하는 사람의 음성, 사진, 아끼는 책 속 한 구절, "괜찮아질 거야"라고 말해주는 20초짜리 영상 — 을 담아두고, 힘들 때 한 번에 하나씩 차분히 꺼내 보는 비공개 "보관함". 소중한 사람은 가입도 설치도 없이 링크로 한마디를 보탬. 제품은 일부러 단순하게, 진짜 작업은 그 아래 엔지니어링에 있음.
+
+## 무엇을 하는가
+
+- 담는 길 둘: 내가 직접(목소리 30초 / 사진 / 글 + 선택 출처 / 영상 20초), 또는 소중한 사람이 추측 불가 링크로 한마디 — 가입 없음.
+- 꺼내는 길 하나 — *꺼내는 모먼트*: 한 번에 하나씩, 매번 다른 순서로, 로켓을 여는 느낌. 또는 정해둔 시각에 부드러운 Web Push.
+- iOS 홈 화면 추가 플로우가 있는 설치형 PWA. 완전한 소유권 — 숨기기 / 삭제(미디어 실삭제), 전체 zip 내보내기, 계정 전체 삭제.
+
+## 왜
+
+무너지는 순간에 쓰는 제품이라 빠르게 열리고 임상적이지 않게 차분해야 함. 핵심 인사이트: *내가 직접* 담을 수 있어서, 아무도 기여하지 않아도 첫날부터 쓸모 있음 — "친구에게 부탁하세요" 류 앱을 죽이는 콜드스타트 문제에 대한 의도된 답.
+
+## 훔쳐갈 만한 한 가지 아이디어
+
+같은 코드가 로컬에선 **외부 계정 0개** 로 동작하고(임베디드 Postgres인 PGlite·로컬 디스크 미디어·자동 생성 세션/VAPID 시크릿), **환경변수별·키별** 로 완전한 프로덕션 인프라로 전환됨: `DATABASE_URL` → node-postgres, `S3_BUCKET` → S3/R2 5분 서명 URL, `VAPID_*` → 고정 푸시 키. 코드 변경도 재빌드도 없음. 두 DB 드라이버는 지연 동적 import라 개발 환경은 `pg`·AWS SDK를 번들에 안 넣고, 커넥션은 전역 메모이즈되어 Next 16 멀티워커 빌드에서도 안전.
+
+## 짚을 만한 엔지니어링 포인트
+
+- **그냥 출시가 아니라 보안 리뷰까지.** 다중 에이전트 적대적 리뷰가 실제 취약점 6종을 찾아 수정: 프로덕션 인증 우회(dev 로그인 프로덕션 404), 비공개 HTML을 계정 간 캐시하던 서비스워커, HTTP `Range` 무시로 아이폰 오디오를 깨뜨리던 미디어 라우트(이제 `206`/`416`, S3는 서명 `302`), CSRF / 동일 출처 미적용(`proxy.ts`), 저장형 XSS를 막는 업로드 MIME 화이트리스트, IP·토큰별 rate limit + `Content-Length` 조기 차단(DoS).
+- **플랫폼 깊이.** 아이폰 Web Push는 설치된 PWA에서만 동작; `MediaRecorder` MIME가 브라우저마다 다름(Safari `audio/mp4` vs Chrome `audio/webm`) → 지원 탐지 녹음 + 선택적 ffmpeg 트랜스코딩; 아이폰은 7일 미사용 시 PWA 저장소를 비움 → 진실의 원천은 브라우저가 아닌 서버.
+- **결정은 기록으로.** 사소하지 않은 수정마다 트러블슈팅 인덱스 + 날짜별 서사에 이중 기록. 성급한 멀티리전 DB 분리에 *반대* 하는 아키텍처 기록 포함(분리는 컴플라이언스용이지 측정 안 된 지연 때문이 아님).
+- **Vercel + AWS 배포** — RDS Postgres(서울), S3 서명 미디어, EventBridge 크론 — Terraform IaC와 영속 호스트용 Docker 경로까지.
+
+## 솔직한 한계
+
+아직 자동 테스트 스위트 없음(검증은 수동 — 클린 프로덕션 빌드 + 1회성 30건 동시 쓰기 점검); rate-limit·멱등은 인메모리(단일 인스턴스); ffmpeg 트랜스코딩은 영속/Docker 경로에서만 동작해 데스크톱 Chrome webm이 아이폰에서 재생 안 될 수 있음; Terraform 인프라는 개발 자세이고 강화 경로는 주석에.

@@ -1,0 +1,42 @@
+---
+title: "곁 · Beside"
+description: "A private, installable PWA for keeping the encouragement of the people who love you — voice, photo, a kind word, a short clip — and surfacing it on the hard days. One codebase: zero-account local to full production infra by env var alone."
+date: "2026-05-31"
+language: "en"
+translationKey: "beside"
+status: "active"
+featured: true
+url: "https://beside.daeseon.ai"
+image: "https://beside.daeseon.ai/og.jpg"
+logSourceRepo: "Daeseon-AI-Factory/motivation"
+tags: ["pwa", "web-push", "full-stack"]
+stack: ["Next.js 16", "React 19", "TypeScript", "PostgreSQL", "Drizzle", "PWA", "Web Push", "S3 / R2", "Terraform", "Tailwind v4"]
+role: "Solo (AI-pair-programmed with Claude Code)"
+---
+
+A private "support box" you fill with the things that steady you — a loved one's voice note, a photo, a line from a book you love, a twenty-second clip of someone telling you it's going to be okay — and open, calmly one at a time, when you need them. People who care about you can add a message through a link, no account and no install. The product is small on purpose; the engineering underneath is where the work is.
+
+## What it does
+
+- Two ways to fill the box: you add directly (voice 30s / photo / words + optional source / video 20s), or a loved one leaves one note via an unguessable link — no signup.
+- One way to open it — the *surfacing moment*: one item at a time, a fresh order each time, like opening a locket. Or a gentle Web Push reminder at a time you pick.
+- Installable PWA with an iOS Add-to-Home-Screen flow; full ownership — hide / delete (media really deleted), export everything as a zip, or delete the whole account.
+
+## Why
+
+It's built for the moment you're low, so it has to open fast and feel calm, not clinical. The key product insight: because *you* can fill it yourself, it's useful from day one even if no one else ever contributes — a deliberate answer to the cold-start problem that kills most "ask your friends" apps.
+
+## The one idea worth stealing
+
+The same code runs locally with **zero external accounts** — embedded Postgres (PGlite), local-disk media, auto-generated session & VAPID secrets — and flips to full production infrastructure **per environment variable, per key**: `DATABASE_URL` → node-postgres, `S3_BUCKET` → S3/R2 with 5-minute presigned URLs, `VAPID_*` → fixed push keys. No code change, no rebuild. Both DB drivers are lazy dynamic imports, so dev never bundles `pg` or the AWS SDK, and the connection is globally memoized to survive Next 16's multi-worker build.
+
+## Engineering bits worth pointing at
+
+- **Security-reviewed, not just shipped.** A multi-agent adversarial pass found and fixed six real issues: a production auth bypass (dev-login now 404s in prod), a service worker that cached private HTML across accounts, a media route that broke iOS audio by ignoring HTTP `Range` (now `206`/`416`, or a presigned `302` on S3), missing CSRF / same-origin checks (`proxy.ts`), an upload MIME allow-list against stored XSS, and per-IP + per-token rate limiting with an early `Content-Length` DoS guard.
+- **Platform depth.** iOS Web Push only works from an installed PWA; `MediaRecorder` MIME differs across browsers (Safari `audio/mp4` vs Chrome `audio/webm`), so capture is capability-probed with an optional ffmpeg transcode; iOS evicts PWA storage after seven days, so the server — never the browser — is the source of truth.
+- **Decisions written down.** Every non-trivial fix is dual-written to a troubleshooting index and a dated narrative, including an architecture record that argues *against* a premature multi-region DB split (shard for compliance, not for unmeasured latency).
+- **Shipped on Vercel + AWS** — RDS Postgres in Seoul, S3 presigned media, EventBridge cron — with Terraform IaC and a Docker path for persistent hosts.
+
+## Honest limitations
+
+No automated test suite yet (verification was manual — a clean production build and a one-off 30-concurrent-write check); rate-limit and idempotency are in-memory (single-instance); ffmpeg transcoding only runs on the persistent / Docker path, so a webm clip recorded on desktop Chrome may not play on iOS; the Terraform infra is a dev posture, with the hardening path noted in comments.
