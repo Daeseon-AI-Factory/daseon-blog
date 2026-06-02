@@ -250,3 +250,8 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: 1b8160e Record override-trigger for aaea0af (industry-retro batch) + skip marker for 08f28d2 [no-log] -->
 <!-- skipped: 5cb5a0b Add Now block to home: surface current status on landing [no-log] -->
 <!-- skipped: 0c1ba6b Project log newest-first; fix blog repo link; hide non-demo Live buttons [no-log] -->
+<!-- skipped: 9b5564c Log recruiter-pass entry + record summary/description rendering bug [no-log] -->
+<!-- skipped: 27cdc30 Rename TubeShadow -> Mimi, point at live mimi.daeseon.ai, drop private repo [no-log] -->
+<!-- skipped: ed639bb Log the weekly project-log cadence choice (Tier-2) [no-log] -->
+<!-- skipped: 22bf207 Make weekly log buckets collapsible (most recent open) [no-log] -->
+<!-- override-trigger: 49994b8 Add per-project README pages — LOC trigger over-fires: most of the diff is the bundled README prose (content/projects/readme/shadow-ai.md), not code. The decision is logged in content/logs/daeseon-ai/2026-06-02-project-readme-pages.mdx (Tier-2). -->

@@ -1,0 +1,42 @@
+---
+title: "Per-project README pages: stored + sanitized, not live-fetched"
+date: "2026-06-02"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "Each project can now show its full README as its own page (/projects/<slug>/readme), and the README also feeds a richer project intro. Chose store-in-blog + sanitize-on-render over live-fetch from the (private) satellite, so the render is verifiable and dead links are neutralized."
+tags: ["ux", "information-architecture", "project-log"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+Project intros read thin, and there was no way to see a project's full README without its (now-private) repo. Goal: a richer intro (summarized from the README) plus the full README viewable as its own page.
+
+## Options considered
+
+- **Source — live-fetch from the satellite repo (token) vs store in the blog.** Live-fetch is the hub-and-spokes-pure option and the token already reads private repos. But I can't read the private READMEs locally (the token only exists in Vercel), so I can't verify the render before deploy, and a build-time fetch could break the build. Store-in-blog lets me see and test the exact render, and the owner is handing me the READMEs anyway.
+- **Render — raw vs sanitized.** A raw GitHub README breaks the MDX pipeline (centering `<div>`, `<sub>`, entities) and is full of links that 404 on the blog (relative repo-doc paths, private-repo links). Raw was rejected.
+
+## Chosen + Why
+
+**Store + sanitize.** The README is mirrored to `content/projects/readme/<slug>.md` and rendered at `/projects/<slug>/readme` (en+ko) through the existing `compileMDX`. `lib/readme.ts` sanitizes first: strips the HTML chrome MDX can't parse, and neutralizes links that would 404 (relative + private-repo → plain text) while keeping in-page anchors, `daeseon.ai` links, and shield badges. A "Full README" button appears on the project page only when a README exists. The same README content also drove the richer Mimi intro.
+
+## Trade-off accepted
+
+The stored README is a copy that can drift from the satellite's canonical README (acceptable — it's mirrored on update). Relative repo-doc links (ARCHITECTURE.md, etc.) become plain text rather than links, because the repo is private and they'd 404 — losing click-through but avoiding the dead links the recruiter audit flagged as the worst offense.
+
+## Reversibility
+
+two-way — a route + `lib/readme.ts` + stored markdown; revert is a commit.
+
+## Verified by
+
+`next build` prerenders `/projects/shadow-ai/readme`; the artifact has the content, **zero** leaked private-repo links from the README (the 2 remaining GitHub hrefs are the site footer's public org link), in-page anchors and shield badges intact, and the "Full README" button on the project page.
+
+## Commit
+
+`49994b8`.
