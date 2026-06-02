@@ -1,0 +1,42 @@
+---
+title: "Project log gets a weekly engineering-log cadence (A+B, factual rollups)"
+date: "2026-06-02"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "A flat 31-entry reverse-chron log read as a wall and didn't feel like a real engineering log. Chose weekly buckets with factual auto-rollups (A) + hand-written snapshot digests pinned on top (B). Rejected LLM auto-narrative and a daily/monthly nesting."
+tags: ["ux", "information-architecture", "project-log"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+The project log had grown to 30+ entries rendered as one flat reverse-chronological list. Even after pinning decisions/snapshots on top, the bulk was a raw wall with no synthesis layer, and it didn't read like a real engineering work log — there was no cadence, no "what happened this period" digest.
+
+## Options considered
+
+- **Summary source — A: factual rollup (auto, metadata only)** vs **B: hand-written digest (reuse `kind: snapshot` + `period`)** vs **C: LLM build-time auto-narrative.** C was rejected: it adds a build-time AI dependency and cost, carries a fabrication risk, and is exactly the performative auto-content this blog rejects (the judgment layer is supposed to be the human's synthesis).
+- **Granularity — weekly vs monthly vs both (nested).** Monthly matched the existing `snapshot.period` model but reads like an exec summary. Both-nested was rejected as cluttered. Weekly is the authentic engineering cadence (standups, sprints, changelogs) — and the goal was "feel like a real company log."
+
+## Chosen + Why
+
+**A + B, weekly.** The build log is bucketed by ISO week, newest first, each week headed by a factual auto-rollup (entry count + kind breakdown — "Week of May 26 · 5 Troubleshoot · 2 Tech retro"). That's pure metadata aggregation: no prose, no LLM, no fabrication. Hand-written `snapshot` entries (B) need no new model — they already render in the pinned "Decisions & milestones" group as the period digests. Two natural tiers (pinned milestones + weekly factual log) without a redundant monthly grouping level.
+
+## Trade-off accepted
+
+The weekly rollup is counts, not narrative — it tells you a week's shape, not its story; a real digest still requires a hand-written snapshot (B), which carries authoring friction (zero written so far). Heavier changelog-style visual treatment (version tags, per-kind color weight) is deferred under the v1 visual freeze — this is structure/IA only.
+
+## Reversibility
+
+two-way — component logic in `LogTimeline.tsx`; revert is a commit.
+
+## Verified by
+
+`tsc --noEmit` + `next build` clean; "Week of" / "Build log" present in the prerendered `/projects/daeseon-ai` artifact and confirmed on the live page.
+
+## Commit
+
+`9f0f31b`.
