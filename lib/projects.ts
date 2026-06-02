@@ -14,6 +14,8 @@ export type ProjectFrontmatter = {
   featured: boolean;
   url: string; // required — live service link, shown as the primary CTA
   repo?: string;
+  /** Optional hero screenshot — path in /public or an absolute URL. */
+  image?: string;
   /**
    * "owner/name" — if set, the project log timeline is fetched from this repo's
    * content/logs/<slug>/ directory instead of this blog's. Lets each project
@@ -63,6 +65,7 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
     featured: Boolean(fm.featured),
     url: fm.url,
     repo: fm.repo,
+    image: fm.image,
     logSourceRepo: fm.logSourceRepo,
     tags: fm.tags,
     stack: fm.stack,

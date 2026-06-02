@@ -1,4 +1,3 @@
-import { renderMdx } from "@/lib/mdx";
 import { formatDate } from "@/lib/format";
 import { type Locale, localizedPath } from "@/lib/i18n";
 import type { Project } from "@/lib/projects";
@@ -22,7 +21,6 @@ export async function ProjectBody({
   translation: Project | null;
   locale: Locale;
 }) {
-  const rendered = await renderMdx(project.content);
   const fm = project.frontmatter;
   const allLogs = await listProjectLogs(project.slug, fm.logSourceRepo, locale);
   const publicLogs = allLogs.filter((e) => e.frontmatter.visibility === "public");
@@ -92,7 +90,16 @@ export async function ProjectBody({
           </dl>
         ) : null}
       </header>
-      <div className="prose">{rendered}</div>
+
+      {fm.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={fm.image}
+          alt={fm.title}
+          loading="lazy"
+          className="mb-4 w-full rounded-lg border border-paper-line"
+        />
+      ) : null}
 
       {publicLogs.length > 0 ? (
         <section className="mt-16 border-t border-paper-line pt-10">
