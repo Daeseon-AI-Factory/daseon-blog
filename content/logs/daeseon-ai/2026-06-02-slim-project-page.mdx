@@ -1,0 +1,42 @@
+---
+title: "Slim the project page to intro + image + link + timeline"
+date: "2026-06-02"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "The project page had grown busy — a multi-section MDX body plus links, stack, and the log. Cut it to a brief intro, an optional hero image, the real links, and the weekly timeline. The long detail now lives only in the Full README page."
+tags: ["ux", "information-architecture"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+After the README-pages work, the project page carried the same detail twice: a long multi-section MDX body (two-halves, engineering highlights, stack prose, limitations) *and* a "Full README" page with the fuller version. It read as clutter.
+
+## Options considered
+
+- **Keep the rich body on the page.** Most detail up front, but redundant with the README page and a wall to scan.
+- **Slim the page; detail lives in the README page (chosen).** The page becomes a scannable card; anyone who wants depth clicks Full README.
+
+## Chosen + Why
+
+Slim it. The project page now shows only: the brief intro (the `description`), an optional hero image (new `image` frontmatter field), the real links (Visit site + Full README + translation), the compact stack/role line, and the weekly log timeline. The long MDX body is no longer rendered on the page — its detail lives in the Full README page. One scannable surface, one detail surface.
+
+## Trade-off accepted
+
+Projects without a README lose their on-page prose (they fall back to description + stack + timeline) until one is added. The rich Mimi intro body written earlier today is now unrendered on the page (still in the file) — superseded by the description + README split.
+
+## Reversibility
+
+two-way — re-rendering `project.content` is a one-line restore in `ProjectBody`.
+
+## Verified by
+
+`next build` clean; live `/projects/shadow-ai` shows the intro, links, stack, and timeline with the long body gone (the remaining "Engineering highlights" string is inside a log entry, not the body). Image slot renders only when `image` is set.
+
+## Commit
+
+`1d510e7`.
