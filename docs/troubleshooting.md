@@ -238,3 +238,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: fae50ba Log T1 entry: v1 close milestone + safety boundary codified [no-log] -->
 <!-- skipped: 2b61d59 Add post: you can't enforce what you can't observe (en/ko) [no-log] -->
 <!-- override-trigger: b406c42 Rewrite observability post (en/ko) — blog content not code; LOC trigger over-fires on prose; the post IS the artifact -->
+<!-- skipped: 08f28d2 Add log-system map doc for external analysis handoff [no-log] -->
+<!-- override-trigger: aaea0af Add 9 industry-retro posts (en/ko) — blog content not code; LOC trigger over-fires on 18 prose files; the posts ARE the artifact -->
