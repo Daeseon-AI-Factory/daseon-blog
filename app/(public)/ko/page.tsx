@@ -44,7 +44,7 @@ export default async function HomeKO() {
                 만들고 현대화해온 소프트웨어 엔지니어. 지금은 Java/Spring
                 백엔드 플랫폼과 AI 보조 제품 엔지니어링에 집중하고 있습니다 —
                 견고한 백엔드와 실제로 쓰이는 AI 도구를 함께 만듭니다. 현재
-                토론토 거주, Senior / Staff 백엔드 또는 AI 엔지니어 포지션을
+                토론토 거주, Senior 백엔드 또는 AI 엔지니어 포지션을
                 찾고 있습니다.
               </p>
             </HomeSection>

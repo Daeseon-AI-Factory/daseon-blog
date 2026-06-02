@@ -45,7 +45,7 @@ export default async function HomeEN() {
                 warehouse, and financial operations. Currently focused on
                 Java/Spring backend platforms and AI-assisted product
                 engineering — reliable backends plus practical AI-powered
-                tools. Based in Toronto, open to senior / staff backend or AI
+                tools. Based in Toronto, open to senior backend or AI
                 engineer roles.
               </p>
             </HomeSection>
