@@ -25,6 +25,23 @@ const KIND_COLOR: Record<LogKind, string> = {
   snapshot: "bg-ink/15 text-ink font-medium",
 };
 
+/** Monday (UTC) of the ISO week containing dateStr ("YYYY-MM-DD"). */
+function mondayOf(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const dow = (d.getUTCDay() + 6) % 7; // Mon = 0
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Factual, no-prose rollup of a week's entries: "5 Troubleshoot · 2 Tech retro". */
+function weekSummary(items: LogEntry[], locale: Locale): string {
+  const counts: Partial<Record<LogKind, number>> = {};
+  for (const e of items) counts[e.kind] = (counts[e.kind] ?? 0) + 1;
+  return LOG_KINDS.filter((k) => counts[k])
+    .map((k) => `${counts[k]} ${LOG_KIND_LABELS[k][locale]}`)
+    .join(" · ");
+}
+
 export function LogTimeline({ project, entries, locale }: Props) {
   const [activeKind, setActiveKind] = useState<LogKind | "all">("all");
 
@@ -51,6 +68,20 @@ export function LogTimeline({ project, entries, locale }: Props) {
   const isAll = activeKind === "all";
   const highlights = isAll ? filtered.filter((e) => HIGHLIGHT.includes(e.kind)) : [];
   const rest = isAll ? filtered.filter((e) => !HIGHLIGHT.includes(e.kind)) : filtered;
+
+  // Bucket the build log by ISO week (newest first), entries already date-desc.
+  const weeks = (() => {
+    const map = new Map<string, LogEntry[]>();
+    for (const e of rest) {
+      const wk = mondayOf(e.frontmatter.date);
+      const arr = map.get(wk);
+      if (arr) arr.push(e);
+      else map.set(wk, [e]);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([weekStart, items]) => ({ weekStart, items }));
+  })();
 
   const renderEntry = (e: LogEntry) => (
     <li key={`${e.project}-${e.slug}`} className="relative">
@@ -142,15 +173,37 @@ export function LogTimeline({ project, entries, locale }: Props) {
         </div>
       ) : null}
 
-      <div className="space-y-3">
+      <div className="space-y-6">
         {isAll && highlights.length > 0 ? (
           <h3 className="font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
-            {locale === "ko" ? "전체 빌드 로그" : "Full build log"}
+            {locale === "ko" ? "빌드 로그" : "Build log"}
           </h3>
         ) : null}
-        <ol className="relative ml-3 space-y-5 border-l border-paper-line pl-6">
-          {rest.map(renderEntry)}
-        </ol>
+        {isAll ? (
+          weeks.map(({ weekStart, items }) => (
+            <div key={weekStart} className="space-y-3">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                <h4 className="font-mono text-[0.7rem] uppercase tracking-widest text-ink">
+                  {locale === "ko"
+                    ? `${formatDate(weekStart, locale)} 주`
+                    : `Week of ${formatDate(weekStart, locale)}`}
+                </h4>
+                <span className="font-mono text-[0.6rem] uppercase tracking-widest text-ink-subtle">
+                  {items.length}{" "}
+                  {locale === "ko" ? "개" : items.length === 1 ? "entry" : "entries"} ·{" "}
+                  {weekSummary(items, locale)}
+                </span>
+              </div>
+              <ol className="relative ml-3 space-y-5 border-l border-paper-line pl-6">
+                {items.map(renderEntry)}
+              </ol>
+            </div>
+          ))
+        ) : (
+          <ol className="relative ml-3 space-y-5 border-l border-paper-line pl-6">
+            {rest.map(renderEntry)}
+          </ol>
+        )}
       </div>
     </div>
   );
