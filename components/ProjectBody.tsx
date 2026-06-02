@@ -36,7 +36,7 @@ export async function ProjectBody({
         </h1>
         <p className="mt-3 text-lg text-ink-muted">{fm.description}</p>
         <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
-          {fm.url ? (
+          {fm.url && fm.url !== fm.repo ? (
             <a
               href={fm.url}
               target="_blank"

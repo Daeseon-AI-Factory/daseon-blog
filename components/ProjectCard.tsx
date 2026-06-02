@@ -10,7 +10,7 @@ const STATUS_COPY = {
 export function ProjectCard({ project, locale }: { project: Project; locale: Locale }) {
   const fm = project.frontmatter;
   const externals: { label: string; href: string }[] = [];
-  if (fm.url) externals.push({ label: locale === "ko" ? "사이트" : "Live", href: fm.url });
+  if (fm.url && fm.url !== fm.repo) externals.push({ label: locale === "ko" ? "사이트" : "Live", href: fm.url });
   if (fm.repo) externals.push({ label: "Repo", href: fm.repo });
 
   return (

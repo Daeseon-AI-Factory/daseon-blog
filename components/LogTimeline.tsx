@@ -34,9 +34,17 @@ export function LogTimeline({ project, entries, locale }: Props) {
     return c;
   }, [entries]);
 
+  const sorted = useMemo(
+    () =>
+      [...entries].sort((a, b) =>
+        b.frontmatter.date.localeCompare(a.frontmatter.date),
+      ),
+    [entries],
+  );
+
   const filtered = useMemo(
-    () => (activeKind === "all" ? entries : entries.filter((e) => e.kind === activeKind)),
-    [entries, activeKind],
+    () => (activeKind === "all" ? sorted : sorted.filter((e) => e.kind === activeKind)),
+    [sorted, activeKind],
   );
 
   if (entries.length === 0) {
