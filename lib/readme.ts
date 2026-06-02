@@ -17,11 +17,27 @@ function candidatePaths(slug: string, locale: Locale): string[] {
  */
 function sanitizeReadme(md: string): string {
   let s = md;
-  // Drop HTML wrappers/inline tags that MDX would treat as JSX.
-  s = s.replace(/<\/?(div|sub|sup|br|p|span|picture|source|center)\b[^>]*>/gi, "");
+  // Drop HTML wrappers/inline tags that MDX would treat as JSX, plus raw
+  // <img>/<table> chrome (READMEs use repo-relative image paths that 404 on
+  // the blog, and HTML tables that are just image layout). GFM "| ... |"
+  // markdown tables are untouched.
+  s = s.replace(
+    /<\/?(div|sub|sup|br|p|span|picture|source|center|img|table|thead|tbody|tr|td|th)\b[^>]*>/gi,
+    "",
+  );
   // A couple of common HTML entities → text.
   s = s.replace(/&nbsp;/g, " ").replace(/&middot;/g, "·");
-  // Neutralize links that won't resolve for a visitor.
+  // Neutralize raw HTML <a href="..."> links (footers etc.) by the same rule:
+  // keep in-page anchors, daeseon.ai, and shield badges; strip the rest to text.
+  s = s.replace(/<a\b[^>]*?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, (full, url, text) => {
+    const u = String(url).trim();
+    const keep =
+      u.startsWith("#") ||
+      /^https?:\/\/([a-z0-9-]+\.)?daeseon\.ai(\/|$|\?)/i.test(u) ||
+      /^https?:\/\/img\.shields\.io\//i.test(u);
+    return keep ? full : text;
+  });
+  // Neutralize markdown links that won't resolve for a visitor.
   s = s.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (full, text, url) => {
     const u = String(url).trim();
     if (u.startsWith("#")) return full; // in-page anchor
