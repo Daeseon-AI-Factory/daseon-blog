@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { type Locale, localizedPath, t } from "@/lib/i18n";
+import { formatDate } from "@/lib/format";
 import type { Post } from "@/lib/posts";
 
 export function WikiList({ entries, locale }: { entries: Post[]; locale: Locale }) {
@@ -26,6 +27,11 @@ export function WikiList({ entries, locale }: { entries: Post[]; locale: Locale 
             </div>
             {e.frontmatter.description ? (
               <p className="mt-1 text-sm text-ink-muted">{e.frontmatter.description}</p>
+            ) : null}
+            {e.frontmatter.date ? (
+              <p className="mt-1.5 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+                {formatDate(e.frontmatter.date, locale)}
+              </p>
             ) : null}
           </Link>
         </li>
