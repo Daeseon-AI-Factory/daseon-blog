@@ -1,0 +1,61 @@
+---
+title: "Engineering Fundamentals — a map of the whole field"
+description: "Software engineering isn't one skill — it's ~18 separately-masterable domains across a few bands. Nobody masters all of them; the real shape is T-shaped. A map for orientation, not walls."
+date: "2026-06-03"
+language: "en"
+type: "knowledge"
+tags: ["map", "fundamentals", "systems", "career"]
+---
+
+## The shape
+
+Software engineering isn't one skill — it's a few **bands** of distinct, separately-masterable domains. You don't master all of them. The realistic shape is **T-shaped**: deep in one or two, literate across the rest — enough to read, reason, and collaborate across the seam. This is the territory.
+
+## Foundations — everything sits on these
+
+- **Computational foundations** — algorithms & data structures, complexity (Big-O), computability, probability. The math substrate.
+- **Single-machine systems** — the memory hierarchy, concurrency primitives (locks, atomics, async), the OS (scheduling, virtual memory, syscalls), I/O models, runtimes (GC/JIT), type systems. How one computer runs a program.
+- **Networking** — TCP/IP, HTTP/1‑2‑3 & QUIC, DNS, gRPC/RPC, TLS, load balancing, CDN/edge. How bytes move between machines.
+
+## Distributed backend — the cloud-product core
+
+- **Distributed systems & data-correctness** — consensus (Raft/Paxos), transactions & isolation (MVCC, the [[race-condition]]), replication, sharding, delivery semantics & [[idempotent|idempotency]], [[distributed-lock|coordination]], caching, back-pressure, the [[append-only-log|append-only log]] as a primitive. Keeping state correct across machines that fail independently. *Most backend-interview depth lives here.*
+- **Data engineering** — batch & stream pipelines, OLAP/columnar, the lakehouse, data modeling, orchestration. Data at scale, for analytics and ML.
+
+## AI / ML
+
+- **ML systems (classical)** — linear algebra & statistics, classical models, feature engineering, evaluation & A/B, model serving, drift monitoring, GPUs. Non-LLM production ML.
+- **Generative AI / LLM stack** — transformers, embeddings & vector search, RAG, agents, evals, inference serving, fine-tuning. Products built on large models.
+
+## Surfaces — where users touch the system
+
+- **Client / frontend / mobile** — the rendering pipeline, the event loop, client state, Web Vitals, SSR, accessibility, PWA/offline, mobile platforms.
+- **Product / UX engineering** — product sense, usability, design systems, user research, experimentation. Building the *right* thing, not just the thing right.
+
+## Cross-cutting — every system needs them
+
+- **Security engineering** — authentication & authorization, applied cryptography, TLS/PKI, threat modeling, secrets & key management, IAM, zero-trust, tenant isolation.
+- **Reliability, operations & cloud (SRE)** — observability (logs/metrics/traces), SLOs & error budgets, incident response, CI/CD & release (canary/rollback/feature flags), infrastructure-as-code, Kubernetes, autoscaling.
+
+## Craft & judgment — what makes the rest compound
+
+- **Software design & delivery** — abstraction & coupling, SOLID, domain modeling (DDD), API contracts, the testing pyramid, version control, ADRs, refactoring.
+- **Engineering judgment & meta-skills** — tradeoff analysis under uncertainty, first-principles reasoning, the economics of a decision, risk, build-vs-buy, technical communication, the AI-native workflow (and knowing when to verify it), owning outcomes.
+
+## Adjacent specializations — each a field of its own
+
+Off the path for most product/backend work, but real masterable domains:
+
+- **Embedded / real-time** — RTOS, WCET, interrupts/ISRs, DMA, firmware, control theory, field buses (CAN/I2C/SPI).
+- **Hardware / computer architecture** — ISA design, RTL, cache coherence (MESI), HDLs, FPGA/ASIC, accelerators.
+- **Graphics / game engines** — rasterization, shaders, ray tracing, physics, the game loop, ECS.
+- **Scientific computing / HPC** — dense & sparse linear algebra, solvers, ODE/PDE, simulation, MPI/OpenMP.
+- **Information theory & compression** — entropy, source coding (Huffman/LZ/zstd), error-correcting codes, probabilistic structures (Bloom, HyperLogLog).
+
+## How to read it
+
+The boundaries leak — a slow query is single-machine *and* distributed *and* data-modeling at once. That's the point: the map is for orientation, not walls. Pick a spike (the one or two domains you go deep on) and keep the rest at literacy — enough to reason and collaborate where they meet.
+
+## In Korean
+
+"엔지니어링 fundamental 전부를 섭렵한다"는 한 사람이 18개 도메인을 다 *깊이* 갖는다는 뜻이 아니다 — **한두 기둥은 깊게, 나머지는 읽고 추론할 만큼**(T자형)이라는 뜻이다. 지도는 벽이 아니라 방향이다.
