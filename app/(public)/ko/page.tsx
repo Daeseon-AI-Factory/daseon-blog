@@ -1,10 +1,11 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PostList } from "@/components/PostList";
+import { WikiList } from "@/components/WikiList";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProjectList } from "@/components/ProjectList";
 import { HomeSection } from "@/components/HomeSection";
-import { getPublishedPosts } from "@/lib/posts";
+import { getPublishedPosts, listContent } from "@/lib/posts";
 import { getFeaturedProjects } from "@/lib/projects";
 import { getNow } from "@/lib/now";
 import { formatDate } from "@/lib/format";
@@ -12,12 +13,17 @@ import { formatDate } from "@/lib/format";
 export const revalidate = 60;
 
 export default async function HomeKO() {
-  const [posts, projects, now] = await Promise.all([
+  const [posts, projects, now, wiki] = await Promise.all([
     getPublishedPosts("ko"),
     getFeaturedProjects("ko", 3),
     getNow("ko"),
+    listContent("knowledge", "ko"),
   ]);
   const recentPosts = posts.slice(0, 5);
+  const recentWiki = wiki
+    .filter((w) => w.frontmatter.visibility !== "private" && w.frontmatter.status !== "draft")
+    .sort((a, b) => (a.frontmatter.date < b.frontmatter.date ? 1 : -1))
+    .slice(0, 4);
 
   return (
     <>
@@ -66,6 +72,17 @@ export default async function HomeKO() {
             >
               <PostList posts={recentPosts} locale="ko" />
             </HomeSection>
+
+            {recentWiki.length > 0 ? (
+              <HomeSection
+                id="wiki"
+                title="위키"
+                seeAll="전체 위키"
+                seeAllHref="/ko/wiki"
+              >
+                <WikiList entries={recentWiki} locale="ko" />
+              </HomeSection>
+            ) : null}
           </div>
         </div>
       </main>
