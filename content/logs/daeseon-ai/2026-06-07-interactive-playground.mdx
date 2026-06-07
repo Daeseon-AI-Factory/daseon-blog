@@ -1,0 +1,36 @@
+---
+title: "Interactive Learning Playground 도입 설계"
+date: "2026-06-07"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "ko"
+summary: "블로그 내부에 시스템 디자인과 프론트엔드 패턴을 시각적으로 학습할 수 있는 커스텀 샌드박스(Playground) 아키텍처 설계"
+tags: ["architecture", "education", "playground"]
+---
+
+## Context
+블로그 소유자는 단순한 텍스트 기반의 정보 전달을 넘어, 시스템 설계(System Design), 디자인 패턴, 핵심 알고리즘을 직접 코드로 짜보고 시각적으로 이해할 수 있는 "완전한 개인 커스텀 학습소(Learning Playground)"를 구축하기를 원함.
+
+## Options considered
+1. **Sandpack (CodeSandbox Engine) + Custom React UI**: 프론트엔드 코드 실행에 최적화, 내재화 가능.
+2. **Interactive MDX Components (Purpose-built Visualizers)**: 개별 시스템 디자인(예: 로드밸런서)의 특성을 살린 전용 인터랙티브 컴포넌트(Josh W. Comeau 스타일).
+3. **Monaco Editor + Server-side Execution**: 백엔드 시스템(Java, Python 등) 실행용 커스텀 아키텍처. 가장 공수가 큼.
+
+## Chosen + Why
+- **Option 1(Sandpack)과 Option 2(Interactive MDX)의 하이브리드** 채택.
+- 프론트엔드 로직은 Sandpack 코어 엔진으로 처리하고 껍데기(UI)는 블로그 디자인에 맞춤.
+- 시스템 아키텍처(백엔드 요소) 학습의 경우 범용 에디터보다 **목적 지향적인 시뮬레이션 컴포넌트(Option 2)**가 훨씬 높은 교육적 효과를 제공하므로 이를 메인으로 채택.
+
+## Trade-off accepted
+- 매 패턴(Circuit Breaker, Rate Limiter 등)을 학습할 때마다 개별 시각화 컴포넌트를 직접 짜야 하므로 초기 작성 공수가 매우 큼.
+- Sandpack 관련 라이브러리로 인해 클라이언트 번들 사이즈 증가 우려가 있으나, 해당 위키 포스트 내에서만 Lazy Load 하도록 격리하여 블로그 전반의 성능 저하를 방어함.
+
+## Reversibility
+- **Hard**. 시각적 컴포넌트를 활용하여 작성된 위키 문서들은 향후 에디터 프레임워크를 변경할 때 재작성 비용이 발생함.
+
+## Verified by
+- [Architecture Document](/docs/interactive-playground-architecture.md) 작성 완료.
+
+## Commit
+- (문서 생성 커밋)
