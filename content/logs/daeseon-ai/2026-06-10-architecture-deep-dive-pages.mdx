@@ -1,0 +1,52 @@
+---
+title: "Architecture deep-dives become a third project surface — dalkkak-ai pilot"
+date: "2026-06-10"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "Each project gets a source-verified architecture deep-dive. Chose a dedicated /projects/[slug]/architecture sub-page over making it the project page's main body (which would reverse the June 2 slim-page decision) or posting to the home feed. Piloted on dalkkak-ai, en+ko, with content extracted by a 13-agent analyze-verify workflow over the actual repo."
+tags: ["information-architecture", "content", "ai-workflow"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+The goal for the site is job hunting plus branding, and the projects section showed *what* each project does but not *how it's built* — the part a senior-engineer reader actually evaluates. The ask was to examine each project's architecture and publish it as a primary surface. One constraint sat in the way: the accepted 2026-06-02 decision (`1d510e7`) that slimmed the project page to "one scannable surface, one detail surface."
+
+## Options considered
+
+- **Render the deep-dive as the project page's main body.** Most literal reading of "post it as main"; depth up front. Rejected because it reverses the slim-page decision and turns the page back into a wall — and there's no evidence depth-up-front converts better than a scannable card.
+- **One deep-dive blog post per project on the home feed.** Highest-traffic surface, RSS + SEO; the industry-retro series shipped this way. Rejected because six same-shaped posts would crowd the feed at once, and the content is reference material, not dated writing.
+- **Architecture entries in each satellite's `content/logs/`** (pulled by the cross-repo aggregation). Rejected: requires committing to satellite repos (explicit-approval boundary), and log entries render in the timeline — wrong shape for a primary surface.
+- **A dedicated `/projects/[slug]/architecture` sub-page (chosen).** Third detail surface following the existing readme/log pattern, linked prominently on the project page.
+
+## Chosen + Why
+
+The sub-page keeps the slim project page intact while giving architecture a first-class, linkable URL per project. Implementation mirrors the README pages exactly: `lib/architecture.ts` reads `content/projects/architecture/<slug>.mdx` (ko falls back to en), two thin routes render it, and `ProjectBody` shows an "Architecture →" link when the file exists.
+
+Pilot first, fan-out second: only dalkkak-ai shipped today. The other five projects follow once the voice and depth are confirmed on the live page — six deep-dives in an unapproved voice would be six rework jobs.
+
+The pilot content itself was extracted from the `ddalkkak` repo by a 13-agent workflow: six subsystem analysts (every claim required file:line evidence), an adversarial verifier per area that re-opened the files instead of trusting citations, and a completeness critic. Two claims were refuted (both count errors) and the corrected values are what's published. The frontend verifier died mid-run on a socket error, so frontend claims in the post are limited to what the critic independently re-verified.
+
+## Trade-off accepted
+
+The deep-dive is one click from the project page rather than on it. It's also a snapshot — the post pins to "2026-06-10, v0.2.26" because the repo released v0.2.26 *during* verification; the page will drift stale as the project moves, and nothing re-verifies it automatically.
+
+## Reversibility
+
+two-way — the loader, routes, and link are additive; deleting `content/projects/architecture/` removes the surface without touching anything else.
+
+## Verified by
+
+`npm run build` clean; both `/projects/dalkkak-ai/architecture` and `/ko/projects/dalkkak-ai/architecture` prerendered (grep of the generated HTML shows the section headings), and the project page HTML contains the "Architecture →" link.
+
+## Discussion artifacts
+
+Placement and rollout were decided via an options question (sub-page vs main-body vs home feed; pilot vs all six) with the slim-page decision surfaced as the conflict. Workflow output retained in the session transcript.
+
+## Commit
+
+`9f94616` (feature + pilot content).

@@ -268,3 +268,19 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- override-trigger: 84673e7 Add DalkkakAI README page + hero + raw-<a> neutralization — LOC over-fires on the bundled README prose (content/projects/readme/dalkkak-ai.md, ~250 lines). The actual code change is small: sanitizeReadme (lib/readme.ts) now also neutralizes raw-HTML <a href> links, not just markdown links — a private-repo anchor and a relative ./README.ko.md anchor in the README footer were rendering as dead links. Verified 0 dead links on the live README page. Reusable pattern: a markdown-link sanitizer must also handle raw HTML <a> tags in GitHub READMEs. -->
 <!-- override-trigger: 61e026b Wire beside <- motivation repo logs + beside README page + hero — LOC over-fires on the bundled README prose (content/projects/readme/beside.md, ~250 lines). Code change is frontmatter only: beside.mdx gets logSourceRepo=Daeseon-AI-Factory/motivation (slug!=reponame) + image. No decision-class change; applying the established README-pages + slim-page pattern to a third project. -->
 <!-- skipped: 51a589a Override marker for 61e026b (beside README prose LOC over-fire) [no-log] -->
+<!-- skipped: 38e4deb Record slug-vs-logdir gotcha + logSourceDir fix (84e572c) [no-log] -->
+<!-- skipped: 2022357 Add engineering-fundamentals field-map wiki entry (en+ko) [no-log] -->
+<!-- skipped: 61d7d79 Show date on wiki list; add map-vs-system-design-vs-OOD distinction [no-log] -->
+<!-- skipped: 389a3a4 Surface recent Wiki entries on the home page (en+ko) [no-log] -->
+
+---
+
+## Per-project architecture deep-dive pages (feature record)
+
+- **Context**: Owner wanted each project's architecture examined and published as a primary surface. The 2026-06-02 slim-page decision (`1d510e7`) deliberately keeps `/projects/[slug]` scannable, so literal "main content" placement would reverse an accepted decision; owner chose the sub-page option when asked.
+- **Choice**: New sub-page `/projects/[slug]/architecture` (+ko), linked on the project page before Full README — third detail surface alongside readme/log. Pilot = dalkkak-ai; the other 5 projects follow after the owner reviews voice/depth on live. Content authored in THIS repo (`content/projects/architecture/<slug>.mdx`), not in satellites — satellite commits need explicit approval, and satellite log entries render in the timeline (wrong shape for a primary surface).
+- **Files changed**: `lib/architecture.ts` (new; mirrors `lib/readme.ts`: `readText` via `lib/source.ts`, ko falls back to en, no sanitize pass since content is authored MDX); `app/(public)/projects/[slug]/architecture/page.tsx` + ko mirror; `components/ProjectBody.tsx` (conditional Architecture link); `content/projects/architecture/dalkkak-ai{,.ko}.mdx`.
+- **Content provenance**: 13-agent workflow over the local ddalkkak repo — 6 subsystem analysts (schema-forced claims, file:line evidence required) → adversarial verifier per area re-opening the files → completeness critic. 2 claims refuted (both count errors; corrected values used). The frontend-area verifier died on a socket error, so frontend claims used in the post are limited to those the critic independently re-verified. The repo bumped v0.2.25→v0.2.26 mid-verification; the post pins to "2026-06-10, v0.2.26".
+- **Gotcha**: architecture MDX renders RAW through `renderMdx` — frontmatter would print as literal text, so these files have none (a "verified at" line in the body instead). Bare `<...>`/`{...}` outside code spans crash MDX (same class as the unquoted-YAML-dates prerender crash); all tmux/env-var strings sit in code spans.
+- **Commit**: 9f94616
+- **Pattern**: `readme.ts` → `architecture.ts` is the template for any per-project detail surface: `content/projects/<surface>/<slug>.mdx` + a small lib loader + 2 thin pages + a conditional ProjectBody link.
