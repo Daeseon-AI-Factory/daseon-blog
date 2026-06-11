@@ -76,6 +76,7 @@ export function validateSiteConfig(input: Partial<SiteAuthor>): { ok: true; data
       handle: input.handle as string,
       hobby: (input.hobby as string) ?? "",
       hobbyKo: (input.hobbyKo as string) ?? "",
+      showReviewNeeded: Boolean(input.showReviewNeeded),
       hobbyPhotos: Array.isArray(input.hobbyPhotos)
         ? (input.hobbyPhotos as Array<{ url?: string; alt?: string }>)
             .filter((p) => p && typeof p.url === "string" && p.url.length > 0)

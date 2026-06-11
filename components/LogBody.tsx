@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/format";
 import { type Locale, localizedPath } from "@/lib/i18n";
 import type { LogEntry } from "@/lib/logs";
 import { LOG_KIND_LABELS } from "@/lib/logs";
+import { loadSiteConfig } from "@/lib/site-storage";
 
 export async function LogBody({
   entry,
@@ -18,6 +19,10 @@ export async function LogBody({
   const humanRendered = humanContent ? await renderMdx(humanContent) : null;
   const fm = entry.frontmatter;
   const hasCompanion = humanRendered !== null;
+  // Admin toggle (content/site.json): when off, entries without a human
+  // companion render single-column with no "Review needed" marker.
+  const showReviewNeeded = Boolean((await loadSiteConfig()).showReviewNeeded);
+  const twoColumns = hasCompanion || (showReviewNeeded && !fm.handwritten);
   const aiLabel = locale === "ko" ? "AI 버전" : "AI version";
   const humanLabel = locale === "ko" ? "직접" : "By hand";
   const reviewLabel = locale === "ko" ? "리뷰 필요" : "Review needed";
@@ -27,7 +32,7 @@ export async function LogBody({
       : "No human review on this entry yet.";
 
   return (
-    <article className="mx-auto max-w-6xl px-5 py-12">
+    <article className={`mx-auto ${twoColumns ? "max-w-6xl" : "max-w-3xl"} px-5 py-12`}>
       <Link
         href={localizedPath(locale, `/projects/${entry.project}`)}
         className="font-mono text-xs uppercase tracking-widest text-ink-subtle hover:text-ink"
@@ -52,7 +57,7 @@ export async function LogBody({
               <span>{humanLabel}</span>
             </>
           ) : null}
-          {!hasCompanion && !fm.handwritten ? (
+          {!hasCompanion && !fm.handwritten && showReviewNeeded ? (
             <>
               <span>·</span>
               <span>{reviewLabel}</span>
@@ -67,24 +72,28 @@ export async function LogBody({
         ) : null}
       </header>
 
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
-        <section>
-          <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
-            {aiLabel}
-          </h2>
-          <div className="prose">{aiRendered}</div>
-        </section>
-        <section className="md:border-l md:border-paper-line md:pl-12">
-          <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
-            {hasCompanion ? humanLabel : reviewLabel}
-          </h2>
-          {hasCompanion ? (
-            <div className="prose">{humanRendered}</div>
-          ) : (
-            <p className="text-sm text-ink-subtle">{reviewHint}</p>
-          )}
-        </section>
-      </div>
+      {twoColumns ? (
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
+          <section>
+            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+              {aiLabel}
+            </h2>
+            <div className="prose">{aiRendered}</div>
+          </section>
+          <section className="md:border-l md:border-paper-line md:pl-12">
+            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-widest text-ink-subtle">
+              {hasCompanion ? humanLabel : reviewLabel}
+            </h2>
+            {hasCompanion ? (
+              <div className="prose">{humanRendered}</div>
+            ) : (
+              <p className="text-sm text-ink-subtle">{reviewHint}</p>
+            )}
+          </section>
+        </div>
+      ) : (
+        <div className="prose">{aiRendered}</div>
+      )}
     </article>
   );
 }

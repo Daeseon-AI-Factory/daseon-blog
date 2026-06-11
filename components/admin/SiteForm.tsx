@@ -249,7 +249,20 @@ export function SiteForm({ initial, savingVia }: { initial: SiteAuthor; savingVi
             />
             Show &quot;Open to roles&quot;
           </label>
+          <label className="flex items-center gap-2 self-end pb-1 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(data.showReviewNeeded)}
+              onChange={(e) => update("showReviewNeeded", e.target.checked)}
+              className="h-4 w-4 accent-ink"
+            />
+            Show &quot;Review needed&quot; on log entries
+          </label>
         </div>
+        <p className="text-xs text-ink-subtle">
+          Off: entries without a human companion render single-column, main content only — no
+          review marker anywhere public.
+        </p>
       </section>
 
       <section className="space-y-3">

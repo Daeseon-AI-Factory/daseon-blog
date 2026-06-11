@@ -21,6 +21,8 @@ export type SiteAuthor = {
   hobby: string;
   hobbyKo: string;
   hobbyPhotos: SitePhoto[];
+  /** Show the "Review needed" marker + empty column on log entries without a human companion. */
+  showReviewNeeded: boolean;
 };
 
 const author = siteJson as SiteAuthor;
