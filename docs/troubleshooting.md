@@ -285,3 +285,15 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Commit**: 9f94616
 - **Pattern**: `readme.ts` → `architecture.ts` is the template for any per-project detail surface: `content/projects/<surface>/<slug>.mdx` + a small lib loader + 2 thin pages + a conditional ProjectBody link.
 <!-- override-trigger: e63af8a Log 9f94616 (architecture deep-dive pages) — dual-write per CLAUDE.md rules [no-log] — false positive: e63af8a contains ONLY the dual-write artifacts for 9f94616 (troubleshooting feature record + Tier-2 decision log entry, both written same turn). The keyword "architecture" comes from referencing the already-logged work; the substantive commit 9f94616 has its full log. Logging the log commit would recurse — same case as acf3538 (wiki v1 dual-write commit). -->
+<!-- skipped: c3e5898 Override marker for e63af8a (dual-write log commit keyword over-fire) [no-log] -->
+
+---
+
+## Every public log entry showed "Review needed" — admin toggle, default off (feature record)
+
+- **Symptom**: every entry page under `/projects/<slug>/log/<entry>` rendered a "리뷰 필요 / Review needed" chip plus an entire empty right column ("No human review on this entry yet.") — because `LogBody` shows it whenever no `<slug>.human.mdx` companion exists, and `find content/logs -name "*.human.mdx"` returns zero files. During recruiter season the whole portfolio read as "unreviewed AI content".
+- **Choice**: site-wide boolean `showReviewNeeded` in `content/site.json`, editable from `/admin/site` (checkbox next to "Open to roles"). Off (default): no-companion entries render single-column (`max-w-3xl`), main content only — no chip, no "AI version" label, no empty column. Entries WITH a companion keep the two-column AI/By-hand layout regardless of the toggle. Rejected: per-entry frontmatter flag (problem is site-wide, would mean editing every entry); removing the mechanism entirely (the /method page documents it; owner asked for a toggle, not removal).
+- **Files changed**: `lib/site.ts` (type), `lib/site-storage.ts` (`validateSiteConfig` must reconstruct the field or saves drop it), `content/site.json` (`"showReviewNeeded": false`), `components/LogBody.tsx` (reads `loadSiteConfig()` server-side; `twoColumns = hasCompanion || (showReviewNeeded && !handwritten)`), `components/admin/SiteForm.tsx` (checkbox).
+- **Gotcha**: first local verification hit a stale server — port 3000 was held by an unrelated node process, `npm run start` died with EADDRINUSE, and curls were silently hitting the wrong app (404s). Re-ran on `-p 3010`. Check `lsof -iTCP:3000` before trusting localhost curls.
+- **Commit**: 8a0824b
+- **Pattern**: site-wide display knobs go in `site.json` via `loadSiteConfig`/`validateSiteConfig` — runtime-editable from admin, live in ~30s through the GitHub-raw read path, no rebuild. Remember validateSiteConfig rebuilds the object field-by-field; a forgotten field silently disappears on the next admin save.

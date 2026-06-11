@@ -1,0 +1,48 @@
+---
+title: "'Review needed' becomes an admin toggle — off while recruiters are looking"
+date: "2026-06-11"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "Every log entry without a human companion was rendering a 'Review needed' marker and an empty review column — and zero companion files exist, so that was every public entry. Added a site-wide admin toggle (showReviewNeeded in site.json), default off: entries render single-column, main content only."
+tags: ["ux", "admin", "information-architecture"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+The side-by-side AI/human layout marks entries that lack a human companion with a "Review needed" chip and an empty right column. The mechanism is honest by design — but no `.human.mdx` companion file exists yet for any entry, so every single public log entry carried the marker. With recruiters actively reading the site, the portfolio's dominant visual signal was "unreviewed AI content".
+
+## Options considered
+
+- **Do nothing.** Keeps the honesty marker maximally visible. Rejected: the marker is meant to distinguish reviewed from unreviewed entries; when it's on 100% of entries it distinguishes nothing and just reads as a warning label.
+- **Per-entry frontmatter flag.** Granular control. Rejected: the problem is site-wide and time-based (recruiter season), not per-entry; it would mean editing dozens of files and remembering the flag on every new entry.
+- **Remove the review-needed UI entirely.** Simplest. Rejected: the `/method` page documents the mechanism as part of the log system, and the owner asked for a switch, not deletion — companions are still planned.
+- **Site-wide admin toggle (chosen).** One checkbox in `/admin/site`, stored in `site.json`.
+
+## Chosen + Why
+
+`showReviewNeeded: false` by default. When off, an entry without a companion renders single-column — main content only, no chip, no "AI version" label, no empty column. Entries **with** a companion keep the two-column AI/By-hand layout regardless of the toggle, since that layout is the feature working as intended, not a review marker. The toggle reaches the live site through the same `site.json` read path as the rest of the site config, so flipping it in admin takes effect in about 30 seconds without a rebuild.
+
+## Trade-off accepted
+
+While the toggle is off, the public site no longer signals which entries had human review — the honesty marker is hidden, and the `/method` page's description of "empty slots render as REVIEW NEEDED" is now conditional rather than always-true. Accepted: the signal was carrying zero information anyway (every entry unreviewed), and it returns the moment companions exist and the toggle flips on.
+
+## Reversibility
+
+two-way — one checkbox in `/admin/site`, or one boolean in `content/site.json`.
+
+## Verified by
+
+`npm run typecheck` and `npm run build` clean (117/117 pages). Local production server: entry page returns 200 with zero "Review needed" matches, single-column `max-w-3xl` container, no "AI version" label. First verification attempt silently curled a different app squatting on port 3000 (EADDRINUSE) — re-verified on a clean port.
+
+## Discussion artifacts
+
+Owner request: make it toggleable, off now, "recruiters will see it." Confirmed zero `.human.mdx` companions exist repo-wide, which upgraded this from cosmetic to every-entry-affected.
+
+## Commit
+
+`8a0824b`.
