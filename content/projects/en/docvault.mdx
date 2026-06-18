@@ -1,0 +1,44 @@
+---
+title: "DocVault"
+description: "A self-hosted insider-threat event collector for small teams: osquery plus a custom clipboard agent feed a Go/PostgreSQL server with tamper-evident audit logs and an operator AI assistant."
+date: "2026-03-24"
+language: "en"
+translationKey: "docvault"
+status: "active"
+featured: false
+url: "https://docvault.daeseon.ai"
+repo: "https://github.com/Daeseon-AI-Factory/docvault"
+logSourceRepo: "Daeseon-AI-Factory/docvault"
+tags: ["security", "go", "postgres", "audit-log", "insider-threat"]
+stack: ["Go 1.26.1", "PostgreSQL 16", "chi", "pgx", "htmx", "osquery", "AES-256-GCM", "Docker", "Caddy"]
+role: "Solo (AI-pair-programmed with Claude Code)"
+---
+
+DocVault is a small-team insider-threat event collector and viewer. osquery and a custom clipboard agent send endpoint activity into a Go server, PostgreSQL stores the event stream, and an htmx web UI exposes audit, endpoint, alert, vault, and operator workflows.
+
+It is live at [docvault.daeseon.ai](https://docvault.daeseon.ai), with source at [Daeseon-AI-Factory/docvault](https://github.com/Daeseon-AI-Factory/docvault).
+
+## What it does
+
+- Collects endpoint activity through osquery and a custom Windows clipboard agent.
+- Stores events, audit trails, users, vault files, endpoint state, alerts, agent actions, and security briefings in PostgreSQL.
+- Uses a database-trigger hash chain to make app-level audit tampering detectable.
+- Serves a server-rendered htmx UI, with Korean as the default product language and an EN/KO toggle.
+- Provides admin installation flows, including an in-app install page and a one-click Windows installer.
+- Adds an operator AI assistant for read and action workflows, with mutating actions logged and rollbackable.
+
+## Why
+
+The goal is practical visibility for a small team, not a full SIEM, DRM system, legal-evidence system, or ML-based UEBA product. The useful product surface is narrower: see whether company endpoint activity is flowing, inspect suspicious behavior, and preserve an auditable trail before the team reaches for heavier enterprise tooling.
+
+## Engineering bits worth pointing at
+
+- **Tamper-evident audit chain.** The early implementation moved audit integrity into a PostgreSQL trigger and advisory-lock flow so application bugs cannot silently bypass the chain. ([log](/projects/docvault/log/2026-03-25-hash-chain-trigger))
+- **Encryption bug fix.** A streaming vault bug around AES-CTR and MAC boundaries was replaced with chunked AES-256-GCM so encrypted file storage has authenticated chunks. ([log](/projects/docvault/log/2026-05-27-aes-ctr-mac-fix))
+- **Deployment stack.** The live service runs behind Caddy on an NCP Seoul box, deployed with rsync, Docker build, Compose recreate, and a health check. ([log](/projects/docvault/log/2026-06-09-api-2fa-and-deploy-stack))
+- **Install workflow.** The Windows agent path moved from manual instructions toward an in-app install page and generated installer script, reducing non-technical setup friction. ([log](/projects/docvault/log/2026-06-17-in-app-install-page))
+- **Operator AI agent.** The management assistant can inspect system state and perform guarded admin actions, with confirmation and rollback paths added after the first implementation. ([log](/projects/docvault/log/2026-06-16-mgmt-ai-agent))
+
+## Current limits
+
+DocVault is not being presented as a hardened public-internet security product. The current handoff still calls out real-desktop clipboard capture, osquery end-to-end verification, prompt-injection hardening for attacker-controlled tool-output fields, recovery-code handling, off-host backup verification, and the first real customer PC install as areas that need more proof before wider use.
