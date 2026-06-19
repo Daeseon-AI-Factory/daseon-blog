@@ -1,0 +1,49 @@
+---
+title: "Project index gets featured hierarchy + card thumbnails — and why GitHub social cards were rejected"
+date: "2026-06-19"
+project: "daeseon-ai"
+kind: "decision"
+visibility: "public"
+language: "en"
+summary: "The /projects index read as a list of text blurbs: a placeholder subtitle, uniform cards, no visuals, no hierarchy. Chose a layout-only design-lock exception: sharper intro copy, featured-vs-rest split, and a card component that renders a hero thumbnail plus a live badge. Used only the real product OG images that already exist (Beside, DalkkakAI); GitHub social cards were tried and rejected because they prominently show 0 stars/forks on the flagships, and real product screenshots are login-walled."
+tags: ["information-architecture", "visual-design", "recruiting", "portfolio"]
+tier: "2"
+status: "accepted"
+reversibility: "two-way"
+---
+
+## Context
+
+The site is for job hunting plus branding. The project detail page engine is already strong — status, live/repo/architecture/readme links, role+stack, and a dated build-log timeline. But the `/projects` index, the first surface a recruiter hits, read as a list of text blurbs: the subtitle was the placeholder "Things I've built or am building.", `ProjectList` mapped every project into a uniform two-column grid sorted by date, and `ProjectCard` rendered no image at all (verified by reading the components). Featured projects got no prominence on the index, and 5 of 7 projects had no `image` set. The blocker was the CLAUDE.md v1 design lock ("no design changes without explicit approval"). Owner passed the 5-posts gate (12 posts live) and explicitly approved a content+visual pass, layout-only, with screenshots sourced from live capture.
+
+## Options considered
+
+- **Do nothing.** Keep the text-blurb list. Rejected — it's the exact "doesn't look like a real project blog" complaint, and for AI/applied-ML roles the GitHub/portfolio surface gets above-average scrutiny.
+- **GitHub social cards (`opengraph.githubassets.com/1/<org>/<repo>`) as thumbnails for all repos.** Uniform, zero-asset, real. Tried it, wired all four repo-backed projects, built, and rendered it locally. Rejected on sight: the card prominently prints "0 stars · 0 forks · 0 issues", so the strongest repo (Mimi, 292 commits) would advertise zero traction to a recruiter. Displaying zero vanity metrics is worse than displaying none.
+- **Real authenticated product screenshots for every project.** Best fidelity, and what the owner picked ("live capture"). Blocked in practice: the flagship live sites are login-walled. `mimi.daeseon.ai`'s public landing is a barebones "Backend status / API health check" page (verified by navigating there) — not a product shot. ScreenBridge and meta-smart-glass are native apps with no web surface at all. Good shots need the owner's credentials.
+- **A `next/og` ImageResponse route generating branded per-project cards.** Consistent, no 0-stars, no login needed, also fixes social sharing. Deferred — it's a new feature with edge-runtime/font build risk, and is design-adjacent enough to warrant its own approval. Offered as the next step.
+- **Layout + content upgrade now, real product OG where it already exists (chosen).** Sharper intro, featured-first hierarchy, a card that renders an image + live badge, using the product OG images Beside and DalkkakAI already host. Cards without an image degrade to clean text (no empty box).
+
+## Chosen + Why
+
+Ship the structural win now and use only images that are genuinely good and real. `ProjectCard` now renders `frontmatter.image` as a hero thumbnail and shows a live dot+badge when `url !== repo`; the index splits featured (prominent cards) from the rest. Beside and DalkkakAI surface their real product art (a locket; a terminal command-deck render); Mimi/DocVault/ScreenBridge/meta-smart-glass render as clean text cards until a real screenshot exists. shadow-ai also gained its public repo link (it was live-URL only).
+
+## Trade-off
+
+The featured row is uneven — Beside and DalkkakAI carry product art while Mimi, the strongest project, is text-only — until the owner provides an authenticated product screenshot or approves the generated-card route. Card images are also hotlinked from the products' own domains (`beside.daeseon.ai/og.jpg`, `ddalkkak.daeseon.ai/...`), so a card image breaks if those sites move the path.
+
+## Reversibility
+
+two-way. The change is copy plus component props and a frontmatter line; reverting is a small, safe diff. No data model or routing change.
+
+## Verified by
+
+`npm run build` succeeds (all 7 project pages + both index pages generate). Local prod screenshots of `/projects`: after image load, Beside (locket OG) and DalkkakAI (deck-art OG) render with live badges; the GitHub-card variant was screenshotted, seen to print "0 stars/forks", and removed; `mimi.daeseon.ai` was navigated and confirmed to be a health-check landing, not a product view.
+
+## Discussion artifacts
+
+Two-question approval this turn (AskUserQuestion): scope = "content + visual" (layout-only design-lock exception), screenshots = "I capture live sites" — which surfaced the login-wall and 0-stars findings that reshaped the image strategy.
+
+## Commit
+
+61502c6
