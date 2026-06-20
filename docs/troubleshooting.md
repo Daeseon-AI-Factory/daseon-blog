@@ -349,3 +349,15 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Satori constraint**: inside `ImageResponse`, every `<div>` with **more than one child must set `display: "flex"`** (or it throws at render). All multi-child divs in the card carry it explicitly; text is via `clamp()` so long titles/descriptions/stacks don't overflow the 1200×630 frame. No custom font is loaded — the generated cards only render the EN project titles (all latin), so the default sans is fine.
 - **Commit**: aac1507
 - **Pattern**: to reuse a generated image as a normal `<img>` (card thumbnail, email, etc.), serve it from a **Route Handler at a stable path**, not the `opengraph-image` file convention (whose URL is hash-busted). Keep it static with `dynamic = "force-static"` + `generateStaticParams`.
+<!-- skipped: 054f5c1 Log aac1507 (generated project card images) — dual-write [no-log] -->
+
+---
+
+## GitHub repo rename ddalkkak → talkak — what the blog must re-point (gotcha)
+
+- **Context**: Owner confirmed `talkak.daeseon.ai` is deployed independently of the repo name, so the satellite repo was renamed `Daeseon-AI-Factory/ddalkkak` → `Daeseon-AI-Factory/talkak` (`gh repo rename talkak --repo Daeseon-AI-Factory/ddalkkak --yes`). GitHub 301-redirects all old `ddalkkak` URLs (git, web, API) to the new name.
+- **Blog re-points (the repo identifier only)**: `logSourceRepo` → `Daeseon-AI-Factory/talkak` in `content/projects/{en,ko}/talkak.mdx`; the architecture naming note (`content/projects/architecture/talkak{,.ko}.mdx`) "the repo is `ddalkkak`" → `talkak`; the full README footer repo link (`content/projects/readme/talkak.md`).
+- **Stays unchanged**: `logSourceDir: "dalkkak-ai"` — the *directory* inside the repo is still `content/logs/dalkkak-ai/` (verified 95 entries via `gh api repos/Daeseon-AI-Factory/talkak/contents/content/logs/dalkkak-ai`). Also unchanged because they aren't the repo name: `@ddalkkak/*` npm workspace packages, bundle id `ai.ddalkkak.desktop`, tmux socket `-L dalkkak`, data dir `~/Library/.../DalkkakAI/`. And the dated `2026-06-19` log entries that say "repo stays ddalkkak" — true when written, left immutable.
+- **Why `logSourceRepo` must change even though GitHub redirects**: relying on the 301 is fragile (a future repo created at the old name would shadow it). Point at the canonical new name. `fetch` follows the 301 in the meantime, so nothing breaks during the transition.
+- **Commit**: b1eb8b4
+- **Pattern**: renaming a GitHub repo only forces blog edits where the *repo name* appears (`logSourceRepo`, repo links, prose "the repo is X"). A repo rename does NOT rename npm package scopes, bundle ids, sockets, or data dirs — leave those. `logSourceDir` is a directory, not the repo, so it's independent of the rename.

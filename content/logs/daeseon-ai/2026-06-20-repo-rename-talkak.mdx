@@ -1,0 +1,34 @@
+---
+title: "Repo renamed ddalkkak → talkak; blog re-pointed to the canonical name"
+date: "2026-06-20"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Closed the last open item from the Talkak rename. The GitHub repo was renamed Daeseon-AI-Factory/ddalkkak → talkak (old URLs 301-redirect), so the GitHub pin now reads talkak. The blog re-points logSourceRepo, the architecture naming note, and the README repo link to the new name; logSourceDir stays dalkkak-ai (the log directory inside the repo is unchanged, verified 95 entries), and internal code identifiers (@ddalkkak packages, bundle id, tmux socket, data dir) are left as-is."
+tags: ["rename", "github", "maintenance"]
+---
+
+## What changed
+
+The owner confirmed `talkak.daeseon.ai` is deployed independently of the repo name, so the satellite repo was renamed on GitHub: `Daeseon-AI-Factory/ddalkkak` → `Daeseon-AI-Factory/talkak`. GitHub 301-redirects every old URL, so clones, links, and the deploy keep working — and the personal-profile pin now shows **talkak** instead of ddalkkak.
+
+The blog re-points only where the **repo name** appears:
+
+- `logSourceRepo` → `Daeseon-AI-Factory/talkak` (en + ko project pages)
+- the architecture deep-dive's naming note (en + ko): "the repo is `ddalkkak`" → `talkak`
+- the full README footer repo link
+
+## What stayed the same
+
+- **`logSourceDir: "dalkkak-ai"`** — the directory *inside* the repo is still `content/logs/dalkkak-ai/`. Confirmed 95 entries resolve under the new repo name, so the cross-repo log timeline is unbroken.
+- **Internal identifiers** that a repo rename doesn't touch: the `@ddalkkak/*` npm workspace packages, the bundle id `ai.ddalkkak.desktop`, the tmux socket `-L dalkkak`, and the data directory `~/Library/.../DalkkakAI/`.
+- The dated 2026-06-19 log entries that say "the repo stays ddalkkak" — accurate when written, kept as immutable history.
+
+## Verified by
+
+`npm run build` clean; a grep confirms the only remaining `Daeseon-AI-Factory/ddalkkak` strings are the two dated 2026-06-19 entries; `gh api repos/Daeseon-AI-Factory/talkak/contents/content/logs/dalkkak-ai` returns 95 entries (so `logSourceRepo` + `logSourceDir` resolve under the new name).
+
+## Commit
+
+b1eb8b4
