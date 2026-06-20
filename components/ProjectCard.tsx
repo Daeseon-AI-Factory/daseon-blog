@@ -18,6 +18,8 @@ export function ProjectCard({
 }) {
   const fm = project.frontmatter;
   const href = localizedPath(locale, `/projects/${project.slug}`);
+  // Real product OG if one exists, else a generated branded card (next/og).
+  const cardImage = fm.image ?? `/projects/${project.slug}/card`;
   const isLive = Boolean(fm.url && fm.url !== fm.repo);
   const externals: { label: string; href: string }[] = [];
   if (isLive) externals.push({ label: locale === "ko" ? "사이트" : "Live", href: fm.url });
@@ -25,23 +27,21 @@ export function ProjectCard({
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-md border border-paper-line bg-white transition hover:border-accent">
-      {fm.image ? (
-        <Link
-          href={href}
-          aria-label={fm.title}
-          className="block overflow-hidden border-b border-paper-line bg-paper-line/20"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={fm.image}
-            alt={fm.title}
-            loading="lazy"
-            className={`w-full object-cover transition duration-300 group-hover:scale-[1.02] ${
-              prominent ? "aspect-[1200/630]" : "aspect-[2/1]"
-            }`}
-          />
-        </Link>
-      ) : null}
+      <Link
+        href={href}
+        aria-label={fm.title}
+        className="block overflow-hidden border-b border-paper-line bg-paper-line/20"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={cardImage}
+          alt={fm.title}
+          loading="lazy"
+          className={`w-full object-cover transition duration-300 group-hover:scale-[1.02] ${
+            prominent ? "aspect-[1200/630]" : "aspect-[2/1]"
+          }`}
+        />
+      </Link>
       <div className={prominent ? "p-6" : "p-5"}>
         <header className="flex items-start justify-between gap-3">
           <Link
