@@ -61,7 +61,7 @@ export default function AboutEN() {
         <Section title={t("en", "about.currently")}>
           <ul className="space-y-1.5 text-[0.95rem]">
             <li>Recently wrapped up ~5 years at SK AX (Korea, Sep 2021 – May 2026). Now based in Toronto.</li>
-            <li>Building LLM-powered developer tools — TubeShadow and Dalkkak — and this site, under the Daeseon AI Factory umbrella.</li>
+            <li>Building LLM-powered developer tools — TubeShadow and Talkak — and this site, under the Daeseon AI Factory umbrella.</li>
             <li>Open to senior backend or AI engineer roles. Toronto or remote.</li>
             <li>
               What I&apos;m on right now lives at{" "}
