@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="landing/images/web/banner.jpg" alt="DalkkakAI — a relaxed robot-sloth running every dashboard from one hammock" width="720" />
+<img src="landing/images/web/banner.jpg" alt="Talkak — a relaxed robot-sloth running every dashboard from one hammock" width="720" />
 
-# DalkkakAI · 딸깍AI
+# Talkak · 딸깍
 
 **One window for every startup you're running — a native, multi-pane command deck for the solo founder who brings their own AI**
 
 <sub>A lightweight **Tauri + Rust** desktop app. Many live terminal panes, across **many startups at once**, each pane a persistent `tmux` session — plus a connective layer that turns your git history and your own Claude Code sessions into a **cross-startup pulse of real work**. It never calls an LLM itself: **you bring your own Claude Code / Codex.**</sub>
 
-[**🌐 Live site → ddalkkak.daeseon.ai**](https://ddalkkak.daeseon.ai)
+[**🌐 Live site → talkak.daeseon.ai**](https://talkak.daeseon.ai)
 
 **English** · [한국어](./README.ko.md)
 
@@ -25,11 +25,11 @@
 
 ---
 
-> **TL;DR.** A native macOS (Apple Silicon) **multi-pane terminal workspace built around running several startups at once.** Every pane is a live shell backed by a persistent `tmux` session; every *startup* is a first-class workspace with its own pane layout and its own granted project folder. On top of that terminal substrate, DalkkakAI builds a **connective layer**: a 20-second worker turns the git history of the repos you grant into a per-startup *change graph*, and your own Claude Code sessions are read — through Claude Code **hooks** and **transcripts**, never by faking data — into a cross-startup **Pulse** of effort, momentum and friction (**tokens as a measure of effort, never a dollar bill**). DalkkakAI **does not call any AI itself** — you bring your own Claude Code / Codex. Shipped as an **unsigned v0.2.0 beta with zero production users**; the cloud backend, auth and billing are scaffolds or roadmap. Every bug and decision is captured in a disciplined in-repo system of six-section post-mortems, ADRs, and a dated build log published to a blog.
+> **TL;DR.** A native macOS (Apple Silicon) **multi-pane terminal workspace built around running several startups at once.** Every pane is a live shell backed by a persistent `tmux` session; every *startup* is a first-class workspace with its own pane layout and its own granted project folder. On top of that terminal substrate, Talkak builds a **connective layer**: a 20-second worker turns the git history of the repos you grant into a per-startup *change graph*, and your own Claude Code sessions are read — through Claude Code **hooks** and **transcripts**, never by faking data — into a cross-startup **Pulse** of effort, momentum and friction (**tokens as a measure of effort, never a dollar bill**). Talkak **does not call any AI itself** — you bring your own Claude Code / Codex. Shipped as an **unsigned v0.2.0 beta with zero production users**; the cloud backend, auth and billing are scaffolds or roadmap. Every bug and decision is captured in a disciplined in-repo system of six-section post-mortems, ADRs, and a dated build log published to a blog.
 
 ## Table of contents
 
-- [What is DalkkakAI?](#what-is-dalkkakai)
+- [What is Talkak?](#what-is-talkak)
 - [Why this project](#why-this-project)
 - [Product walkthrough](#product-walkthrough)
 - [The multi-startup model & the connective layer](#the-multi-startup-model--the-connective-layer)
@@ -45,23 +45,23 @@
 
 ---
 
-## What is DalkkakAI?
+## What is Talkak?
 
-<img src="landing/shots/cockpit.jpg" alt="The DalkkakAI cockpit: a startup sidebar on the left, four live terminal panes running Claude Code and OpenAI Codex side by side" width="100%" />
+<img src="landing/shots/cockpit.jpg" alt="The Talkak cockpit: a startup sidebar on the left, four live terminal panes running Claude Code and OpenAI Codex side by side" width="100%" />
 
-*딸깍 (ddalkkak)* is the Korean word for the small *click* of a switch — the sound of a thing just getting done. The mascot is a sloth in a hammock running every dashboard at once, because the AI is doing the clicking.
+*딸깍* — romanized *Talkak* — is the Korean word for the small *click* of a switch — the sound of a thing just getting done. The mascot is a sloth in a hammock running every dashboard at once, because the AI is doing the clicking.
 
-DalkkakAI is the answer to one concrete, measured pain: its author runs **roughly 12 macOS desktops at the same time** while building services — about *1–3 startups × ~4 tools (Claude Code, an editor, a browser, a terminal)* — and the day is spent in Mission Control, losing context and never knowing at a glance which AI session is working, idle, or stuck (`docs/BLUEPRINT.md §2`).
+Talkak is the answer to one concrete, measured pain: its author runs **roughly 12 macOS desktops at the same time** while building services — about *1–3 startups × ~4 tools (Claude Code, an editor, a browser, a terminal)* — and the day is spent in Mission Control, losing context and never knowing at a glance which AI session is working, idle, or stuck (`docs/BLUEPRINT.md §2`).
 
 So the product is **one native window** that holds:
 
 1. **Many startups, side by side.** A left sidebar lists your startups (workspaces); each one owns its own grid of terminal panes and its own granted project folder. Switch with `⌃1–9`. This is the organizing axis of the whole app — *N startups in one workspace, not one project at a time* (`docs/BLUEPRINT.md §1, §4`).
 2. **Many live shells, in a resizable grid.** Each pane is a real PTY backed by a persistent `tmux` session, so your running `claude` or `codex` survives a layout change *and* an app restart.
-3. **A connective layer on top.** DalkkakAI watches the repos you explicitly grant and reads your AI sessions, then surfaces — *honestly, with provenance* — what actually changed across your whole portfolio this week.
+3. **A connective layer on top.** Talkak watches the repos you explicitly grant and reads your AI sessions, then surfaces — *honestly, with provenance* — what actually changed across your whole portfolio this week.
 
 The terminal grid is the **substrate**; the connective layer across startups is the **product**. The stated north-star is *"everything a one-person founder needs to **start → build → manage → operate** new services — across several startups at once"* (`docs/BLUEPRINT.md §1`, refined 2026-05-30).
 
-> The screenshot above is real: six startups in the sidebar (`Dalkkak`, `Mimi`, `ki-clash`, `daeseonblog`, `EnglishGlass`, `BackendPlatform`), four panes running the author's own **Claude Code (Opus)** and **OpenAI Codex** sessions — the three Claude Code panes each showing a `done` status and a `✦ Summarize` action. DalkkakAI supplies the workspace around those tools — it does not run them for you.
+> The screenshot above is real: six startups in the sidebar (`Dalkkak`, `Mimi`, `ki-clash`, `daeseonblog`, `EnglishGlass`, `BackendPlatform`), four panes running the author's own **Claude Code (Opus)** and **OpenAI Codex** sessions — the three Claude Code panes each showing a `done` status and a `✦ Summarize` action. Talkak supplies the workspace around those tools — it does not run them for you.
 
 ---
 
@@ -77,7 +77,7 @@ The terminal grid is the **substrate**; the connective layer across startups is 
 - **🔌 Systems-level debugging under a GUI sandbox.** A Tauri GUI bundle inherits a near-empty environment, which produced concrete, documented bugs: `claude --resume` froze ~15s (missing `TERM`/locale), `tmux` silently failed (Homebrew off `PATH`), and `codex` became "command not found" because a leaked `npm_config_prefix` stopped `nvm` from loading. The fix sets `TERM`/`COLORTERM`/locale, *augments* `PATH`, **strips every `npm_config_*`**, and wraps spawns in `bash` so failures print instead of freezing (`src-tauri/src/pty.rs`; post-mortems in `docs/ISSUES.md`).
 - **🧱 A non-obvious architecture call.** Terminals and PTYs live in a **module-level registry outside React**, so `react-mosaic` remounts (which fire on every split) don't kill your running session — the pattern VS Code uses to host its terminals (`apps/desktop/src/terminalRegistry.ts`).
 - **🤖 Reliability over cleverness.** Per-pane session status is driven by **Claude Code hook events**, not by scraping the TUI — after an honest admission that a hand-rolled stream parser captured *zero* real events (`src-tauri/src/hooks.rs`, `sessionStatus.ts`; `content/logs/.../streamparser-hardcoded-admission.mdx`).
-- **🧭 BYO, by principle.** Almost the entire app is pure local logic; the only outbound AI call is the user's *own* `claude -p` for an on-demand summary, in a single Rust module (`src-tauri/src/summarize.rs`). DalkkakAI never marks up tokens and never proxies your keys (`docs/BLUEPRINT.md §5`).
+- **🧭 BYO, by principle.** Almost the entire app is pure local logic; the only outbound AI call is the user's *own* `claude -p` for an on-demand summary, in a single Rust module (`src-tauri/src/summarize.rs`). Talkak never marks up tokens and never proxies your keys (`docs/BLUEPRINT.md §5`).
 - **📓 Documentation discipline that's unusual for a solo project.** 10 dated post-mortems, 8 ADRs, 23 problem-indexed troubleshooting entries, and 40 dated build-log narratives — under anti-hallucination rules codified in `CLAUDE.md` (see [Engineering discipline](#engineering-discipline)).
 - **🗣️ Honest communication.** This README leads with what *isn't* built; every number above is traceable to a file or a `git` measurement.
 
@@ -139,7 +139,7 @@ The **Pulse** (`📊 Graph → Pulse`) is the clearest expression of the multi-s
 | **Friction** | Where the flow stalls — times the AI paused waiting on you, plus tool errors |
 | **Shipped vs thrash** | Asks vs commits that day — many asks → 0 commits = churn |
 
-Every unit is honest: *"output tokens / active days / counts — **never a `$`**."* On a Max subscription there is no per-token bill, so DalkkakAI never fabricates a dollar figure (`apps/desktop/src/viz/PulsePanel.tsx`, `usagePulse.ts`).
+Every unit is honest: *"output tokens / active days / counts — **never a `$`**."* On a Max subscription there is no per-token bill, so Talkak never fabricates a dollar figure (`apps/desktop/src/viz/PulsePanel.tsx`, `usagePulse.ts`).
 
 ---
 
@@ -158,7 +158,7 @@ Around the BYO terminal, a set of React renderers turn raw session output into s
 </tr>
 </table>
 
-- **The `<dk-summary>` protocol.** DalkkakAI installs a *its-own-only* `claude` wrapper (`src-tauri/src/inline.rs`) that appends a system-prompt directive asking the model to end each reply with a small `<dk-summary>{…}</dk-summary>` JSON block — one of `recap | plan | question | concept | note`. The block stays visible in the terminal; the **card is read reliably from the transcript** (`read_inline_summary`), not by parsing the mangled TUI stream (ADR-003 / ADR-004).
+- **The `<dk-summary>` protocol.** Talkak installs a *its-own-only* `claude` wrapper (`src-tauri/src/inline.rs`) that appends a system-prompt directive asking the model to end each reply with a small `<dk-summary>{…}</dk-summary>` JSON block — one of `recap | plan | question | concept | note`. The block stays visible in the terminal; the **card is read reliably from the transcript** (`read_inline_summary`), not by parsing the mangled TUI stream (ADR-003 / ADR-004).
 - **Cards.** Six renderers exist, each pulling typed data from `@ddalkkak/shared`. Five — `RecapCard`, `PlanCard`, `QuestionCard`, `ConceptCard`, `NoteCard` — render the on-demand summary (the `<dk-summary>` directive emits exactly those five kinds); `MermaidCard` (sanitizes LLM diagrams with `securityLevel: 'strict'`, zoom/pan-able, *requires* a plain-language caption) is currently wired only into the in-app viz demo.
 - **Token accounting, honestly.** `session_usage` sums the **real** per-message `usage` from the transcript into a session total and a current-turn total (input / output / cache) — *"so we report tokens, not dollars (no fabricated $)."*
 - **Reliable status from hooks.** Live per-pane status comes from Claude Code **hook events** (`hooks.rs` tails `session-events.jsonl` → a `session-hook` event → coarse states), which replaced an earlier stream-scraping parser that didn't work on real output.
@@ -238,7 +238,7 @@ This is, deliberately, half the point of the project — turning every bug and d
 - **[`docs/ISSUES.md`](docs/ISSUES.md)** — **10 dated post-mortems** (9 in the full six-section structure — *Symptom / Root cause / Fix / was-the-instruction-at-fault / was-it-avoidable / Lessons* — plus one follow-up), each scored on a prompt-quality and an avoidability rubric, with **verified commit hashes**. Bug classes include Korean/CJK IME in WKWebView, the `npm_config_prefix` → `nvm` → `codex` trap, a `tmux` mouse-mode scrollback regression, a React error-boundary whiteout, and a `useEffect` persistence race.
 - **[`docs/DECISIONS.md`](docs/DECISIONS.md)** — **8 ADRs (ADR-001 → ADR-008)** with real status discipline (`Accepted`, `Superseded`, `Proposed / Not adopted`): per-session status via hooks (001), the inline-summary fast path (003) and reading it from the transcript (004), the read-time pulse (005), the v3 blueprint recorded as a *non-adopted draft* (006), opt-in worktree concurrency (007), and monetization v1 (008).
 - **[`docs/troubleshooting.md`](docs/troubleshooting.md)** — **23 terse, problem-indexed entries** (*Symptom / Cause / Fix / Commit / Pattern*).
-- **[`content/logs/dalkkak-ai/`](content/logs/dalkkak-ai/)** — **40 dated narrative build-log entries** (`.mdx` with YAML frontmatter), published to the cross-repo timeline at [daeseon.ai/projects/dalkkak-ai](https://daeseon.ai/projects/dalkkak-ai).
+- **[`content/logs/dalkkak-ai/`](content/logs/dalkkak-ai/)** — **40 dated narrative build-log entries** (`.mdx` with YAML frontmatter), published to the cross-repo timeline at [daeseon.ai/projects/talkak](https://daeseon.ai/projects/talkak).
 - **[`docs/MILESTONES.md`](docs/MILESTONES.md)** — 15 milestone entries, each written in three registers (🔧 Engineering / 💬 Raw / 📣 Marketing).
 
 The protocol is codified in [`CLAUDE.md`](CLAUDE.md) (the agent operating rules for this repo): RULE #6 *"Issues are assets — patching and moving on is forbidden,"* a two-layer logging rule, and a dual-write logging contract with **non-negotiable anti-hallucination rules** (literal symptom, verified cause, fix names actual files, commit hash *after* committing). These are house rules written into `CLAUDE.md` rather than machine-enforced.
@@ -250,7 +250,7 @@ The protocol is codified in [`CLAUDE.md`](CLAUDE.md) (the agent operating rules 
 The business model is **ADR-008** (`docs/DECISIONS.md`, *Accepted 2026-06-02*): a hard **14-day free trial → paid subscription**, no perpetual free tier. Pricing, verified in code (`apps/desktop/src/entitlement.ts`) and on the landing page:
 
 - **$96 / year** (headline) or **$12 / month**, USD — annual is ~33% off the monthly run-rate to absorb the merchant-of-record fee.
-- **0% token markup** — bring your own Claude / Codex; DalkkakAI never marks up tokens.
+- **0% token markup** — bring your own Claude / Codex; Talkak never marks up tokens.
 - Two AI modes are *planned* — **BYO** (build first) and a future **Managed** mode framed explicitly as an infrastructure + learning investment, *not* a margin bet.
 
 **What is actually wired today (and what isn't):** the entitlement **gate** is real and end-to-end — a Rust `get_entitlement` command, called once on launch, hard-locks the whole workspace behind a `<Paywall>` when not entitled. But the entitlement **backend is an explicitly-labeled local STUB**: a spoofable file-based trial clock plus a `DALKKAK_ENTITLEMENT` dev override, **failing *open*** on error by design. **No payment is wired** — the checkout button opens the placeholder `https://polar.sh/REPLACE_ME`; Polar is the intended merchant-of-record and Supabase the intended source-of-truth, both roadmap (`src-tauri/src/entitlement.rs`, `Paywall.tsx`).
@@ -259,7 +259,7 @@ The business model is **ADR-008** (`docs/DECISIONS.md`, *Accepted 2026-06-02*): 
 
 ## Security & privacy
 
-DalkkakAI runs your shells and reads your repos, so its reach is constrained deliberately (`docs/BLUEPRINT.md §5.5`, `docs/CONNECTIVE_LAYER.md`).
+Talkak runs your shells and reads your repos, so its reach is constrained deliberately (`docs/BLUEPRINT.md §5.5`, `docs/CONNECTIVE_LAYER.md`).
 
 | Concern | Implementation |
 |---|---|
@@ -268,7 +268,7 @@ DalkkakAI runs your shells and reads your repos, so its reach is constrained del
 | **Git reads are read-only** | Capture shells out to `git log` / `git show` only — it never writes to your repos. |
 | **Provenance, not guesses** | Every graph node carries `confirmed / inferred / hypothesis`; confirmed nodes must carry evidence, and recap cards refuse to invent facts a `git --stat` can't prove. |
 | **No fabricated money** | Token counts are reported as effort; the app never invents a dollar figure for a flat-rate subscription. |
-| **Your keys stay yours** | DalkkakAI makes no AI calls of its own; the one summary feature runs *your* `claude` binary and strips `ANTHROPIC_API_KEY` to force your own subscription auth. |
+| **Your keys stay yours** | Talkak makes no AI calls of its own; the one summary feature runs *your* `claude` binary and strips `ANTHROPIC_API_KEY` to force your own subscription auth. |
 | **Logging never logs secrets** | Two-layer logging records IDs, counts and lifecycle events — never passwords, tokens, keys or PII (CLAUDE.md). |
 
 ---
@@ -291,7 +291,7 @@ pnpm lint                            # biome check .
 cd apps/desktop && pnpm tauri build  # produces the .app + .dmg (Apple Silicon)
 ```
 
-**Or just download it.** The v0.2.0 Apple-Silicon `.dmg` (~8.9 MB) is linked from **[ddalkkak.daeseon.ai](https://ddalkkak.daeseon.ai)**. It's an **unsigned beta**, so the first launch needs right-click → Open (or `xattr -cr`).
+**Or just download it.** The v0.2.0 Apple-Silicon `.dmg` (~8.9 MB) is linked from **[talkak.daeseon.ai](https://talkak.daeseon.ai)**. It's an **unsigned beta**, so the first launch needs right-click → Open (or `xattr -cr`).
 
 ---
 
@@ -332,14 +332,14 @@ apps/desktop/
     hooks.rs                tail session-events.jsonl → session-hook events
     summarize.rs            transcript → usage / inline card / readable log; BYO `claude -p`
     pulse.rs                read-time, zero-storage cross-startup rollups
-    inline.rs               installs the DalkkakAI-only claude wrapper (<dk-summary>)
+    inline.rs               installs the Talkak-only claude wrapper (<dk-summary>)
     paths.rs                PathAllowlist chokepoint
     entitlement.rs          trial/paywall gate (local STUB)
     lib.rs                  Tauri entry · command registry · two-layer logging
 packages/
   augmentor/  shared/       real, used libs (PTY-output parser · graph schema + viz vocab)
   advisor/ platform-client/ skills/ viz/   named placeholders (roadmap)
-landing/                    static bilingual landing page (ddalkkak.daeseon.ai) + screenshots + .dmg
+landing/                    static bilingual landing page (talkak.daeseon.ai) + screenshots + .dmg
 docs/                       BLUEPRINT · CONNECTIVE_LAYER · ROADMAP · ISSUES · DECISIONS · MILESTONES · …
 content/logs/dalkkak-ai/    40 dated build-log entries (rendered on the blog)
 old_repo/                   frozen v1 (Python/FastAPI), read-only reference
@@ -350,8 +350,8 @@ CLAUDE.md                   agent operating rules for this repo
 
 <div align="center">
 
-**[DalkkakAI · 딸깍AI](https://ddalkkak.daeseon.ai)** — one window for every startup you're running.
+**[Talkak · 딸깍AI](https://talkak.daeseon.ai)** — one window for every startup you're running.
 
-<sub>Repo: <a href="https://github.com/Daeseon-AI-Factory/ddalkkak">Daeseon-AI-Factory/ddalkkak</a> · Live: <a href="https://ddalkkak.daeseon.ai">ddalkkak.daeseon.ai</a> · Build log: <a href="https://daeseon.ai/projects/dalkkak-ai">daeseon.ai/projects/dalkkak-ai</a> · <a href="./README.ko.md">한국어 README</a> · MIT</sub>
+<sub>Repo: <a href="https://github.com/Daeseon-AI-Factory/ddalkkak">Daeseon-AI-Factory/ddalkkak</a> · Live: <a href="https://talkak.daeseon.ai">talkak.daeseon.ai</a> · Build log: <a href="https://daeseon.ai/projects/talkak">daeseon.ai/projects/talkak</a> · <a href="./README.ko.md">한국어 README</a> · MIT</sub>
 
 </div>

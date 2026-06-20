@@ -59,7 +59,7 @@ export default function AboutKO() {
         <Section title={t("ko", "about.currently")}>
           <ul className="space-y-1.5 text-[0.95rem]">
             <li>SK AX(한국, 2021.9 – 2026.5)에서 약 5년 근무를 최근 마무리. 현재 토론토 거주.</li>
-            <li>LLM 기반 개발자 도구 — TubeShadow, Talkak — 과 이 사이트를 Daeseon AI Factory 아래에서 제작 중.</li>
+            <li>LLM 기반 개발자 도구 — Mimi, Talkak — 과 이 사이트를 Daeseon AI Factory 아래에서 제작 중.</li>
             <li>Senior 백엔드 또는 AI 엔지니어 포지션을 찾고 있습니다. 토론토 또는 원격.</li>
             <li>
               지금 무엇을 하고 있는지는{" "}
