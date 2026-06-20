@@ -337,3 +337,15 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Pattern**: renaming a project slug is a 5-file `git mv` + a mandatory `logSourceDir` pin (or the log timeline silently empties) + a `/:path*` redirect for the sub-pages. Always re-verify on a confirmed-fresh port.
 <!-- override-trigger: b208cd6 Log a29ffd4 (talkak slug migration + readme rebrand) — dual-write [no-log] — false positive: b208cd6 contains ONLY the dual-write artifacts for a29ffd4 (the slug-migration troubleshooting feature record + the kind:update narrative), both written the same turn. The trigger keyword "migration" appears only because the commit subject names the already-logged work; the substantive commit a29ffd4 has its full dual-write above. Logging a log commit would recurse — same case as e63af8a / c3e5898. -->
 
+<!-- skipped: 3e64507 Override marker for b208cd6 (dual-write log commit keyword over-fire) [no-log] -->
+
+---
+
+## Generated project card images — opengraph-image hashed URL vs a stable route handler (feature record)
+
+- **Context**: The project index needed a uniform thumbnail per card without login-walled screenshots and without the 0-star GitHub social cards (`61502c6`). Solution: generate a branded card with `next/og` and use it as the `<img>` thumbnail (and a nicer social preview) for any project lacking a real product OG.
+- **First attempt + gotcha**: `app/(public)/projects/[slug]/opengraph-image.tsx`. It builds, but Next serves it at a **hashed path** (`/projects/<slug>/opengraph-image-1le12y`), so a hardcoded `<img src="/projects/<slug>/opengraph-image">` returns **404**. The hash is intended for the auto-injected `og:image` meta tag, not for direct reference.
+- **Fix**: a **Route Handler** at `app/(public)/projects/[slug]/card/route.tsx` (`export const dynamic = "force-static"` + `generateStaticParams`) returning an `ImageResponse`. Stable URL `/projects/<slug>/card`, prebuilt static (`● /projects/[slug]/card` in the build output), `200 image/png`. `ProjectCard` uses `cardImage = fm.image ?? /projects/${slug}/card`, so Beside/Talkak keep their real product OG and the rest get the generated card.
+- **Satori constraint**: inside `ImageResponse`, every `<div>` with **more than one child must set `display: "flex"`** (or it throws at render). All multi-child divs in the card carry it explicitly; text is via `clamp()` so long titles/descriptions/stacks don't overflow the 1200×630 frame. No custom font is loaded — the generated cards only render the EN project titles (all latin), so the default sans is fine.
+- **Commit**: aac1507
+- **Pattern**: to reuse a generated image as a normal `<img>` (card thumbnail, email, etc.), serve it from a **Route Handler at a stable path**, not the `opengraph-image` file convention (whose URL is hash-busted). Keep it static with `dynamic = "force-static"` + `generateStaticParams`.

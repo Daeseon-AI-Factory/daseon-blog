@@ -1,0 +1,34 @@
+---
+title: "Every project card now has a thumbnail — generated branded cards (next/og)"
+date: "2026-06-20"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Closed the open follow-up from the project-index visual upgrade. Projects without a real product OG image now render a generated branded card (next/og) at a stable /projects/<slug>/card URL, so the index is uniform: featured row is three images, the rest are consistent cards — no empty boxes, no 0-star GitHub cards, no login-walled screenshots. Verified live-equivalent on a clean local build."
+tags: ["next-og", "visual-design", "portfolio"]
+---
+
+## What I did
+
+The [project-index visual upgrade](/projects/daeseon-ai/log/2026-06-19-project-index-visual-upgrade) left one gap: only Beside and Talkak had real product OG art, so the featured row was uneven and most cards were text-only. This adds a generated fallback.
+
+## Before / change / result
+
+- **Before**: `ProjectCard` rendered an image only when `frontmatter.image` was set. Five of seven projects had none → text-only cards; the GitHub-social-card alternative was rejected because it prints "0 stars / 0 forks".
+- **Change**: a `force-static` `next/og` Route Handler at `/projects/<slug>/card` renders a branded card (title · description · stack · status, in the `#fbfbfa`/`#111`/`#b8531a` palette). `ProjectCard` uses `fm.image ?? /projects/<slug>/card`, so real product OG wins where it exists and everything else gets a consistent generated card.
+- **Result**: the index reads as a real project blog — the featured row is three images (Beside + Talkak product art, Mimi generated), the "More" grid is uniform. Build clean; `/projects/<slug>/card` returns `200 image/png` (~48 KB), prerendered static.
+
+## What it doesn't do / next
+
+- No custom font is loaded, so the cards intentionally only carry the EN (latin) project titles; a Korean title in a generated card would need a bundled CJK font.
+- The generated card repeats the title that also appears as the card caption — acceptable (standard for thumbnail+caption cards), not worth de-duplicating.
+- Still owner-only: the `showep12` GitHub **bio** (needs a `user` token scope the local `gh` lacks) and **pinned repos** (no public API) — left as a two-minute manual finish.
+
+## Verified by
+
+`npm run build` clean (`● /projects/[slug]/card` prerendered for every slug); on a fresh local server `/projects/shadow-ai/card` returns `200 image/png`, and a browser screenshot of `/projects` shows the featured row uniform and the generated cards rendering in the site palette.
+
+## Commit
+
+aac1507
