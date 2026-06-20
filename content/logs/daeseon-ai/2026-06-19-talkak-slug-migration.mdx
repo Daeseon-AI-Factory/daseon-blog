@@ -1,0 +1,36 @@
+---
+title: "Talkak follow-through: slug → /projects/talkak, README rebrand, redirects"
+date: "2026-06-19"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Completed the four follow-ups to the DalkkakAI→Talkak rename. Migrated the route slug dalkkak-ai→talkak (5-file git mv) with an explicit logSourceDir so the satellite log pull doesn't silently empty, added 308 redirects for old links and sub-pages, rebranded the full README mirror (brand + live domain only, internal ids kept), and fixed a stale name on the about page. The GitHub bio + pins could not be changed via API (missing token scope / no pin API) — left for the owner."
+tags: ["rename", "routing", "branding", "maintenance"]
+---
+
+## What changed
+
+Four follow-ups to the [Talkak rename](/projects/talkak/log/2026-06-19-talkak-rename):
+
+1. **Route slug `dalkkak-ai` → `talkak`.** `git mv` of the five slug-keyed files (project page en+ko, architecture en+ko, README). New routes `/projects/talkak` (+ko, +`/architecture`, +`/readme`) generate cleanly.
+2. **About page** (en+ko): the stale tool name "TubeShadow" → **Mimi**.
+3. **Full README mirror**: user-facing `DalkkakAI` → `Talkak`, live domain → `talkak.daeseon.ai`, blog links → `/projects/talkak`.
+4. **GitHub profile** (showep12): could **not** be done from here — the bio update needs a `user` token scope the local `gh` lacks, and GitHub exposes no API for pinned repos. Those two are the owner's to do in the UI.
+
+## The two things that would have quietly broken
+
+- **Log timeline.** Logs are pulled by `logSourceDir ?? slug`. The satellite keeps them under `content/logs/dalkkak-ai/`, so a bare slug rename would have pointed the pull at a non-existent `content/logs/talkak/` and emptied the timeline with no error. Fixed by pinning `logSourceDir: "dalkkak-ai"`.
+- **Inbound links.** `next.config.mjs` now 308-redirects `/projects/dalkkak-ai` and every sub-path (architecture/readme/log) — and the Korean mirror — to the `talkak` slug, so existing links (including those in dated log entries) keep working.
+
+## What stayed `ddalkkak` / `dalkkak` on purpose
+
+The repo is still `Daeseon-AI-Factory/ddalkkak`; the packages `@ddalkkak/*`, bundle id `ai.ddalkkak.desktop`, tmux socket `-L dalkkak`, and data directories `~/Library/.../DalkkakAI/` are real code identifiers and are left as-is. The architecture deep-dive's "four naming layers" note already explains this.
+
+## Verified by
+
+`npm run build` clean (all `talkak` routes generate); on a fresh local server the old slug + sub-paths return 308 to the new slug and `/projects/talkak` returns 200. A first verification pass was thrown off by a stale server holding the port — re-checked on a confirmed-free port.
+
+## Commit
+
+a29ffd4
