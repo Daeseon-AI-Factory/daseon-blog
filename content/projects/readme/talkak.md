@@ -352,6 +352,6 @@ CLAUDE.md                   agent operating rules for this repo
 
 **[Talkak · 딸깍AI](https://talkak.daeseon.ai)** — one window for every startup you're running.
 
-<sub>Repo: <a href="https://github.com/Daeseon-AI-Factory/ddalkkak">Daeseon-AI-Factory/ddalkkak</a> · Live: <a href="https://talkak.daeseon.ai">talkak.daeseon.ai</a> · Build log: <a href="https://daeseon.ai/projects/talkak">daeseon.ai/projects/talkak</a> · <a href="./README.ko.md">한국어 README</a> · MIT</sub>
+<sub>Repo: <a href="https://github.com/Daeseon-AI-Factory/talkak">Daeseon-AI-Factory/talkak</a> · Live: <a href="https://talkak.daeseon.ai">talkak.daeseon.ai</a> · Build log: <a href="https://daeseon.ai/projects/talkak">daeseon.ai/projects/talkak</a> · <a href="./README.ko.md">한국어 README</a> · MIT</sub>
 
 </div>
