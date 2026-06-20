@@ -361,3 +361,16 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Why `logSourceRepo` must change even though GitHub redirects**: relying on the 301 is fragile (a future repo created at the old name would shadow it). Point at the canonical new name. `fetch` follows the 301 in the meantime, so nothing breaks during the transition.
 - **Commit**: b1eb8b4
 - **Pattern**: renaming a GitHub repo only forces blog edits where the *repo name* appears (`logSourceRepo`, repo links, prose "the repo is X"). A repo rename does NOT rename npm package scopes, bundle ids, sockets, or data dirs — leave those. `logSourceDir` is a directory, not the repo, so it's independent of the rename.
+<!-- skipped: 075dbae Log b1eb8b4 (repo rename ddalkkak to talkak sync) — dual-write [no-log] -->
+
+---
+
+## Architecture deep-dive fan-out (4 projects via a verify-gated workflow)
+
+- **Context**: Owner wanted each project's real backend/architecture surfaced so a recruiter/engineer is impressed. The deep-dive surface existed (`/projects/[slug]/architecture`, piloted on talkak 2026-06-10); fanned it out to shadow-ai (Mimi), docvault, beside, jarvis-pc.
+- **How**: a per-project `pipeline(analyze → adversarial-verify → write)` over the LOCAL repos at `~/Documents/GitHub/ai-product/<dir>` (note: `beside` slug → `motivation` dir). Analyze measured numbers with shell + cited files; verify re-opened every cited file and re-ran every count.
+- **The verify pass earned its keep** — it cut/corrected real embellishments before they shipped: ScreenBridge image downscale `1568→1024` (1568 was a stale comment; live const is 1024), deny-list `19→17`, irreversible-keywords `40→35`, "5-layer privacy" softened (2 layers in-progress); Mimi finder count `39→25` (substring/call-site count vs declared signatures), cut unverified "Spring Boot 3.3"; Beside removed a "no native push" wart that current `expo-notifications` code refutes; DocVault LOC label said "non-test" but counted tests.
+- **Gotcha 1 — writers wrote files directly**: 3 of 4 write-agents have the Write tool and interpreted "save as content/projects/architecture/<slug>.mdx" as an instruction — they wrote the file and returned only a confirmation note, NOT the mdx in the result. Only shadow-ai returned the content as text (I wrote that file by hand). If you want the content back in the result instead of on disk, tell the writer "return ONLY the markdown, do not use the Write tool."
+- **Gotcha 2 — MDX safety held**: the architecture mdx render RAW (no frontmatter). Generics/env braces (`ObjectProvider<...>`, `Result<T, String>`, `ConcurrentHashMap<ip, Bucket>`, `<row fields>`) are all inside backtick code spans; mermaid `<br/>` is inside the ```` ```mermaid ```` fence (not JSX-parsed). `npm run build` clean; all 5 architecture pages return 200.
+- **Commit**: 69e91ab
+- **Pattern**: source-grounded portfolio prose = analyze-with-evidence → SEPARATE adversarial verify that re-opens files → write from verified-only. The verify stage is non-optional: it caught 4+ wrong numbers per project that an interviewer reading the repo would have caught instead.

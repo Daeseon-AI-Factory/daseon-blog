@@ -1,0 +1,43 @@
+---
+title: "Architecture deep-dives for 4 more projects — source-verified, adversarially checked"
+date: "2026-06-20"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Fanned out the architecture deep-dive surface (piloted on talkak) to Mimi, DocVault, Beside, and ScreenBridge. Each was extracted from the actual local repo by an analyze → adversarial-verify → write pipeline; the verify pass cut or corrected a real wrong number on every project before it shipped. Every claim cites real files; every number is measured. EN now; the loader falls back to EN for KO until KO versions are written. ScreenBridge and Meta-Smart-Glass: ScreenBridge done; Meta hit a rate limit mid-run and is the one remaining."
+tags: ["information-architecture", "ai-workflow", "content", "recruiting"]
+---
+
+## What I did
+
+Each project's `/projects/<slug>/architecture` page now carries a source-verified deep-dive in the same shape as the talkak pilot: a measured-metrics table, a request-path mermaid diagram, the core mechanisms with the real file names inline, and an honest "what this doesn't do" section.
+
+- **Mimi** — the async LLM pipeline pinned off the DB connection (`@TransactionalEventListener(AFTER_COMMIT)` + `@Async`, short-tx bookends around the network call, `ObjectProvider` self-proxy), a bounded `CallerRuns` executor, the Gemini→OpenAI→Claude fallback with a hand-rolled retry, repository-layer multi-tenant isolation, and token-version JWT revocation.
+- **DocVault** — the audit hash chain enforced in Postgres triggers (with a `pg_advisory_xact_lock` to close a read-then-write race), chunked authenticated AES-GCM with a nonce layout that defeats reorder and truncation, two-tier ingestion auth, and a server-enforced operator assistant.
+- **Beside** — one codebase that scales local→prod by env var, dual cookie/bearer auth, from-scratch Apple JWT verification, owner-gated presigned media with HTTP Range.
+- **ScreenBridge** — the AX/OCR-over-LLM coordinate fusion, the privacy chokepoint, and the irreversible-action gate.
+
+## How it stayed honest
+
+Each project ran through analyze → **adversarial verify** → write. The verify stage re-opened every cited file and re-ran every measurement, and it caught a real error on every single project:
+
+- ScreenBridge: the image downscale cap was claimed at 1568 px from a stale code comment; the live constant is 1024. Deny-list 19→17; irreversible keywords 40→35; the "five-layer privacy" framing softened because two layers are still in-progress in the code.
+- Mimi: a multi-tenant finder count of 39 was a substring/call-site count, corrected to 25 declared signatures; an unverified "Spring Boot 3.3" version pin was cut.
+- Beside: a "native push not implemented" limitation was removed because the current mobile code (`expo-notifications`, `getExpoPushTokenAsync`, a scheduler Expo branch) refutes it.
+- DocVault: a LOC metric labeled "non-test" actually counted tests; corrected.
+
+These are exactly the numbers an engineer reading the repo in an interview would have caught. Better the adversarial pass caught them first.
+
+## What's left
+
+- **Meta Smart Glass** — its verify agent hit a provider rate limit mid-run, so it's the one project without a deep-dive yet. Next.
+- **KO** — the deep-dives are EN; the architecture loader falls back to EN for KO readers, so nothing is broken, but native KO versions are a follow-up.
+
+## Verified by
+
+`npm run build` clean (all `/projects/[slug]/architecture` routes prerender, no MDX crash from the generics/diagrams); on a fresh local server all five architecture pages return 200 and the project pages now show the "Architecture →" link.
+
+## Commit
+
+69e91ab
