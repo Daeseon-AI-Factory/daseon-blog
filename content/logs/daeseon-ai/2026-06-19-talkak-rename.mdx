@@ -1,0 +1,37 @@
+---
+title: "Product rename: DalkkakAI → Talkak (brand + live domain only)"
+date: "2026-06-19"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "The terminal-deck product is now Talkak, live at talkak.daeseon.ai (ddalkkak.daeseon.ai 307-redirects there). Updated the user-facing name and live URL on the project page, /now, the about page, and the showep12 GitHub profile README. Left the repo name (still ddalkkak), internal code identifiers, the route slug, and dated log history unchanged — renaming those would be false or would break the cross-repo log pull."
+tags: ["rename", "branding", "maintenance"]
+---
+
+## What changed
+
+The macOS terminal-deck product was renamed to **Talkak** and its site moved to `talkak.daeseon.ai` (the old `ddalkkak.daeseon.ai` 307-redirects to it). User-facing surfaces now say Talkak:
+
+- Project page title + live link + hero image (en + ko)
+- `/now` headline and project link label (en + ko)
+- About page tool list (en + ko)
+- The `showep12/showep12` GitHub profile README (Selected-work row)
+
+## What deliberately did *not* change
+
+The rename is the brand and the live URL — not the plumbing:
+
+- **Repo stays `Daeseon-AI-Factory/ddalkkak`** (there is no `talkak` repo). `logSourceRepo` must equal the real repo name, or this very build's log pull 404s.
+- **Internal code identifiers** that appear in the architecture deep-dive are real and stay: the tmux socket `-L dalkkak`, `DALKKAK_PANE_ID`, the data directory `DalkkakAI/`, the `@ddalkkak/*` packages, the bundle id `ai.ddalkkak.desktop`. The deep-dive already documents these four naming layers.
+- **The route slug `dalkkak-ai`** is unchanged — changing it would rename six files and 404 existing inbound links to `daeseon.ai/projects/dalkkak-ai`.
+- **Dated log entries** are immutable history.
+
+## Open
+
+- Whether to also migrate the URL slug `/projects/dalkkak-ai` → `/projects/talkak` (needs a redirect plan for old links) — held pending a call.
+- The about page still lists "TubeShadow" alongside Talkak; if that's a stale name for Mimi, it should be updated too — not assumed.
+
+## Commit
+
+dfd2745

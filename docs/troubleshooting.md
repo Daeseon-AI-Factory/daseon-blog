@@ -310,3 +310,14 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Files changed**: `app/(public)/projects/page.tsx` + ko mirror, `components/ProjectCard.tsx`, `components/ProjectList.tsx`, `content/projects/{en,ko}/shadow-ai.mdx` (repo link).
 - **Commit**: 61502c6
 - **Pattern**: for a recruiter-facing portfolio, prefer no image over a generic card that surfaces zero vanity metrics. The unsolved gap (uniform real visuals without screenshots or 0-stars) points at a `next/og` branded-card generator as the proper fix — deferred, owner approval pending.
+<!-- skipped: ec42b00 Log 61502c6 (project index visual upgrade) — dual-write [no-log] -->
+
+---
+
+## Product rename DalkkakAI → Talkak — what to rename and what NOT to (gotcha)
+
+- **Context**: The terminal-deck product was renamed (user-facing) to **Talkak** and its live domain moved `ddalkkak.daeseon.ai` → `talkak.daeseon.ai` (old domain 307-redirects to new; both `images/web/{banner,og}.jpg` resolve 200 on the new host). The **GitHub repo is still `Daeseon-AI-Factory/ddalkkak`** (`Daeseon-AI-Factory/talkak` 404s).
+- **Renamed (user-facing only)**: project page title + `url` + `image` (en+ko), `/now` headline + link label (en+ko), about-page tool list (en+ko), and the `showep12/showep12` profile README row (DalkkakAI→Talkak, live link→talkak.daeseon.ai, committed via `gh api` PUT as showep12).
+- **Deliberately NOT renamed (would be false or break things)**: `logSourceRepo: "Daeseon-AI-Factory/ddalkkak"` (repo really is ddalkkak — renaming this 404s the cross-repo log pull); internal code identifiers surfaced in prose/architecture (`tmux -L dalkkak`, `DALKKAK_PANE_ID`, data dir `~/Library/.../DalkkakAI/`, `@ddalkkak/*` packages, `ai.ddalkkak.desktop`); the slug `dalkkak-ai` (route id — changing it renames 6 files + breaks `daeseon.ai/projects/dalkkak-ai` inbound links); dated `content/logs/` entries (immutable history). The architecture deep-dive already documents the four naming layers (product=Talkak, repo=ddalkkak, data dir=DalkkakAI, socket=dalkkak) — left intact.
+- **Commit**: dfd2745
+- **Pattern**: a "rename everywhere" request means the **brand + live URL**, not internal code identifiers, the repo name, the route slug, or dated history. `logSourceRepo` must always equal the real repo name or log aggregation 404s.
