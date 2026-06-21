@@ -1,0 +1,37 @@
+---
+title: "Project pages led with text and nothing grabbed — a measured-metrics strip"
+date: "2026-06-20"
+project: "daeseon-ai"
+kind: "ux-retro"
+visibility: "public"
+language: "en"
+summary: "Owner's read: per project, nothing grabbed at a glance. A live screenshot confirmed it — the project pages were title, description, buttons, role/stack, then the log timeline, all text, no hero for the four projects without a product OG image. Added a bold mono metrics strip under the description, filled with the verified numbers from each project's architecture deep-dive. The real fix — a product screenshot hero — still needs the owner for the login-walled and native apps."
+tags: ["ux", "visual-design", "recruiting"]
+---
+
+## What it looked like before
+
+A live screenshot of `/projects/shadow-ai` (Mimi): `ACTIVE · MAY 23` → **Mimi** → a three-line description → buttons → Role / Stack → the log timeline. All text. Beside and Talkak have a hero (their product OG image), but Mimi, DocVault, ScreenBridge, and Meta have no `image`, so nothing visual carried the page. The architecture deep-dive underneath is strong, but you have to read to find it; nothing made a skimming recruiter stop.
+
+## What I changed
+
+A new optional `metrics` field on the project frontmatter, rendered in `ProjectBody` as a bold, monospace strip with a hairline top border, directly under the description. Every project got one, EN and KO, with the numbers taken straight from its architecture deep-dive so the strip, the prose, and the repo all agree:
+
+- **Mimi** — `8,892 LOC · 49 endpoints · 121 tests · multi-tenant · AWS ECS Fargate`
+- **DocVault** — `17,783 LOC · 23 tables · 102 routes · Postgres-trigger audit chain`
+- **Beside** — `6,822 LOC · 26 routes · local→prod by env var · Terraform`
+- **ScreenBridge** — `5,808 LOC · Swift 6 strict concurrency · AX + OCR + vision fusion`
+- **Talkak** — `3,605 Rust + 12,078 TS LOC · tmux-persistent panes · BYO Claude / Codex`
+- **Meta Smart Glass** — `Bun + Swift · YOLO11 on-device · 3-provider key-gated fallback · early-stage`
+
+## What it doesn't do
+
+This is the half I can do without assets. The real grab is a product screenshot as the page hero. Beside and Talkak already have one; Mimi and DocVault are behind a login and ScreenBridge and Meta are native apps, so a real shot of those has to come from the owner — a PNG in `/public/images/projects/<slug>.png` plus an `image:` line, and it renders as the hero.
+
+## Verified by
+
+`npm run build` clean; a fresh-server screenshot of `/projects/shadow-ai` shows the strip rendering bold under the description, above the buttons.
+
+## Commit
+
+7a13f42

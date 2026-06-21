@@ -386,3 +386,14 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: `git checkout HEAD -- content/projects/architecture/jarvis-pc.mdx` to restore the verified committed version, then add ONLY the new `meta-smart-glass.mdx`. Verified the restore kept the corrected numbers (`1024`, `17`, `35`) and that `git status` then showed only meta as new.
 - **Commit**: 9f85201 (meta added; jarvis-pc restored, not re-committed)
 - **Pattern**: resuming a workflow whose agents WRITE FILES is not idempotent on disk — a cache miss re-runs the agent and overwrites. After any resume, `git status` the output dir and `git checkout HEAD --` any committed file the resume touched; trust the committed (already-verified) version over the resume's fresh output. Safer still: have writers RETURN content (not Write it) so resume can't clobber the tree.
+<!-- skipped: 929a0e0 Log 9f85201 (meta deep-dive added) + resume-overwrite gotcha — dual-write [no-log] -->
+
+---
+
+## Project pages had no visual grab — measured-metrics strip (feature record)
+
+- **Symptom**: owner's feedback — "플젝별로 한눈에 뭔가 끄는게 1도없는데" (nothing grabs per project at a glance). A live screenshot of `/projects/shadow-ai` confirmed it: status · date · title · description · buttons · role/stack · log timeline — all text, no hero/screenshot. Projects without a product OG (Mimi, DocVault, ScreenBridge, Meta) have no `fm.image`, so `ProjectBody` renders no hero at all.
+- **Fix (autonomous half)**: new optional `frontmatter.metrics: string[]` (type + map in `lib/projects.ts`), rendered in `ProjectBody.tsx` as a bold mono strip with a top border directly under the description. Filled for all 6 projects (en+ko) with the VERIFIED numbers from each project's architecture deep-dive (e.g. `8,892 LOC · 49 endpoints · 121 tests · multi-tenant · AWS ECS Fargate`). It makes "substantial" register before any reading, in the minimalist no-chrome house style.
+- **Still owner-only**: the real visual grab is a product screenshot as the page hero. Beside/Talkak already have one (their product OG). Mimi/DocVault are login-walled and ScreenBridge/Meta are native apps, so only the owner can capture those — drop a PNG in `/public/images/projects/<slug>.png` and set `image:`.
+- **Commit**: 7a13f42
+- **Pattern**: when you can't add a real image, lead with verified numbers. A measured-metrics strip is an honest, low-chrome "grab" that doubles as proof — keep the numbers sourced from the architecture deep-dive so prose, strip, and repo all agree.
