@@ -31,6 +31,8 @@ export type ProjectFrontmatter = {
   tags?: string[];
   stack?: string[];
   role?: string;
+  /** Short measured highlights shown as a strip under the description (a grab). */
+  metrics?: string[];
 };
 
 export type Project = {
@@ -77,6 +79,7 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
     tags: fm.tags,
     stack: fm.stack,
     role: fm.role,
+    metrics: fm.metrics,
   };
   return { slug, locale, frontmatter, content };
 }

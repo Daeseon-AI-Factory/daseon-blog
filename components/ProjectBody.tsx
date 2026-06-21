@@ -37,6 +37,11 @@ export async function ProjectBody({
           {fm.title}
         </h1>
         <p className="mt-3 text-lg text-ink-muted">{fm.description}</p>
+        {fm.metrics && fm.metrics.length > 0 ? (
+          <p className="mt-4 border-t border-paper-line pt-4 font-mono text-sm font-medium tracking-tight text-ink">
+            {fm.metrics.join("  ·  ")}
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
           {fm.url && fm.url !== fm.repo ? (
             <a
