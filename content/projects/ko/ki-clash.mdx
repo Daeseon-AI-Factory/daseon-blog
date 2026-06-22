@@ -6,7 +6,7 @@ language: "ko"
 translationKey: "ki-clash"
 status: "active"
 featured: false
-url: "https://github.com/Daeseon-AI-Factory/ki-clash"
+url: "https://jjan.daeseon.ai"
 repo: "https://github.com/Daeseon-AI-Factory/ki-clash"
 logSourceRepo: "Daeseon-AI-Factory/ki-clash"
 tags: ["game", "realtime", "pvp", "websocket", "go", "python"]
@@ -32,7 +32,6 @@ metrics: ["Python + Go 듀얼 런타임", "Redis 상태 공유", "164 테스트"
 
 ## 아직 안 되는 것
 
-- EC2 백엔드 미프로비저닝. Vercel 프런트엔드는 배포돼 있지만, 프로덕션 compose·Caddyfile·배포 런북은 커밋만 돼 있고 첫 런치 + DNS 레코드 대기 중. (그래서 지금 공개 라이브 링크는 플레이 가능한 URL이 아니라 repo다.)
 - 프런트엔드 자동 테스트 없음. 엔진·매치메이킹·게임 스토어·AI 상대·pub/sub은 Python 테스트 함수 151개, Go 엔진은 13개 — 하지만 React UI는 수동 검증.
 - Go 런타임은 end-to-end 검증됐지만 아직 authoritative 아님. 켜는 건 Caddy 한 줄 주석 해제 + 재배포.
 - 단일 왕복 Lua 원자적 submit을 작성했다가 Redis `cjson`의 빈 배열 인코딩 한계로 되돌림. 현재 경합(하루 한 자릿수)에선 `WATCH` / `MULTI` / `EXEC`로 충분.

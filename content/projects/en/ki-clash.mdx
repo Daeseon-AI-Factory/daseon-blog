@@ -6,7 +6,7 @@ language: "en"
 translationKey: "ki-clash"
 status: "active"
 featured: false
-url: "https://github.com/Daeseon-AI-Factory/ki-clash"
+url: "https://jjan.daeseon.ai"
 repo: "https://github.com/Daeseon-AI-Factory/ki-clash"
 logSourceRepo: "Daeseon-AI-Factory/ki-clash"
 tags: ["game", "realtime", "pvp", "websocket", "go", "python"]
@@ -32,7 +32,6 @@ A real-time 1v1 port of *기싸움*, the Korean schoolyard hand game. The produc
 
 ## What it doesn't do (yet)
 
-- The EC2 backend isn't provisioned. The Vercel frontend is deployed; the production compose, Caddyfile, and deploy runbook are committed and waiting on the first launch + DNS record. (So the public live link is the repo for now, not a playable URL.)
 - No automated frontend tests. The engine, matchmaking, game store, AI opponent, and pub/sub have 151 Python test functions; the Go engine has 13 — but the React UI is verified by hand.
 - The Go runtime is verified end-to-end but not yet authoritative; flipping it on is a one-line Caddy uncomment plus a redeploy.
 - A single-round-trip Lua atomic submit was written, then reverted over a Redis `cjson` empty-array encoding limit. `WATCH` / `MULTI` / `EXEC` is fine at current contention (single digits per day).
