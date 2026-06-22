@@ -1,0 +1,39 @@
+---
+title: "Ki Clash"
+description: "A real-time 1v1 PvP game from the Korean schoolyard 기싸움 hand game — read the opponent, charge ki, strike on the right beat. Python (FastAPI) and a second Go runtime share one Redis-backed game state; Next.js 16 PWA, room-based PvP, 6 character ultimates, AI-generated sprites."
+date: "2026-06-10"
+language: "en"
+translationKey: "ki-clash"
+status: "active"
+featured: false
+url: "https://github.com/Daeseon-AI-Factory/ki-clash"
+repo: "https://github.com/Daeseon-AI-Factory/ki-clash"
+logSourceRepo: "Daeseon-AI-Factory/ki-clash"
+tags: ["game", "realtime", "pvp", "websocket", "go", "python"]
+stack: ["Python 3.11", "FastAPI", "Go 1.23", "Next.js 16", "React 19", "PostgreSQL", "asyncpg", "Redis", "Caddy", "Tailwind v4"]
+role: "Solo (AI-pair-programmed with Claude Code)"
+metrics: ["Python + Go dual runtime", "shared Redis state", "164 tests", "136 commits", "6 ultimates · 36 sprites"]
+---
+
+A real-time 1v1 port of *기싸움*, the Korean schoolyard hand game. The product is a small game; the engineering is the point — two server runtimes (Python and Go) sharing one Redis-backed game state, room-based PvP, and an AI sprite pipeline.
+
+## What it does
+
+- Real-time 1v1: both players pick **charge / block / punch / ki-burst / teleport** at the same time. Moves reveal on the same instant and an outcome matrix decides who took damage, who built ki, who got dodged. First to win 2 of 3 rounds takes the match.
+- Two ways in: **Quick Match** (auto-matched from a global queue) or **Create / Join Room** — host gets a 4-character code, a friend joins, both pick a character and ready up. This is the "an interviewer can play with me in 30 seconds" path.
+- Six characters, each with a signature ultimate that fires on the final blow.
+
+## The engineering worth pointing at
+
+- **Two parallel server runtimes, one shared truth.** Python (FastAPI) and Go both read and write the same Redis JSON blob (`ki_clash:game:{id}`). The canonical mutation — load → `WATCH` / `MULTI` / `EXEC` → publish to per-player Redis channels — is ported byte-for-byte across runtimes. End-to-end verified: a room spawned via the Python REST endpoint, both players connect over Go's WebSocket, both submit `charge`, both receive correctly personalized `turn_result` envelopes (`go-server/test_e2e.py`). Go is wired to take the hot path through a one-line Caddy route swap; Python stays authoritative until then.
+- **Distributed-state hardening, with the bugs written down.** An in-process PvP simulator surfaced four real concurrency bugs — a spurious `opponent_reconnected` on first connect, a duplicate `waiting_for_action`, message ordering, and a missing `turn_number` — each fixed with a symptom / cause / commit entry in the repo's troubleshooting log and a regression test so they don't come back.
+- **An AI sprite pipeline that survives a transparency and copyright pass.** 36 fighter PNGs (6 characters × 6 poses) generated through Pollinations/flux, then re-processed through rembg (U2Net) to strip the white backgrounds the generator leaves. The renderer picks the right PNG per pose and drops the CSS "puppet" rotation to scale-only when a pose is already oriented, so a `ko.png` that's lying down isn't double-rotated. One regeneration pass was already done on a sprite that landed too close to a licensed character.
+- **A written reasoning trail.** 15 design-decision records (DR-1 through DR-15) and a 2,512-line engineering log — backend language choice (Python vs Spring vs Go), the asset-pipeline shape, Redis-as-truth with stateless workers, optimistic concurrency for turn submission — each annotated with the alternative considered and the trade-off taken.
+
+## What it doesn't do (yet)
+
+- The EC2 backend isn't provisioned. The Vercel frontend is deployed; the production compose, Caddyfile, and deploy runbook are committed and waiting on the first launch + DNS record. (So the public live link is the repo for now, not a playable URL.)
+- No automated frontend tests. The engine, matchmaking, game store, AI opponent, and pub/sub have 151 Python test functions; the Go engine has 13 — but the React UI is verified by hand.
+- The Go runtime is verified end-to-end but not yet authoritative; flipping it on is a one-line Caddy uncomment plus a redeploy.
+- A single-round-trip Lua atomic submit was written, then reverted over a Redis `cjson` empty-array encoding limit. `WATCH` / `MULTI` / `EXEC` is fine at current contention (single digits per day).
+- Mobile (Expo) is paused on a React 19 / Reanimated peer-dependency conflict; it runs as a PWA on mobile browsers in the meantime.
