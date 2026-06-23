@@ -397,3 +397,16 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Still owner-only**: the real visual grab is a product screenshot as the page hero. Beside/Talkak already have one (their product OG). Mimi/DocVault are login-walled and ScreenBridge/Meta are native apps, so only the owner can capture those — drop a PNG in `/public/images/projects/<slug>.png` and set `image:`.
 - **Commit**: 7a13f42
 - **Pattern**: when you can't add a real image, lead with verified numbers. A measured-metrics strip is an honest, low-chrome "grab" that doubles as proof — keep the numbers sourced from the architecture deep-dive so prose, strip, and repo all agree.
+<!-- skipped: 1cca283 Log 7a13f42 (project metrics strip) — dual-write [no-log] -->
+<!-- skipped: 1c6ab5a Add Ki Clash project page (en+ko) — Python/Go dual-runtime PvP game [no-log] -->
+<!-- skipped: 49035f9 Ki Clash url -> live jjan.daeseon.ai (playable; backend up), drop stale EC2 wart [no-log] -->
+
+---
+
+## Subagent workflow rate-limited — do the deep-dive inline in the main loop
+
+- **Symptom**: the per-project deep-dive workflow for Ki Clash failed instantly — both the analyze and verify agents returned `API Error: Server is temporarily limiting requests (not your usage limit) · Rate limited`, `subagent_tokens: 0`, and the script crashed on `verified.findings` being null. A retry would likely hit the same limit.
+- **Cause**: a transient provider-side rate limit on **subagent spawns**. The main agent loop is not subject to that limit.
+- **Fix**: did the analyze → verify → write **inline in the main loop** instead of via subagents — read the actual `ki-clash` source (`go-server/session.go`, `app/core/game_store.py`'s `watch_and_update`, the README architecture section), measured LOC/tests/endpoints with shell, and wrote `content/projects/architecture/ki-clash.mdx` directly. Same rigor (real files, measured numbers), no subagents. `npm run build` clean; the page renders 200 and the project page shows the "Architecture →" link.
+- **Commit**: fc03ddb
+- **Pattern**: when a Workflow dies on subagent rate-limiting (not your usage cap), don't just retry — the main loop can do the same source-grounded extraction itself. Reserve the workflow for genuinely parallel fan-out; a single deep-dive is fine inline.

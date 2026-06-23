@@ -1,0 +1,26 @@
+---
+title: "Ki Clash architecture deep-dive — the two-runtimes-one-Redis story, from source"
+date: "2026-06-22"
+project: "daeseon-ai"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "Added a source-verified architecture deep-dive for Ki Clash, the newest project. The standout is the dual-runtime design: a Go game server and a Python FastAPI app serve the same game over the same Redis state, with the WATCH/MULTI/EXEC optimistic-concurrency pattern ported across both languages. The subagent workflow rate-limited mid-launch, so the analyze→verify→write was done inline in the main loop, reading the actual repo."
+tags: ["information-architecture", "content", "ki-clash"]
+---
+
+## What I added
+
+`/projects/ki-clash/architecture` now carries a deep-dive in the same shape as the other six, drawn from the real `ki-clash` source: the two-runtimes-one-Redis design (Go `session.go` literally "ports `app/modules/ki_clash/game_session.py`"), the `watch_and_update` / `watchAndUpdate` optimistic-concurrency pair, the two-envelope simultaneous-action resolve, cross-runtime push over `ki_clash:player:{id}`, the four distributed-state bugs that live as commented invariants in `session.go`, and an engine whose 5×5 outcome matrix is tested cell-by-cell in both Python and Go. Measured: Python 5,671 / Go 2,082 / Web 13,997 LOC, 151 Python + 13 Go tests, 136 commits.
+
+## How it was built (and a process note)
+
+The per-project deep-dive workflow died on launch — both subagents hit a provider rate limit and the run returned zero tokens. Rather than retry into the same wall, the analyze → verify → write was done **inline in the main loop**, which isn't subject to the subagent rate limit: read the actual files, ran the measurement commands, and wrote the page directly. Same standard — every claim traces to a file, every number is measured.
+
+## Verified by
+
+`npm run build` clean; `/projects/ki-clash/architecture` returns 200 with the dual-runtime sections rendering, and the project page shows the "Architecture →" link. All `{...}` / `<...>` (Redis key templates, sprite paths) are inside code spans so the raw MDX render doesn't crash.
+
+## Commit
+
+fc03ddb
