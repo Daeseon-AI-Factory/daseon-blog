@@ -15,7 +15,7 @@ export const revalidate = 60;
 export default async function HomeKO() {
   const [posts, projects, now, wiki] = await Promise.all([
     getPublishedPosts("ko"),
-    getFeaturedProjects("ko", 3),
+    getFeaturedProjects("ko"),
     getNow("ko"),
     listContent("knowledge", "ko"),
   ]);

@@ -15,7 +15,7 @@ export const revalidate = 60;
 export default async function HomeEN() {
   const [posts, projects, now, wiki] = await Promise.all([
     getPublishedPosts("en"),
-    getFeaturedProjects("en", 3),
+    getFeaturedProjects("en"),
     getNow("en"),
     listContent("knowledge", "en"),
   ]);

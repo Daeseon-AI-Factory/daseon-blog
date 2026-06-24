@@ -33,6 +33,12 @@ export type ProjectFrontmatter = {
   role?: string;
   /** Short measured highlights shown as a strip under the description (a grab). */
   metrics?: string[];
+  /**
+   * Curated order for the home "Featured projects" rail (ascending; lower =
+   * earlier). Lets the resume's flagship order win over pure date-desc.
+   * Unset featured projects sort after ordered ones, by date desc.
+   */
+  featuredOrder?: number;
 };
 
 export type Project = {
@@ -80,6 +86,8 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
     stack: fm.stack,
     role: fm.role,
     metrics: fm.metrics,
+    featuredOrder:
+      typeof fm.featuredOrder === "number" ? fm.featuredOrder : undefined,
   };
   return { slug, locale, frontmatter, content };
 }
@@ -96,9 +104,16 @@ export async function getAllProjects(locale: Locale): Promise<Project[]> {
   return listLocale(locale);
 }
 
-export async function getFeaturedProjects(locale: Locale, limit = 3): Promise<Project[]> {
+export async function getFeaturedProjects(locale: Locale, limit = 6): Promise<Project[]> {
   const all = await listLocale(locale);
-  const featured = all.filter((p) => p.frontmatter.featured);
+  const featured = all
+    .filter((p) => p.frontmatter.featured)
+    .sort((a, b) => {
+      const ao = a.frontmatter.featuredOrder ?? Number.POSITIVE_INFINITY;
+      const bo = b.frontmatter.featuredOrder ?? Number.POSITIVE_INFINITY;
+      if (ao !== bo) return ao - bo; // curated order first
+      return a.frontmatter.date < b.frontmatter.date ? 1 : -1; // then date desc
+    });
   return featured.slice(0, limit);
 }
 
