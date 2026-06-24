@@ -1,12 +1,12 @@
 ---
 title: "Talkak"
-description: "지금 돌리는 모든 스타트업을 한 창에서 — 자기 AI(Claude Code / Codex)를 들고 오는 1인 창업자를 위한 네이티브 멀티페인 터미널 커맨드 덱. Tauri + Rust, macOS."
+description: "내 Claude Code / Codex를 감싸는 콕핏 — 위험한 에이전트 액션을 승인 게이트 뒤에 세우고, 'done' 주장 뒤의 명령을 다시 돌려 거짓을 잡아내며, 결정을 검색 가능한 프로젝트 메모리 그래프로 남기는 네이티브 AI 작업 운영체제. Tauri + Rust, macOS."
 date: "2026-05-25"
 language: "ko"
 translationKey: "dalkkak-ai"
 status: "active"
 featured: true
-metrics: ["3,605 Rust + 12,078 TS LOC", "tmux-persistent panes", "BYO Claude / Codex"]
+metrics: ["에이전트 액션 승인 게이트", "'done' 주장 재실행 검증", "결정 자동 캡처 그래프", "tmux-persistent panes", "토큰 마크업 0% · BYO Claude/Codex"]
 url: "https://talkak.daeseon.ai/"
 image: "https://talkak.daeseon.ai/images/web/banner.jpg"
 logSourceRepo: "Daeseon-AI-Factory/talkak"
@@ -16,27 +16,23 @@ stack: ["Tauri 2", "Rust", "React 19", "TypeScript", "xterm.js", "portable-pty",
 role: "Solo (Claude Code 페어 프로그래밍)"
 ---
 
-여러 "스타트업" 워크스페이스에 걸쳐 다중 터미널 페인을 띄우고, 각 페인은 영구 tmux 세션으로 백업되어 앱 재시작 후에도 `claude`, dev 서버, 로그 tail이 살아남는 네이티브 macOS 앱. 내가 직접 쓰려고 만들었음 — 맥북 데스크톱 12개를 동시에 띄워놓고 작업하다 Mission Control 전환에 시간을 다 쓰고 있었음.
+내 `claude` / `codex` 바이너리를 운영 레이어로 감싸는 네이티브 macOS 앱. 워크스페이스마다 다중 터미널 페인을 띄우고 — 각 페인은 영구 tmux 세션이라 에이전트 작업이 앱 재시작 후에도 살아남음 — 거기에 raw 터미널에는 없는 세 가지를 더한다: 위험한 액션을 멈춰 세우는 **승인 게이트**, "done" 주장 뒤의 명령을 다시 돌려 거짓을 잡는 **검증 패스**, 작업을 검색 가능한 프로젝트 메모리로 만드는 **append-only 이벤트/그래프 스토어**. 내가 직접 쓰려고 만들었음 — 맥북 데스크톱 12개를 동시에 띄워놓고 각 에이전트가 실제로 뭘 했는지 놓치고 있었음.
 
 ## 무엇을 하는가
 
-- 멀티-페인 터미널 그리드 (react-mosaic + xterm.js) + 페인별 PTY (`portable-pty`)
-- 각 페인은 `dalkkak-<id>` 키의 tmux 세션 → 앱보다 오래 삶
-- 멀티-스타트업 사이드바, 스타트업별 layout, `⌘1..9` / `⌘⇧[` / `⌘⇧]` 단축키
-- localStorage에 layout JSON 영속화, 실행 시 자동 reattach
-- 2-layer 관측: Claude Code hooks → `logs/*.jsonl`, Rust `tracing` → daily-rolling runtime 로그
+- **멀티-페인 에이전트 워크스페이스.** react-mosaic + xterm.js + 페인별 PTY(`portable-pty`); 각 페인은 `dalkkak-<id>` 키의 tmux 세션으로 앱보다 오래 삶. 멀티-스타트업 사이드바, `⌘1..9` 단축키, 실행 시 자동 reattach.
+- **승인 게이트.** 에이전트가 제안한 이메일 답장·캘린더 일정·문서 편집은 *pending*으로 쌓이고, 내가 승인을 눌러야만 실행된다 — "AI가 답장을 쓰고, 네가 승인을 누르거나, 아니면 안 나간다." 부수효과가 있는 동작은 무단으로 외부에 닿지 않음.
+- **신뢰 대신 검증.** 에이전트가 "테스트 통과 / done"이라 하면 Talkak이 그 명령을 다시 돌려 맞지 않으면 표시한다 — 자신감 있게 틀린 에이전트가 믿어지는 대신 잡힘.
+- **결정은 스스로를 기억한다.** 작업 항목·액션·결정·근거·승인·검증 영수증이 프로젝트별 이벤트/그래프에 append-only로 캡처돼 나중에 검색 가능 — 스크롤백 버퍼가 아니라 운영 메모리.
+- **턴마다 리캡(`⌘I`)**, Usage Pulse, 2-layer 관측: Claude Code hooks → `logs/*.jsonl`, Rust `tracing` → daily-rolling runtime 로그.
 
 ## 왜
 
-이 제품의 핵심 동작은 *사용자 본인의 로컬 `claude` 바이너리를 조작*하는 것. 브라우저 탭은 이걸 못 함 — 즉 web-only로는 본질적 문제를 해결 불가능. Tauri (Rust 백엔드 + 시스템 WebKit) 로 ~10MB 번들에 파일 시스템 + 프로세스 트리 소유권 유지. Warp / iTerm / BridgeMind 가 모두 "1 프로젝트 = 1 윈도우" 가정인 것과 달리 *멀티-스타트업이 first-class*라는 점이 차별화 지점.
+핵심 동작은 "사용자 본인의 로컬 `claude` 바이너리를 조작하고, 그게 뭘 했는지 검증 가능한 기록으로 남기는 것." 브라우저 탭은 프로세스 트리를 소유하거나 셸 명령을 다시 돌릴 수 없음 — web-only로는 승인+검증 레이어가 본질적으로 불가능. Tauri(Rust 백엔드 + 시스템 WebKit)로 ~10MB 번들에 파일 시스템 + 프로세스 트리 소유권 유지. Warp / iTerm가 "1 프로젝트 = 1 윈도우" 가정인 것과 달리 *멀티-스타트업이 first-class*라는 점이 차별화 지점.
 
-## 출시된 것 (v0.1.0)
+## 상태
 
-Phase 1: 멀티-페인 + tmux 영속화 + 멀티-스타트업 사이드바. 규모: Rust 309줄, TypeScript 14 파일. Unsigned beta, macOS Apple Silicon 전용.
-
-## 아직 안 한 것
-
-Phase 2 (Claude Code 출력 augmentation), Phase 3 (cross-startup operator layer), Phase 4 (signed release + marketplace) 는 로드맵만 있음. 사용자: 0명. Dogfood 테스트 — 12개 데스크톱을 1주일 동안 이 앱으로 대체 — 아직 미실시.
+14일 로컬 앱 체험판 제공 중(macOS 13+, Apple Silicon). **토큰 마크업 0%** — 본인의 Claude Code / Codex를 들고 오고, Talkak은 토큰을 되팔지 않음. 유료 결제는 준비 중: 구독 약관이 아직 출시 단계가 아님.
 
 ## 짚을 만한 엔지니어링 포인트
 

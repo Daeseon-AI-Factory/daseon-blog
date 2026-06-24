@@ -1,12 +1,12 @@
 ---
 title: "Talkak"
-description: "One window for every startup you're running — a native, multi-pane terminal command deck for the solo founder who brings their own AI (Claude Code / Codex). Tauri + Rust, macOS."
+description: "The cockpit around your own Claude Code / Codex — a native AI work operating system that gates risky agent actions behind your approval, re-runs the commands behind a 'done' claim to catch false ones, and captures decisions into a searchable project-memory graph. Tauri + Rust, macOS."
 date: "2026-05-25"
 language: "en"
 translationKey: "dalkkak-ai"
 status: "active"
 featured: true
-metrics: ["3,605 Rust + 12,078 TS LOC", "tmux-persistent panes", "BYO Claude / Codex"]
+metrics: ["Approval-gated agent actions", "Re-runs your 'done' claims", "Auto-captured decision graph", "tmux-persistent panes", "0% token markup · BYO Claude/Codex"]
 url: "https://talkak.daeseon.ai/"
 image: "https://talkak.daeseon.ai/images/web/banner.jpg"
 logSourceRepo: "Daeseon-AI-Factory/talkak"
@@ -16,27 +16,23 @@ stack: ["Tauri 2", "Rust", "React 19", "TypeScript", "xterm.js", "portable-pty",
 role: "Solo (AI-pair-programmed with Claude Code)"
 ---
 
-A native macOS app that gives you multiple terminal panes across multiple "startup" workspaces, each backed by a persistent tmux session so `claude`, dev servers, and log tails survive an app restart. Built to scratch my own itch — I was running ~12 macOS desktops in parallel and burning hours on Mission Control switching.
+A native macOS app that wraps your own `claude` / `codex` binary in an operating layer. It runs multiple terminal panes per workspace — each on a persistent tmux session so an agent's work survives an app restart — then adds the three things a raw terminal doesn't: an **approval gate** that holds risky actions until you press approve, a **verification pass** that re-runs the commands behind a "done" claim and catches the false ones, and an **append-only event/graph store** that turns the work into searchable project memory. Built to scratch my own itch — I was running ~12 macOS desktops in parallel and losing the thread of what each agent had actually done.
 
 ## What it does
 
-- Multi-pane terminal grid (react-mosaic + xterm.js) over per-pane PTYs (`portable-pty`).
-- Each pane is a tmux session keyed `dalkkak-<id>`, so sessions outlive the app.
-- Multi-startup sidebar with per-startup layout; `⌘1..9` / `⌘⇧[` / `⌘⇧]` navigation.
-- Layout JSON persistence in localStorage, automatic reattach on launch.
-- Two-layer observability: Claude Code hooks → `logs/*.jsonl`, Rust `tracing` → daily-rolling runtime log.
+- **Multi-pane agent workspace.** react-mosaic + xterm.js over per-pane PTYs (`portable-pty`); each pane is a tmux session keyed `dalkkak-<id>` that outlives the app. Multi-startup sidebar, `⌘1..9` navigation, automatic reattach on launch.
+- **Approval gate.** Agent-proposed email replies, calendar events, and document edits stage as *pending* and only execute after you approve — "AI drafts the reply, you press approve, or it never sends." Nothing side-effectful reaches the outside world unattended.
+- **Verification, not trust.** When an agent claims "tests pass" / "done," Talkak re-runs the underlying command and flags the claim if it doesn't hold — a confident-but-wrong agent gets caught instead of believed.
+- **Decisions remember themselves.** Work items, actions, decisions, evidence, approvals, and verification receipts are captured append-only into a per-project event/graph you can search later — the operating memory, not just a scrollback buffer.
+- **Per-turn recap (`⌘I`)**, Usage Pulse, and two-layer observability: Claude Code hooks → `logs/*.jsonl`, Rust `tracing` → a daily-rolling runtime log.
 
 ## Why
 
-The product's core verb is "drive the user's local `claude` binary". A browser tab can't do that — web-only is technically incapable of solving the actual pain. Tauri (Rust backend + system WebKit) gives a ~10 MB bundle that still owns the file system and process tree. Multi-startup as a first-class citizen separates it from Warp / iTerm / BridgeMind, which all assume one project per window.
+The core verb is "drive the user's local `claude` binary and keep a verifiable record of what it did." A browser tab can't own the process tree or re-run a shell command — web-only is technically incapable of the approval + verification layer. Tauri (Rust backend + system WebKit) gives a ~10 MB bundle that still owns the file system and process tree. Multi-startup as a first-class citizen separates it from Warp / iTerm, which assume one project per window.
 
-## What's shipped (v0.1.0)
+## Status
 
-Phase 1: multi-pane + tmux persistence + multi-startup sidebar. Bundle: 309 lines of Rust, 14 TypeScript files. Unsigned beta, macOS Apple Silicon only.
-
-## What's not
-
-Phase 2 (Claude Code output augmentation), Phase 3 (cross-startup operator layer), Phase 4 (signed release + marketplace) are roadmap only. Production users: zero. The dogfood test — replace 12 macOS desktops for one full week — hasn't been run yet.
+A 14-day local-app trial is available now (macOS 13+, Apple Silicon). **0% token markup** — you bring your own Claude Code / Codex and Talkak never resells tokens. Paid checkout is pending: the subscription terms aren't launch-ready yet.
 
 ## Engineering bits worth pointing at
 
