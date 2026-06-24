@@ -419,3 +419,11 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: flipped `featured` (docvault→true, beside→false, en+ko); rewrote home About (en+ko) to the resume's concurrency/transaction-integrity spine with concrete numbers; led DocVault opening + metrics with the 40-person active-use claim + DB-trigger hash chain; refreshed `public/resume.pdf` from the root PDF. `npm run build` clean.
 - **Commit**: 64e49a9
 - **Pattern**: the resume is the canonical positioning. When it changes, re-check three blog surfaces: `getFeaturedProjects` set (frontmatter `featured`), the home About copy, and each Selected Project's opening line + metrics strip. Featured order is date-desc, so the set alone controls what shows in the 3-slot home cap.
+
+## Talkak blog body was a year stale vs the live product
+
+- **Symptom**: `content/projects/{en,ko}/talkak.mdx` framed Talkak as a "multi-pane terminal command deck" and led its limitations with "Production users: zero / Phase 2–4 roadmap only." The resume and the live site both present it as an "AI work operating system" with a shipped approval gate, verification pass, and decision/memory graph.
+- **Cause**: the body was written 2026-05-25 (v0.1.0) and never updated as the product shipped Phases 2–3. No local repo to diff against.
+- **Fix**: verified current state from the live site (`WebFetch https://talkak.daeseon.ai`) — confirmed "AI work operating system", approval gate ("you press approve or it never sends"), "Tests pass. Talkak checks." verification, "Decisions remember themselves" memory graph, 14-day local trial, 0% token markup. Rewrote description, metrics strip, opening, "What it does", and replaced the stale shipped/roadmap sections with a real Status section. Owner confirmed operating-memory shipped.
+- **Commit**: ff32431
+- **Pattern**: for a shipped product whose repo isn't local, the live marketing site is the source of truth for current positioning — `WebFetch` it before rewriting, don't infer from a months-old blog body. Same lesson as the resume-sync: positioning drifts, re-verify against the canonical current surface.
