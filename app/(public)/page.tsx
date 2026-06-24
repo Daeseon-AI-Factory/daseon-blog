@@ -46,12 +46,16 @@ export default async function HomeEN() {
 
             <HomeSection id="about" title="About">
               <p className="text-base leading-relaxed text-ink">
-                Software engineer with 6 years building and modernizing
-                mission-critical enterprise systems across manufacturing,
-                warehouse, and financial operations. Currently focused on
-                Java/Spring backend platforms and AI-assisted product
-                engineering — reliable backends plus practical AI-powered
-                tools. Based in Toronto, open to senior backend or AI
+                Backend engineer, 6 years building and operating data-heavy
+                enterprise systems across global manufacturing, warehouse, and
+                finance. The throughline is concurrency and transaction
+                integrity: distributed locks that ended cross-server duplicate
+                execution, a staging-table batch pattern that cut processing
+                time 60%, 46 middleware endpoints consolidated into one RPC
+                dispatcher across 8 plants. Now I apply the same
+                fault-tolerance discipline — async workflows, retry/backoff,
+                state-machine execution — to AI products: LLM pipelines, RAG,
+                agent loops. Based in Toronto, open to senior backend or AI
                 engineer roles.
               </p>
             </HomeSection>
