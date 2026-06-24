@@ -427,3 +427,12 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: verified current state from the live site (`WebFetch https://talkak.daeseon.ai`) — confirmed "AI work operating system", approval gate ("you press approve or it never sends"), "Tests pass. Talkak checks." verification, "Decisions remember themselves" memory graph, 14-day local trial, 0% token markup. Rewrote description, metrics strip, opening, "What it does", and replaced the stale shipped/roadmap sections with a real Status section. Owner confirmed operating-memory shipped.
 - **Commit**: ff32431
 - **Pattern**: for a shipped product whose repo isn't local, the live marketing site is the source of truth for current positioning — `WebFetch` it before rewriting, don't infer from a months-old blog body. Same lesson as the resume-sync: positioning drifts, re-verify against the canonical current surface.
+<!-- skipped: 6c9a98c Log ff32431 (Talkak live-product rewrite) — dual-write [no-log] -->
+
+## Home front door only showed 3 projects; owner wanted all given ones
+
+- **Symptom**: home "Featured projects" rail capped at 3 (`getFeaturedProjects(locale, 3)`), so the owner's five provided projects (Talkak, Mimi, DocVault, Ki Clash, Beside) weren't all visible on the front door. Pure date-desc ordering also pushed the resume's flagship three below the newer extras.
+- **Cause**: featured cap hardcoded to 3 at the call site; featured set sorted by date only, no curation hook.
+- **Fix**: added `featuredOrder?: number` frontmatter; `getFeaturedProjects` sorts by it ascending (undefined last) then date desc, default limit raised 3→6; home calls drop the explicit `3`. Featured + ordered all five: talkak=1, shadow-ai(Mimi)=2, docvault=3, ki-clash=4, beside=5 (en+ko). Rail renders Talkak→Mimi→DocVault→Ki Clash→Beside. `npm run build` clean (141 pages).
+- **Commit**: ffeb6fb
+- **Pattern**: home rail = `featured: true` ∩ `featuredOrder`. To curate the front door, set both; to control sequence independent of date, set `featuredOrder`. Date-desc is the tiebreaker for unordered featured projects.
