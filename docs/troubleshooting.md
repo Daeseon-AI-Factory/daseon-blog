@@ -410,3 +410,12 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: did the analyze → verify → write **inline in the main loop** instead of via subagents — read the actual `ki-clash` source (`go-server/session.go`, `app/core/game_store.py`'s `watch_and_update`, the README architecture section), measured LOC/tests/endpoints with shell, and wrote `content/projects/architecture/ki-clash.mdx` directly. Same rigor (real files, measured numbers), no subagents. `npm run build` clean; the page renders 200 and the project page shows the "Architecture →" link.
 - **Commit**: fc03ddb
 - **Pattern**: when a Workflow dies on subagent rate-limiting (not your usage cap), don't just retry — the main loop can do the same source-grounded extraction itself. Reserve the workflow for genuinely parallel fan-out; a single deep-dive is fine inline.
+<!-- skipped: 4df63b0 Log fc03ddb (Ki Clash deep-dive) — dual-write [no-log] -->
+
+## Blog flagship set drifted from the resume's Selected Projects
+
+- **Symptom**: home-page featured projects were (Beside, Mimi, Talkak) but the resume's Selected Projects are (Talkak, Mimi, DocVault); a recruiter arriving from the resume saw a different flagship set. DocVault's strongest signal ("in active use by a 40-person team", on the resume) was absent from the blog. `public/resume.pdf` was a stale May-31 copy.
+- **Cause**: featured flags and home copy were set before the resume settled; no process kept them in sync.
+- **Fix**: flipped `featured` (docvault→true, beside→false, en+ko); rewrote home About (en+ko) to the resume's concurrency/transaction-integrity spine with concrete numbers; led DocVault opening + metrics with the 40-person active-use claim + DB-trigger hash chain; refreshed `public/resume.pdf` from the root PDF. `npm run build` clean.
+- **Commit**: 64e49a9
+- **Pattern**: the resume is the canonical positioning. When it changes, re-check three blog surfaces: `getFeaturedProjects` set (frontmatter `featured`), the home About copy, and each Selected Project's opening line + metrics strip. Featured order is date-desc, so the set alone controls what shows in the 3-slot home cap.

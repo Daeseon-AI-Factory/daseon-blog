@@ -1,0 +1,80 @@
+---
+title: "Aligned the blog front door to the resume — featured set, About spine, DocVault active-use hook"
+date: "2026-06-24"
+project: "daeseon-ai"
+kind: "decision"
+status: "accepted"
+reversibility: "easy"
+visibility: "public"
+language: "en"
+summary: "Re-aimed the home page and project hooks at the resume a recruiter reads first. Featured projects now match the resume's three Selected Projects (Talkak, Mimi, DocVault) instead of (Beside, Mimi, Talkak). The home About was rewritten from a generic 'mission-critical systems' blurb to the resume's concrete concurrency/transaction-integrity spine. DocVault now leads with 'in active use by a 40-person team' — its strongest signal, previously absent from the blog."
+tags: ["content", "information-architecture", "resume", "docvault", "talkak"]
+---
+
+## Context
+
+The owner pushed READMEs and screenshots to the project repos and dropped the
+current resume (`DaeseonYoo_Resume.pdf`) into the blog root, asking for the
+blog to read like a real project portfolio that hooks a recruiter in ~30
+seconds and matches the resume. A recruiter typically opens the resume first,
+then clicks through to the blog — so the two surfaces should reinforce, not
+diverge.
+
+## Options considered
+
+- **Leave featured as-is (Beside, Mimi, Talkak).** Beside is a solid project
+  but it is *not* one of the resume's three Selected Projects, so a recruiter
+  arriving from the resume would see a different flagship set than they just
+  read. Rejected: breaks resume↔blog continuity.
+- **Feature all projects equally.** No hierarchy means no 30-second hook.
+  Rejected.
+- **Match the resume's Selected Projects exactly (chosen).** Feature Talkak,
+  Mimi, DocVault; unfeature Beside. By date-desc this renders Talkak → Mimi →
+  DocVault, the same order and set as the resume.
+
+## Chosen + Why
+
+- Featured: DocVault `featured: true`, Beside `featured: false` (en + ko).
+- Home About (en + ko) rewritten from the generic blurb to the resume's
+  professional-summary spine: 6 yrs data-heavy enterprise systems, concurrency
+  and transaction integrity, three concrete wins (distributed locks ending
+  cross-server duplicate execution, staging-table batch pattern cutting
+  processing time 60%, 46 middleware endpoints → one RPC dispatcher across 8
+  plants), then the AI fault-tolerance pivot. CLAUDE.md requires concrete
+  numbers and forbids vague abstraction — the old copy violated that.
+- DocVault opening line and metrics strip now lead with **"in active use by a
+  40-person team"** (the resume's own claim) plus the DB-trigger hash chain and
+  single-use install-token onboarding. This signal was on the resume but absent
+  from the blog.
+- `public/resume.pdf` refreshed to the latest root PDF (the served copy was
+  stale, dated May 31).
+
+## Trade-off accepted
+
+Beside loses home-page real estate despite being a real shipped project. Worth
+it for resume↔blog continuity; it is one `featured: true` flip to restore.
+
+## Reversibility
+
+Easy (two-way). Each change is a frontmatter flag or a copy block.
+
+## Verified by
+
+`npm run build` clean (all project pages prerendered). `cmp` confirms
+`public/resume.pdf` is now byte-identical to the root resume. Featured flags
+verified via `grep '^featured:' content/projects/en/*.mdx` → talkak, shadow-ai
+(Mimi), docvault `true`; beside `false`.
+
+## Open item (not done — needs owner input)
+
+Talkak's blog body still frames it only as a terminal command deck and leads
+its limitations with "Production users: zero / Phase 2–4 roadmap only," while
+the resume positions it as an "AI-agent workspace and operating-memory system"
+with a shipped JSONL event/graph store (work items, decisions, receipts). These
+conflict and the Talkak repo is not local, so the current shipped state could
+not be verified. Left unedited pending the owner's confirmation rather than
+guessing on a public job-hunt page.
+
+## Commit
+
+64e49a9
