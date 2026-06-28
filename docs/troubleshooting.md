@@ -436,3 +436,6 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: added `featuredOrder?: number` frontmatter; `getFeaturedProjects` sorts by it ascending (undefined last) then date desc, default limit raised 3→6; home calls drop the explicit `3`. Featured + ordered all five: talkak=1, shadow-ai(Mimi)=2, docvault=3, ki-clash=4, beside=5 (en+ko). Rail renders Talkak→Mimi→DocVault→Ki Clash→Beside. `npm run build` clean (141 pages).
 - **Commit**: ffeb6fb
 - **Pattern**: home rail = `featured: true` ∩ `featuredOrder`. To curate the front door, set both; to control sequence independent of date, set `featuredOrder`. Date-desc is the tiebreaker for unordered featured projects.
+<!-- skipped: 1d1fa72 Log ffeb6fb (all-5 home rail + featuredOrder) — dual-write [no-log] -->
+
+<!-- skipped: abc9b5d Add real screenshot heroes (DocVault, Ki Clash, Beside) :tier-3 -->
