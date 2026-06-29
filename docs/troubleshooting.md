@@ -441,3 +441,11 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: abc9b5d Add real screenshot heroes (DocVault, Ki Clash, Beside) :tier-3 -->
 <!-- skipped: 542339b Mark abc9b5d screenshot heroes as tier-3 skip [no-log] -->
 <!-- skipped: d865fe0 Add Mimi screenshot hero (composited from app screenshots) [no-log] -->
+
+## Architecture deep-dives were impenetrable to non-engineers
+
+- **Symptom**: owner reviewed the 7 architecture deep-dives and couldn't follow them — each opens directly into measured tables and `file:line` mechanism prose with no plain-language on-ramp.
+- **Cause**: docs were authored for hiring engineers; no progressive-disclosure layer for a non-specialist (recruiter/founder) reader.
+- **Fix**: added a `> **In plain words.**` blockquote to the top of all 8 architecture files (talkak.mdx + talkak.ko.mdx, shadow-ai, docvault, beside, jarvis-pc, meta-smart-glass, ki-clash) — jargon-free what-it-is + one clever idea + concrete analogy. Technical body unchanged. `npm run build` clean; grep confirms 8/8 carry the box.
+- **Commit**: 570a178
+- **Pattern**: these deep-dives serve two audiences. Keep the measured, source-cited body for engineers; prepend a plain box for everyone else. When adding a new architecture doc, lead with the In-plain-words box before the provenance line.

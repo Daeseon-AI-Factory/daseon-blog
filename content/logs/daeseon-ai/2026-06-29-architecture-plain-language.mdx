@@ -1,0 +1,63 @@
+---
+title: "Architecture deep-dives get a plain-language on-ramp — non-engineers now get the gist in one box"
+date: "2026-06-29"
+project: "daeseon-ai"
+kind: "decision"
+status: "accepted"
+reversibility: "easy"
+visibility: "public"
+language: "en"
+summary: "The seven architecture deep-dives were dense and engineer-only (file:line citations, jargon, no on-ramp). Added a jargon-free 'In plain words' lead box to all eight files (talkak en+ko, Mimi, DocVault, Beside, ScreenBridge, Meta Smart Glass, Ki Clash): what it is in everyday terms, the one clever idea, a concrete analogy. The measured, source-cited technical body is unchanged below — progressive disclosure for two audiences."
+tags: ["content", "architecture", "accessibility", "information-architecture"]
+---
+
+## Context
+
+The owner reviewed the architecture deep-dives and couldn't follow them — they
+open straight into measured tables and `file:line` mechanism prose written for
+hiring engineers. A recruiter, founder, or non-specialist bounces before
+reaching the substance. The deep technical content is the recruiter signal and
+must stay; the problem is the missing on-ramp.
+
+## Options considered
+
+- **Rewrite each doc to be uniformly simple.** Would destroy the engineer-grade
+  depth that is the whole point of these pages. Rejected.
+- **Write separate "simple" versions per doc.** Doubles maintenance for 7+ docs,
+  and the two would drift. Rejected.
+- **Add a plain-language lead box, keep the technical body (chosen).** One
+  jargon-free paragraph at the top of each doc — what it is in everyday terms,
+  the single clever idea, a concrete analogy — then the unchanged technical
+  content. Progressive disclosure: a non-engineer gets the gist in ~15 seconds;
+  an engineer reads on.
+
+## Chosen + Why
+
+Added a `> **In plain words.**` blockquote to all eight architecture files
+(`talkak.mdx` + `talkak.ko.mdx`, `shadow-ai.mdx`, `docvault.mdx`, `beside.mdx`,
+`jarvis-pc.mdx`, `meta-smart-glass.mdx`, `ki-clash.mdx`). English on the
+en-primary docs (the hiring audience is largely English-speaking); the Korean
+Talkak doc got a Korean box. Each box was written from the same source I'd
+already read for the technical body, so the analogies are accurate (e.g.
+DocVault = a sealed security-camera tape the writing software itself can't
+rewrite; Ki Clash = two referees sharing one scorebook, never the same line).
+
+## Trade-off accepted
+
+The Korean architecture route falls back to the English docs for every project
+except Talkak, so a Korean reader sees English plain-boxes on the other six.
+Acceptable — the boxes are plain enough to follow, and maintaining six Korean
+deep-dives isn't worth it pre-hire. Revisit if a Korean audience matters.
+
+## Reversibility
+
+Easy (two-way) — each box is one self-contained blockquote at the top of a file.
+
+## Verified by
+
+`npm run build` clean (141 static pages). `grep -lE "In plain words|쉽게 말하면"
+content/projects/architecture/*.mdx | wc -l` → 8.
+
+## Commit
+
+570a178
