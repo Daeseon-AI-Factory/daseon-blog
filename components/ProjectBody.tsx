@@ -6,6 +6,7 @@ import { hasProjectArchitecture } from "@/lib/architecture";
 import { hasProjectReadme } from "@/lib/readme";
 import { LogTimeline } from "@/components/LogTimeline";
 import { ProjectStatusHeader } from "@/components/ProjectStatusHeader";
+import { renderMdx } from "@/lib/mdx";
 import Link from "next/link";
 
 const STATUS_COPY = {
@@ -27,6 +28,7 @@ export async function ProjectBody({
   const publicLogs = allLogs.filter((e) => e.frontmatter.visibility === "public");
   const readmeExists = await hasProjectReadme(project.slug, locale);
   const architectureExists = await hasProjectArchitecture(project.slug, locale);
+  const body = project.content.trim() ? await renderMdx(project.content) : null;
   return (
     <article className="mx-auto max-w-3xl px-5 py-12">
       <header className="mb-10">
@@ -115,6 +117,8 @@ export async function ProjectBody({
           className="mb-4 w-full rounded-lg border border-paper-line"
         />
       ) : null}
+
+      {body ? <div className="prose">{body}</div> : null}
 
       {publicLogs.length > 0 ? (
         <section className="mt-16 border-t border-paper-line pt-10">
