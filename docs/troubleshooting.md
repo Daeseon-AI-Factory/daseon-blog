@@ -439,3 +439,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- skipped: 1d1fa72 Log ffeb6fb (all-5 home rail + featuredOrder) — dual-write [no-log] -->
 
 <!-- skipped: abc9b5d Add real screenshot heroes (DocVault, Ki Clash, Beside) :tier-3 -->
+<!-- skipped: 542339b Mark abc9b5d screenshot heroes as tier-3 skip [no-log] -->
+<!-- skipped: d865fe0 Add Mimi screenshot hero (composited from app screenshots) [no-log] -->
