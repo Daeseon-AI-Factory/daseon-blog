@@ -449,3 +449,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: added a `> **In plain words.**` blockquote to the top of all 8 architecture files (talkak.mdx + talkak.ko.mdx, shadow-ai, docvault, beside, jarvis-pc, meta-smart-glass, ki-clash) — jargon-free what-it-is + one clever idea + concrete analogy. Technical body unchanged. `npm run build` clean; grep confirms 8/8 carry the box.
 - **Commit**: 570a178
 - **Pattern**: these deep-dives serve two audiences. Keep the measured, source-cited body for engineers; prepend a plain box for everyone else. When adding a new architecture doc, lead with the In-plain-words box before the provenance line.
+
+<!-- override-trigger: 74a3417 Log 570a178 (architecture plain-language boxes) — dual-write [no-log] — false positive: this IS the dual-write log commit for 570a178; the architecture change is already fully logged (content/logs/daeseon-ai/2026-06-29-architecture-plain-language.mdx kind:decision + troubleshooting entry, both anchored on 570a178). Keyword "architecture" appears only because this commit names the change it records. -->
