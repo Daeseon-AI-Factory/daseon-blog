@@ -1,3 +1,5 @@
+> **In plain words.** Mimi turns YouTube clips into English speaking practice. The interesting engineering is in the backend: when the AI analyzes a clip — which takes several seconds — that work is handed to a background worker so it never ties up the database, like a restaurant taking your order at the counter and sending the slow cooking to the back so the line keeps moving. It also tries a free AI provider first and automatically falls back to paid ones only if that one fails, and every user's data is walled off so one account can never see another's.
+
 *Extracted from the `shadow-ai` repo source on 2026-06-20, checked against the code and cross-checked by a second adversarial pass. Numbers are measured, not estimated.*
 
 ## The shape of the system

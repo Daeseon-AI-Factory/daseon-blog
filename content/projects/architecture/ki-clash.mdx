@@ -1,3 +1,5 @@
+> **In plain words.** Ki Clash is a fast 1v1 online game — a digital version of the Korean schoolyard "기싸움." The engineering story is the backend: two separate server programs, one written in Python and one in Go, run the exact same game off one shared memory store (Redis), so either can handle any player. The tricky bug they guard against is two players moving in the same instant and overwriting each other's result; they use a "read, then commit, retry if someone beat you to it" pattern — like two referees sharing one scorebook and never writing on the same line at once.
+
 *Extracted from the `ki-clash` repo source on 2026-06-22, checked against the code and cross-checked against the engineering log. Numbers are measured, not estimated.*
 
 ## The shape of the system

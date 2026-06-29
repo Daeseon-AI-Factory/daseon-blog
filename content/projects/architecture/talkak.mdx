@@ -1,3 +1,5 @@
+> **In plain words.** Talkak is a Mac app that runs your own AI coding assistant (Claude Code or Codex) across several always-on terminal windows, and keeps a searchable record of what it actually did. The hard trick: those AI sessions keep running even when you rearrange the windows or restart the app — they live in a background session manager called `tmux`, not in the app itself — so a screen change never kills the work. Think of it as a control room for a crew of AI workers: you watch each one, risky actions wait for your approval, and quitting the app doesn't lose their progress.
+
 *Extracted from the `ddalkkak` repo source on 2026-06-10, at v0.2.26. Every claim below was checked against the code, then cross-checked by a second adversarial pass. Numbers are measured, not estimated.*
 
 One naming note up front: the product is **Talkak** (the bundle's `productName`), the repo is `talkak` (renamed from `ddalkkak`), user-facing data directories use `DalkkakAI`, and the tmux socket is `dalkkak`. Same project, three layers of naming history.
