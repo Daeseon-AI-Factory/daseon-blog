@@ -462,3 +462,4 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: added `const body = project.content.trim() ? await renderMdx(project.content) : null;` and `<div className="prose">{body}</div>` under the hero image. Built HTML now contains the prose (shadow-ai App Store line, talkak "What it does", docvault body). `npm run build` clean.
 - **Commit**: 6482120
 - **Pattern**: a body component showing frontmatter but not prose = it isn't calling `renderMdx(content)`. Project bodies render between the hero image and the project-log section.
+<!-- skipped: ceb231a Log 6482120 (render project body prose) — dual-write [no-log] -->
