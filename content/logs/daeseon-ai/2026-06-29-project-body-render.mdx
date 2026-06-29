@@ -1,0 +1,49 @@
+---
+title: "Project pages were silently dropping their .mdx body — now rendered"
+date: "2026-06-29"
+project: "daeseon-ai"
+kind: "troubleshoot"
+visibility: "public"
+language: "en"
+summary: "A live-site walkthrough found that a Mimi body line wasn't showing. Tracing it (not a cache lag — the local build HTML lacked it too) revealed ProjectBody rendered only frontmatter (description, metrics), links, and the log timeline, never project.content. Every project's What-it-does / Why / Engineering-bits prose was authored but unrendered. Added renderMdx(project.content), matching PostBody/WikiBody/LogBody."
+tags: ["bug", "rendering", "mdx", "projects"]
+---
+
+## Symptom
+
+During a live-site verification sweep, the Mimi project page (`/projects/shadow-ai`)
+did not contain the body line "now shipping on the iOS App Store" that the source
+`.mdx` clearly had. `x-vercel-cache` showed `STALE`, suggesting a cache lag — but
+the locally-built `.next/server/app/projects/shadow-ai.html` was *also* missing it,
+ruling out the CDN.
+
+## Cause
+
+Verified by reading `components/ProjectBody.tsx`: it renders `fm.description`,
+`fm.metrics`, the URL/repo/architecture/readme links, the stack/role list, the hero
+image, and the `LogTimeline` — but never `project.content`. `PostBody`, `WikiBody`,
+`LogBody`, and the `now` page all call `renderMdx(content)`; `ProjectBody` was the
+only body component that didn't. So every project's prose body (What it does / Why /
+Engineering bits, the Mimi App Store line, Talkak's operating-layer writeup, etc.)
+was authored in `content/projects/{en,ko}/*.mdx` but rendered nowhere on the public
+site. Only frontmatter-derived text appeared, which is why earlier checks for
+description/metrics passed while the body line failed.
+
+## Fix
+
+Added `const body = project.content.trim() ? await renderMdx(project.content) : null;`
+and rendered `<div className="prose">{body}</div>` under the hero image, before the
+project-log section — the same pattern `PostBody` uses. Verified in the local build:
+`shadow-ai.html` now contains the App Store line, `talkak.html` has "What it does",
+`docvault.html` has its body prose. `npm run build` clean.
+
+## Commit
+
+6482120
+
+## Pattern
+
+When a body component shows frontmatter but not prose, check whether it actually
+calls `renderMdx(content)`. `ProjectBody` was the odd one out. Any future "the .mdx
+text isn't showing" report on a project page: confirm `project.content` is being
+rendered, not just `frontmatter`.

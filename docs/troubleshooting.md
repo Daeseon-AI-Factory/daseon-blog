@@ -453,3 +453,12 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 <!-- override-trigger: 74a3417 Log 570a178 (architecture plain-language boxes) — dual-write [no-log] — false positive: this IS the dual-write log commit for 570a178; the architecture change is already fully logged (content/logs/daeseon-ai/2026-06-29-architecture-plain-language.mdx kind:decision + troubleshooting entry, both anchored on 570a178). Keyword "architecture" appears only because this commit names the change it records. -->
 
 <!-- override-trigger: 532a345 Mark 74a3417 architecture-keyword trigger as false positive (it is the dual-write log commit) [no-log] — false positive: 532a345 only appends an override-justification comment for 74a3417 (which is itself a dual-write log commit). No code/content change. The trigger keyword appears solely because the subject quotes the prior commit being annotated. Logging this would be infinite recursion. -->
+<!-- skipped: 9540e06 Record Stop-hook false-positive override note [no-log] -->
+
+## Project pages rendered frontmatter but never the .mdx body
+
+- **Symptom**: a Mimi body line ("now shipping on the iOS App Store") present in `content/projects/en/shadow-ai.mdx` did not appear on the live `/projects/shadow-ai`; the locally-built `.next/server/app/projects/shadow-ai.html` was also missing it (so not a CDN/cache lag).
+- **Cause**: `components/ProjectBody.tsx` rendered only frontmatter (`description`, `metrics`), links, stack/role, hero image, and the `LogTimeline` — it never called `renderMdx(project.content)`. `PostBody`/`WikiBody`/`LogBody`/`now` all render `.content`; `ProjectBody` was the lone exception, so all per-project prose bodies were authored but unrendered site-wide.
+- **Fix**: added `const body = project.content.trim() ? await renderMdx(project.content) : null;` and `<div className="prose">{body}</div>` under the hero image. Built HTML now contains the prose (shadow-ai App Store line, talkak "What it does", docvault body). `npm run build` clean.
+- **Commit**: 6482120
+- **Pattern**: a body component showing frontmatter but not prose = it isn't calling `renderMdx(content)`. Project bodies render between the hero image and the project-log section.
