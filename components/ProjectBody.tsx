@@ -108,7 +108,18 @@ export async function ProjectBody({
         ) : null}
       </header>
 
-      {fm.image ? (
+      {fm.video ? (
+        <video
+          src={fm.video}
+          poster={fm.image}
+          autoPlay
+          muted
+          loop
+          playsInline
+          controls
+          className="mb-4 w-full rounded-lg border border-paper-line"
+        />
+      ) : fm.image ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={fm.image}

@@ -17,6 +17,12 @@ export type ProjectFrontmatter = {
   /** Optional hero screenshot — path in /public or an absolute URL. */
   image?: string;
   /**
+   * Optional hero video (path in /public or absolute URL) shown on the project
+   * page in place of the still image; `image` is used as its poster and as the
+   * home-card thumbnail (cards never autoplay video).
+   */
+  video?: string;
+  /**
    * "owner/name" — if set, the project log timeline is fetched from this repo's
    * content/logs/<slug>/ directory instead of this blog's. Lets each project
    * keep its own dual-write log in its own repo while the blog aggregates.
@@ -80,6 +86,7 @@ async function readProjectFile(locale: Locale, fileName: string): Promise<Projec
     url: fm.url,
     repo: fm.repo,
     image: fm.image,
+    video: fm.video,
     logSourceRepo: fm.logSourceRepo,
     logSourceDir: fm.logSourceDir,
     tags: fm.tags,
