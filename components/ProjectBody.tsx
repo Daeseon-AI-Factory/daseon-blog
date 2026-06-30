@@ -7,6 +7,7 @@ import { hasProjectReadme } from "@/lib/readme";
 import { LogTimeline } from "@/components/LogTimeline";
 import { ProjectStatusHeader } from "@/components/ProjectStatusHeader";
 import { renderMdx } from "@/lib/mdx";
+import { HeroVideo } from "@/components/HeroVideo";
 import Link from "next/link";
 
 const STATUS_COPY = {
@@ -109,14 +110,9 @@ export async function ProjectBody({
       </header>
 
       {fm.video ? (
-        <video
+        <HeroVideo
           src={fm.video}
           poster={fm.image}
-          autoPlay
-          muted
-          loop
-          playsInline
-          controls
           className="mb-4 w-full rounded-lg border border-paper-line"
         />
       ) : fm.image ? (
