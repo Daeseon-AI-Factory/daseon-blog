@@ -471,3 +471,4 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: added optional `video?: string` to `ProjectFrontmatter` (`lib/projects.ts`); `components/ProjectBody.tsx` renders `<video autoplay muted loop playsInline controls poster={fm.image}>` when set, else the `<img>`. Vendored `talkak.daeseon.ai/clips/hero.mp4` to `public/videos/talkak-hero.mp4`; `image` = real dashboard screenshot (`/images/projects/talkak.jpg`), used as card thumbnail + video poster. Home cards stay image-only (ProjectCard reads `image`, never `video`).
 - **Commit**: 1e649ee
 - **Pattern**: to give a project a moving hero, set both `image` (card thumb + poster) and `video` (project-page hero). Cards never autoplay; only the detail page plays the clip.
+<!-- skipped: d6d9713 Log 1e649ee (Talkak video hero) — dual-write [no-log] -->
