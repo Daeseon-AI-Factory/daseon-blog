@@ -1,0 +1,56 @@
+---
+title: "Talkak hero: real dashboard screenshot + embedded demo video"
+date: "2026-06-29"
+project: "daeseon-ai"
+kind: "decision"
+status: "accepted"
+reversibility: "easy"
+visibility: "public"
+language: "en"
+summary: "Swapped Talkak's designed banner for a real screenshot of its multi-agent dashboard (agents online, approval queue, per-startup rows) and embedded the product's own demo clip on the project page. Added an optional `video` frontmatter field; ProjectBody plays it (autoplay/muted/loop, poster = image) instead of the still. Home cards stay image-only."
+tags: ["content", "media", "talkak", "video"]
+---
+
+## Context
+
+Owner asked to replace Talkak's banner with a real app screenshot "or just embed
+a video." The Talkak landing page references `clips/hero.mp4` (324 KB) — a real
+demo clip — and the screenshot set has the multi-agent dashboard, which is the
+clearest single image of the "AI work operating system" thesis.
+
+## Options considered
+
+- **Still screenshot only.** Simple, works on card + page. But a static frame
+  undersells a live multi-pane/agent product.
+- **Video on the home cards too.** Rejected — autoplaying video in a project
+  *list* is heavy and distracting; cards should stay quiet thumbnails.
+- **Screenshot as card/poster + video on the project page (chosen).** Best of
+  both: quiet thumbnail in lists, a moving demo on the detail page.
+
+## Chosen + Why
+
+Added an optional `video?: string` to `ProjectFrontmatter`. `ProjectBody` renders
+`<video autoplay muted loop playsInline controls poster={fm.image}>` when `video`
+is set, else the existing `<img>`. Vendored the clip to `/public/videos/talkak-hero.mp4`
+(robustness over hotlinking talkak.daeseon.ai). Hero image is `projects.png`
+resized to `/images/projects/talkak.jpg` (176 KB) — used as the home-card
+thumbnail and the video poster.
+
+## Trade-off accepted
+
+The screenshot shows internal workspace labels ("Dalkkak") and the owner's
+already-public email in a tiny corner badge — acceptable (the email is on the
+resume/site). The vendored mp4 adds 324 KB to the repo; fine for a one-off hero.
+
+## Reversibility
+
+Easy — remove the `video` line to fall back to the still; the field is additive.
+
+## Verified by
+
+`npm run build` clean; built `talkak.html` contains both `talkak-hero.mp4` and
+`/images/projects/talkak.jpg`. Source clip fetched HTTP 200 `video/mp4` 324430 B.
+
+## Commit
+
+1e649ee

@@ -463,3 +463,11 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Commit**: 6482120
 - **Pattern**: a body component showing frontmatter but not prose = it isn't calling `renderMdx(content)`. Project bodies render between the hero image and the project-log section.
 <!-- skipped: ceb231a Log 6482120 (render project body prose) — dual-write [no-log] -->
+<!-- skipped: 0694e6d Record hook skip marker for ceb231a [no-log] -->
+
+## Hero media: supporting a project demo video (not just an image)
+
+- **Symptom/need**: Talkak's still banner undersold a live multi-agent product; owner wanted a real screenshot "or a video."
+- **Fix**: added optional `video?: string` to `ProjectFrontmatter` (`lib/projects.ts`); `components/ProjectBody.tsx` renders `<video autoplay muted loop playsInline controls poster={fm.image}>` when set, else the `<img>`. Vendored `talkak.daeseon.ai/clips/hero.mp4` to `public/videos/talkak-hero.mp4`; `image` = real dashboard screenshot (`/images/projects/talkak.jpg`), used as card thumbnail + video poster. Home cards stay image-only (ProjectCard reads `image`, never `video`).
+- **Commit**: 1e649ee
+- **Pattern**: to give a project a moving hero, set both `image` (card thumb + poster) and `video` (project-page hero). Cards never autoplay; only the detail page plays the clip.
