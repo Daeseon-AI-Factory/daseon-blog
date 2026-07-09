@@ -1,0 +1,42 @@
+---
+title: "Added ds-forge as a project + wired its build logs onto the site"
+date: "2026-07-09"
+project: "daeseon-ai"
+kind: "decision"
+status: "accepted"
+reversibility: "easy"
+visibility: "public"
+language: "en"
+summary: "Added content/projects/{en,ko}/ds-forge.mdx with logSourceRepo=Daeseon-AI-Factory/ds-forge, so ds-forge's 94 public build-log entries aggregate on /projects/ds-forge — the same private-repo-over-token path talkak already uses. Framed generically (the public Lab: N+1 / pool-exhaustion / deadlock against real Postgres+HikariCP, data-structure visualizers, deterministic state→SVG engine), not as company-specific interview prep. Left featured:false and url pointed at /lab."
+tags: ["content", "ds-forge", "project-log", "decision"]
+---
+
+## Context
+
+ds-forge is a self-built interview-prep platform (private repo, `Daeseon-AI-Factory/ds-forge`) whose dual-write logs were always meant to aggregate onto daeseon.ai. The open question was whether the blog could pull logs from a **private** satellite repo, and how to frame a personal prep tool on a recruiter-facing site.
+
+## Options considered
+
+- **Framing — generic engineering vs. name the target company.** The repo names a specific employer across ~61 files and the design doc calls it personal prep, not a product. Naming it broadcasts "actively interviewing at X." Chose generic: the public `/lab` is genuinely company-neutral backend work (DB-failure repro, data-structure internals).
+- **Entry point — full-open the deploy vs. use the existing `/lab` showcase.** The app already gates everything except `/lab` (its intended public showcase). Full-open would expose the personal trainer + the employer's name. Chose `/lab` as the `url`.
+- **Home rail — featured vs. not.** Left `featured:false`; it renders on `/projects` and aggregates logs without competing with the five resume-flagship cards on the home rail. One field flips it.
+
+## Chosen + Why
+
+Add the project with generic framing, `url` = `…/lab`, `featured:false`, `logSourceRepo`/`logSourceDir` set. Log aggregation over a private repo works because `lib/source.ts` reads satellite content via GitHub raw + `Authorization: token` — proven live by talkak (also `isPrivate:true`) rendering its logs. Only 5 of the 94 public log entries mention the employer by name; shipped as-is (owner said deploy), one `visibility` flip hides each.
+
+## Trade-off
+
+The Lab surface is gated until the current ds-forge code is deployed, so the `url` may hit a login wall until then. The 5 employer-named public logs are live. The heavy prep material stays in the 44 private entries, which the blog never renders (public-only filter).
+
+## Reversibility
+
+Easy. Delete the two mdx files to remove the project; flip `featured` for the home rail; flip `visibility` on the 5 logs in the ds-forge repo.
+
+## Verified by
+
+`npm run build` — 144/144 static pages, `/projects/ds-forge` + `/ko/projects/ds-forge` generated, no errors. Log timeline is empty locally (no token) and populates on Vercel, same as talkak.
+
+## Commit
+
+(this commit)

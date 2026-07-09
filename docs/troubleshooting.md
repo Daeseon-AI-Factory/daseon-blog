@@ -472,3 +472,12 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Commit**: 1e649ee
 - **Pattern**: to give a project a moving hero, set both `image` (card thumb + poster) and `video` (project-page hero). Cards never autoplay; only the detail page plays the clip.
 <!-- skipped: d6d9713 Log 1e649ee (Talkak video hero) — dual-write [no-log] -->
+<!-- skipped: c450d17 Record hook skip marker [no-log] -->
+
+## A project's logs come from a PRIVATE satellite repo — do they still render?
+
+- **Question**: setting `logSourceRepo: "<owner>/<private-repo>"` on a project — will the blog actually pull and render that repo's `content/logs/<dir>/` entries, or does private block it?
+- **Answer**: they render. `lib/source.ts` `readText`/`listFiles` fetch satellite content from `raw.githubusercontent.com` / the Contents API with `headers: { Authorization: token ${GITHUB_TOKEN} }`. As long as `GITHUB_TOKEN` (set in Vercel) can read the private repo, it works. Confirmed live: `talkak` (`isPrivate:true`) renders its logs on `/projects/talkak/log/*`. `ds-forge` (also private, same org) added the same way.
+- **Local caveat**: locally `GITHUB_TOKEN`/`GITHUB_REPO` are usually unset, so `repoConfig` returns null and cross-repo `readText` returns null (it will NOT fall back to local fs for a different repo) — so satellite log timelines look EMPTY in local `npm run build`/dev. They populate only on Vercel. Don't mistake the empty local timeline for a broken wiring.
+- **Also**: `ProjectBody` renders only `visibility: "public"` log entries. Private/unlisted entries in the satellite repo never surface. `ds-forge`: 94 public / 44 private / 1 unlisted.
+- **Pattern**: private satellite repo + a `GITHUB_TOKEN` with read access = logs aggregate. Verify on the deployed site, not locally.

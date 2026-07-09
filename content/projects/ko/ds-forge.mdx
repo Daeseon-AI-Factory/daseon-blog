@@ -1,0 +1,32 @@
+---
+title: "ds-forge"
+description: "직접 만든 인터뷰 대비 플랫폼. 공개된 Lab은 N+1·커넥션 풀 고갈·데드락 같은 프로덕션 DB 장애를 실제 Spring Boot + JPA + PostgreSQL/HikariCP 백엔드에 그대로 재현하고, 자료구조 내부를 '타입 있는 상태 → SVG 뷰 → 즉시 확인' 결정론적 엔진으로 시각화한다. Next.js 15 + 컨테이너화된 Java 러너."
+date: "2026-06-07"
+language: "ko"
+translationKey: "ds-forge"
+status: "active"
+featured: false
+url: "https://ds-forge-delta.vercel.app/lab"
+logSourceRepo: "Daeseon-AI-Factory/ds-forge"
+logSourceDir: "ds-forge"
+metrics: ["실제 Postgres + HikariCP에 N+1 / 풀 고갈 / 데드락 재현", "타입 있는 상태에서 자료구조 내부 시각화", "상태 → SVG 결정론적 렌더링 (simlab 재사용)", "컨테이너화 Java 러너, 편집 즉시 실행"]
+tags: ["nextjs", "spring-boot", "postgres", "interview-prep"]
+stack: ["Next.js 15", "React 19", "TypeScript", "Tailwind", "MDX", "Spring Boot", "JPA", "PostgreSQL", "Docker"]
+role: "1인 (Claude Code 페어 프로그래밍)"
+---
+
+백엔드 인터뷰를 준비하려고 만든 플랫폼인데, 빌드 한 번이 곧 코딩 연습 한 번이 되도록 설계했다. 공개된 부분은 **Lab** — 부하를 올리거나 코드를 고치면 결과가 즉시 눈으로 확인되는 인터랙티브 실험들이다.
+
+## Lab에 있는 것
+
+- **프로덕션 장애 샌드박스.** N+1 쿼리, 커넥션 풀 고갈, 데드락을 실제 Spring Boot + JPA + PostgreSQL 백엔드(HikariCP)에 재현한다 — SQL을 흉내 낸 게 아니라 진짜로. 트래픽이나 데이터량을 올리면 장애가 실제로 나고, 그다음 고치는 걸 본다.
+- **자료구조 내부.** 배열·스택·큐·HashMap 등을 손으로 그린 다이어그램이 아니라 실제 타입 있는 상태에서 시각화한다.
+- **결정론적 렌더링 엔진.** `타입 있는 상태 → SVG 뷰` reducer 하나가 모든 시각화를 구동해서, 같은 입력이면 항상 같은 그림이 나온다. 코어는 `simlab`(서킷 브레이커 physics)에서 재사용해 business-event 상태머신으로 re-point한 것.
+
+## 왜 이렇게 생겼나
+
+척추는 *즉시 시각 확인* — 데이터를 넣으면 결정론적 뷰가 나오고, 맞는지 바로 보인다. 이 감각(상태에서 SVG, one-way 레이어 분리)은 블로그·simlab에서 그대로 넘어와서 새 렌더링 학습 곡선이 없었다. Java는 TypeScript로 흉내 내지 않고 컨테이너화된 러너로 진짜 실행되는데, 그게 DB 장애 lab의 핵심이다.
+
+## 안 되는 것
+
+공개 surface는 Lab 하나뿐이다. AI 페어링·시스템 디자인 연습 surface는 게이팅돼 있고 아직 미완성 — 인터뷰 날짜 이후에 만든 것들이라 그렇다. 백엔드 lab은 컨테이너 러너가 떠 있어야(docker-compose: Caddy + Next + Spring Boot + Postgres) 돌아가서, 프론트만 배포된 상태에선 시각화는 보이지만 실제 Postgres lab은 안 돈다.

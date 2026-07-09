@@ -1,0 +1,32 @@
+---
+title: "ds-forge"
+description: "A self-built interview-prep platform. The public Lab reproduces production database failures — N+1, connection-pool exhaustion, deadlock — on demand against a real Spring Boot + JPA + PostgreSQL/HikariCP backend, and visualizes data-structure internals over a deterministic 'typed state → SVG view → instant confirmation' engine. Next.js 15 + a containerized Java runner."
+date: "2026-06-07"
+language: "en"
+translationKey: "ds-forge"
+status: "active"
+featured: false
+url: "https://ds-forge-delta.vercel.app/lab"
+logSourceRepo: "Daeseon-AI-Factory/ds-forge"
+logSourceDir: "ds-forge"
+metrics: ["Reproduces N+1 / pool-exhaustion / deadlock against real Postgres + HikariCP", "Data-structure internals visualized from typed state", "Deterministic state → SVG rendering (reused from simlab)", "Containerized Java runner, run-on-edit"]
+tags: ["nextjs", "spring-boot", "postgres", "interview-prep"]
+stack: ["Next.js 15", "React 19", "TypeScript", "Tailwind", "MDX", "Spring Boot", "JPA", "PostgreSQL", "Docker"]
+role: "Solo (AI-pair-programmed with Claude Code)"
+---
+
+A platform I built to prep for backend interviews, where every build doubles as a coding rep. The public surface is the **Lab**: interactive experiments you drive by turning up load or editing code and watching the result confirm itself immediately.
+
+## What's in the Lab
+
+- **Production-failure sandbox.** N+1 queries, connection-pool exhaustion, and deadlock are reproduced on demand against a real Spring Boot + JPA + PostgreSQL backend with HikariCP — not simulated SQL. You turn up traffic or data volume and watch the failure happen, then the fix.
+- **Data-structure internals.** Array, stack, queue, HashMap, and more, each visualized from the actual typed state rather than a hand-drawn diagram.
+- **Deterministic rendering engine.** A single `typed state → SVG view` reducer drives every visual, so the same input always produces the same picture. The core is reused from `simlab` (circuit-breaker physics) and re-pointed at business-event state machines.
+
+## Why it looks like this
+
+The spine is *live visual confirmation*: type data, get a deterministic view, see instantly whether it's right. That instinct — SVG from state, one-way layer separation — carried over from the blog and simlab, so there was no new rendering learning curve. Java runs for real through a containerized runner rather than being faked in TypeScript, which is the whole point of the DB-failure labs.
+
+## What it doesn't do
+
+The Lab is the only public surface. The AI-pairing and system-design practice surfaces are gated and still unfinished — they came after the interview date, not before it. Backend labs need the containerized runner up (docker-compose: Caddy + Next + Spring Boot + Postgres), so the pure-frontend deploy shows the visualizers but not the live-Postgres labs.
