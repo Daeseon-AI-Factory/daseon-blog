@@ -1,0 +1,30 @@
+---
+title: "Case films 02–05: gateway, HTTP 413, row lock, costing"
+date: "2026-07-13"
+kind: "update"
+visibility: "public"
+language: "en"
+summary: "The /portfolio page now plays five case films. Facts sourced from SKAX STAR docs; people scenes only where the sources record real collaboration."
+tags: ["portfolio", "framer-motion"]
+---
+
+Four films added on top of the Case 01 grammar: 46-endpoints→1 gateway
+(senior's security pushback answered with a PoC, then hardened by him),
+HTTP 413 → PK-only payloads (easy fix rejected — shared server), duplicate
+LOT IDs → Oracle FOR UPDATE scoped to one row and shrunk to one statement,
+and the costing project (single-intake anchor role, 7.7K-line PL/SQL →
+per-process CTEs, thank-you letter at month 7).
+
+Numbers come from the resume; narrative and quotes from ds-forge SKAX docs.
+Where sources conflicted (STAR notes say "about 40 APIs", resume says 46;
+customer wanted 50 LOTs, resume claims 80), the published resume number won.
+The row-lock film has no people scene because the sources record no
+collaboration facts for it — nothing invented.
+
+Player change: films start when scrolled into view (IntersectionObserver)
+so five don't animate simultaneously.
+
+What it doesn't do: films for distributed-lock, multi-plant, validation, and
+Dure TCP still text-only on faangforge. Not deployed yet.
+
+Commit: 8c4b660
