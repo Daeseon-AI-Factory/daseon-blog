@@ -10,10 +10,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@number-flow/react": "^0.6.1",
     "@octokit/rest": "^21.1.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "feed": "^4.2.2",
+    "framer-motion": "^12.42.2",
     "gray-matter": "^4.0.3",
     "jose": "^5.9.6",
     "mermaid": "^11.15.0",
