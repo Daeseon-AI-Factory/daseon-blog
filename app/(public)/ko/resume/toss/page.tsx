@@ -24,7 +24,7 @@ function FilmLink({ film, children }: { film?: string; children?: React.ReactNod
   return (
     <a
       href={`https://daeseon.ai/portfolio#${film}`}
-      className="text-[14px] font-semibold text-[#3182f6] hover:underline"
+      className="text-[14px] font-semibold text-[#191f28] underline decoration-[#d1d6db] underline-offset-4 hover:decoration-[#191f28]"
     >
       {children ?? "케이스 필름 →"}
     </a>
@@ -46,7 +46,7 @@ export default function KoResumeToss() {
       <main className="mx-auto max-w-[720px] px-6">
         {/* 히어로 — 한 화면 한 메시지 */}
         <section className="pt-28 pb-24">
-          <p className="text-[17px] font-semibold text-[#3182f6]">Backend Engineer · Toronto (캐나다 취업 가능)</p>
+          <p className="text-[17px] font-semibold text-[#8b95a1]">Backend Engineer · Toronto (캐나다 취업 가능)</p>
           <h1 className="mt-3 text-[48px] font-extrabold leading-[1.15] tracking-[-0.02em]">
             유대선
           </h1>
@@ -57,7 +57,7 @@ export default function KoResumeToss() {
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href="mailto:showep12@gmail.com"
-              className="rounded-[14px] bg-[#3182f6] px-5 py-3 text-[16px] font-bold text-white hover:bg-[#1b64da]"
+              className="rounded-[14px] bg-[#191f28] px-5 py-3 text-[16px] font-bold text-white hover:bg-[#333d4b]"
             >
               연락하기
             </a>
@@ -91,7 +91,7 @@ export default function KoResumeToss() {
               >
                 <p className="text-[30px] font-extrabold tracking-[-0.02em] text-[#191f28]">{s.n}</p>
                 <p className="mt-1 text-[14px] font-medium leading-snug text-[#6b7684]">{s.label}</p>
-                <p className="mt-2 text-[13px] font-semibold text-[#3182f6] opacity-0 transition-opacity group-hover:opacity-100">
+                <p className="mt-2 text-[13px] font-semibold text-[#191f28] opacity-0 transition-opacity group-hover:opacity-100">
                   필름 보기 →
                 </p>
               </a>
