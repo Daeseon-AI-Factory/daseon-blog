@@ -6,7 +6,7 @@
  *  continuity) instead of cutting. Auto-plays once, then hands over
  *  to manual stepping. */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface Scene {
   id: string;
@@ -37,7 +37,26 @@ export function CaseFilmPlayer({
   children: (scene: number) => React.ReactNode;
 }) {
   const [scene, setScene] = useState(0);
-  const [playing, setPlaying] = useState(true);
+  // autoplay starts when the film scrolls into view (several films share a page)
+  const [playing, setPlaying] = useState(false);
+  const rootRef = useRef<HTMLElement | null>(null);
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const ob = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !startedRef.current) {
+          startedRef.current = true;
+          setPlaying(true);
+        }
+      },
+      { threshold: 0.45 },
+    );
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!playing) return;
@@ -60,7 +79,7 @@ export function CaseFilmPlayer({
   };
 
   return (
-    <figure className="not-prose my-8">
+    <figure className="not-prose my-8" ref={rootRef}>
       <style>{`
         @keyframes cf-dash-kf { to { stroke-dashoffset: -22; } }
         .cf-dash { animation: cf-dash-kf 0.7s linear infinite; }
