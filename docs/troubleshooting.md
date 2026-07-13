@@ -492,3 +492,13 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Fix**: positioning (absolute + translate) lives on a plain wrapper div; the `motion.div` inside animates opacity/y only. `components/casefilm/primitives.tsx` PersonNode.
 - **Commit**: 9a93eea
 - **Pattern**: never put Tailwind transform utilities on a motion element that animates x/y/scale — split position (wrapper) from animation (motion child).
+
+---
+
+## Case film ending never fired — hardcoded last-scene index
+
+- **Symptom**: owner: "케이스별로 스토리가 꼬였다". Films 03/04 showed the IMPACT tag + caption but kept rendering the AFTER diagram — metric tiles never appeared.
+- **Cause**: both films have SIX scenes (0–5) but copied `const impact = s === 6` from the seven-scene films. `s` never reaches 6, so the impact overlay never mounted and `diagram` never hid. Verified: tiles appeared immediately after changing to `s === 5`.
+- **Fix**: `impact = s === 5` in `payload-413.tsx` / `row-level-lock.tsx`; also premature-state labels (payload "keys only" at SETUP, gateway "46 endpoints" at SETUP) and missing SETUP flow edges.
+- **Commit**: (this commit)
+- **Pattern**: scene-state booleans must derive from `scenes.length - 1`, not a copied literal — when a film's scene count differs from the template you copied, the ending silently dies.

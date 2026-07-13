@@ -81,7 +81,7 @@ export function RowLockFilm() {
       {(s) => {
         const race = s === 1 || s === 2;
         const after = s >= 4;
-        const impact = s === 6;
+        const impact = s === 5; // last scene of SIX — not seven
         const diagram = !impact;
         const dimAll = s === 3;
         return (
@@ -109,6 +109,10 @@ export function RowLockFilm() {
                 pulse={s === 2}
               />
             </At>
+
+            {/* SETUP: both instances draw from the one counter */}
+            <Edge x1={18} y1={26} x2={74} y2={40} visible={s === 0} />
+            <Edge x1={18} y1={54} x2={74} y2={40} visible={s === 0} />
 
             {/* race reads */}
             <Edge x1={18} y1={26} x2={74} y2={40} tone={s === 2 ? "bad" : "accent"} visible={race} />

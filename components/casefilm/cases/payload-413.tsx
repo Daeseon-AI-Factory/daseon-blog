@@ -81,7 +81,7 @@ export function Payload413Film() {
       {(s) => {
         const before = s === 1 || s === 2;
         const after = s >= 4;
-        const impact = s === 6;
+        const impact = s === 5; // last scene of SIX — not seven
         const diagram = !impact;
         const dimAll = s === 3;
         return (
@@ -112,6 +112,11 @@ export function Payload413Film() {
             <At x={88} y={56} visible={diagram} dim={dimAll}>
               <SysNode icon="📚" label="DB" sub="source of truth" tone={after ? "good" : "neutral"} />
             </At>
+
+            {/* SETUP: the normal save path */}
+            <Edge x1={16} y1={36} x2={45} y2={36} visible={s === 0} />
+            <Edge x1={45} y1={36} x2={72} y2={36} visible={s === 0} />
+            {s === 0 && <Packet from={[16, 36]} to={[72, 36]} duration={2.4} />}
 
             {/* BEFORE: fat packets */}
             <Edge x1={16} y1={36} x2={45} y2={36} tone={s === 2 ? "bad" : "warn"} visible={before} />

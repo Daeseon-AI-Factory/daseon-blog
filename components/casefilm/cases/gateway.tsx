@@ -107,7 +107,13 @@ export function GatewayFilm() {
               <SysNode
                 icon="🧱"
                 label="Tomcat middleware"
-                sub={after ? "thin gateway — forwards only" : "46 endpoints · knows business"}
+                sub={
+                  after
+                    ? "thin gateway — forwards only"
+                    : s >= 1
+                      ? "46 endpoints · knows business"
+                      : "between floor and legacy"
+                }
                 tone={s === 2 ? "bad" : after ? "good" : "neutral"}
                 pulse={s === 2}
               />
