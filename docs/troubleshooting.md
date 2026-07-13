@@ -481,3 +481,14 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Local caveat**: locally `GITHUB_TOKEN`/`GITHUB_REPO` are usually unset, so `repoConfig` returns null and cross-repo `readText` returns null (it will NOT fall back to local fs for a different repo) — so satellite log timelines look EMPTY in local `npm run build`/dev. They populate only on Vercel. Don't mistake the empty local timeline for a broken wiring.
 - **Also**: `ProjectBody` renders only `visibility: "public"` log entries. Private/unlisted entries in the satellite repo never surface. `ds-forge`: 94 public / 44 private / 1 unlisted.
 - **Pattern**: private satellite repo + a `GITHUB_TOKEN` with read access = logs aggregate. Verify on the deployed site, not locally.
+<!-- skipped: c9fb235 Log 4d1b643 (ds-forge project added) with live-verified count [no-log] -->
+
+---
+
+## framer-motion clobbers Tailwind translate on the same element
+
+- **Symptom**: case-film speech bubble rendered ~90px right of its avatar and clipped at the stage edge, despite `left-1/2 -translate-x-1/2`.
+- **Cause**: the bubble was a `motion.div` animating `y` — framer-motion writes the element's inline `transform`, wiping the Tailwind translate classes. Verified by moving positioning off the motion element (bubble centered correctly after).
+- **Fix**: positioning (absolute + translate) lives on a plain wrapper div; the `motion.div` inside animates opacity/y only. `components/casefilm/primitives.tsx` PersonNode.
+- **Commit**: 9a93eea
+- **Pattern**: never put Tailwind transform utilities on a motion element that animates x/y/scale — split position (wrapper) from animation (motion child).

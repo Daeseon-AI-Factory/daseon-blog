@@ -1,0 +1,62 @@
+---
+title: "Portfolio direction: animated case films instead of a text resume page"
+date: "2026-07-13"
+kind: "decision"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "New /portfolio surface renders production case studies as scene-stepped before/after diagram films. Case 01 (ERP↔MES transactional outbox) shipped."
+tags: ["portfolio", "framer-motion", "nextjs"]
+---
+
+## Context
+
+The resume PDF already exists and the deep-dives live on faangforge. What was
+missing: a surface where a reviewer can *see* the bottleneck and the fix in
+seconds — owner's constraint: minimal prose, ByteByteGo-style clarity, and the
+human collaboration visible, not just the architecture.
+
+## Options considered
+
+- **Text-first /resume page with live GitHub widgets** — fastest; but it
+  duplicates the PDF and buries the differentiator (the case work) in bullets.
+  Rejected by the owner explicitly ("구절구절 극혐").
+- **Screen-recorded video (Remotion) per case** — highest polish; but heavy to
+  iterate per case, not interactive, and text in video is unsearchable.
+  Deferred, the film spec can be ported to Remotion later.
+- **Scene-stepped diagram films (chosen)** — a player component steps through
+  setup → before → failure → decision → after → people → impact; actors animate
+  between states so continuity does the explaining. One caption line per scene.
+
+## Chosen + why
+
+Case films. The format encodes exactly what interviewers probe (where it broke,
+what changed, who was aligned, measured result) and each film ends with a link
+to the existing faangforge deep-dive — no content duplication.
+
+## Trade-off accepted
+
+framer-motion + @number-flow/react enter the bundle (client components only,
+/portfolio route: 157 kB first load). Each new case is hand-storyboarded
+(~250 lines) rather than generated from a spec; a case-spec factory is only
+worth building after 2–3 cases exist.
+
+## Verified by
+
+`npm run build` — 145/145 static pages, /portfolio 157 kB. All 7 scenes
+stepped through in a real browser (screenshots in session); two layout bugs
+found and fixed during verification: node overlap in the AFTER scene, and
+speech-bubble mispositioning caused by framer-motion clobbering Tailwind's
+translate (positioning moved to a wrapper div).
+
+Facts in the film trace to the resume PDF and ds-forge `SKAX/ERPMES.md` STAR
+notes (metrics: −60% processing time, ~20/month reprocessing → near zero).
+
+## What it doesn't do yet
+
+Cases 02–05 are listed as storyboards-next only. No /ko variant of the page
+frame (captions are already bilingual). Not deployed until the owner approves
+the push.
+
+Commit: 9a93eea
