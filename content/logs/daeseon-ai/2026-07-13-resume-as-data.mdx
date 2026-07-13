@@ -1,0 +1,46 @@
+---
+title: "Resume factory: one data file generates the web page and the PDF"
+date: "2026-07-13"
+kind: "decision"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "lib/resumeData.ts is now the resume's single source of truth; /resume renders it and a puppeteer script prints the ATS-safe one-page PDF."
+tags: ["resume", "puppeteer", "nextjs"]
+---
+
+## Context
+
+Eight scattered resume PDF copies with different dates, and the site serving a
+stale one. Editing in Notion/Google Docs felt wrong to the owner — outputs were
+being hand-maintained.
+
+## Options considered
+
+- **Keep editing in a doc tool, re-export** — familiar; but the copy divergence
+  problem stays, and bullets can't carry live links to the case films cleanly.
+- **Notion as the resume** — no ATS PDF, vendor-locked, rejected as primary.
+- **Resume as data (chosen)** — `lib/resumeData.ts` (bullets verbatim from the
+  2026-06-24 PDF) → `/resume` route (print CSS) → `scripts/build-resume-pdf.mjs`
+  (puppeteer `page.pdf()`) emits the one-page PDF. Phone number is injected at
+  build time from an env var so it never enters this public repo.
+
+## Verified by
+
+`pdfinfo`: 1 page, Letter. `pdftotext`: name extracts as "Daeseon Yoo"
+(tracking-tight had merged it to "DaeseonYoo" — removed), full contact line with
+phone, content complete through Education. Film/deep-dive links on 9 bullets.
+
+## Trade-off accepted
+
+Layout tuning lives in JSX instead of a WYSIWYG. First fit-to-one-page pass
+took three compression rounds. `mdls` page counts are Spotlight cache and lied
+after regeneration — trust `pdfinfo`, not `mdls`, for overwritten files.
+
+## What it doesn't do yet
+
+Korean 경력기술서 generator from the same data. The site's Resume button still
+serves the old static PDF until the owner approves replacing it.
+
+Commit: (this commit)
