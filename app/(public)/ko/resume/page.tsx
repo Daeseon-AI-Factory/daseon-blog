@@ -191,7 +191,7 @@ export default function KoResumePage() {
         <hr className="my-10 border-[#ededec]" />
         <p className="text-[13px] text-[#787774]">
           이 페이지는 데이터 파일에서 생성됩니다 — 모든 숫자는 영문 이력서(PDF)와 동일 원본.{" "}
-          <a className="underline decoration-[#c9c8c5] underline-offset-2" href="https://daeseon.ai/portfolio">
+          <a className="underline decoration-[#c9c8c5] underline-offset-2" href="/portfolio">
             케이스 필름 전체 보기 →
           </a>
         </p>

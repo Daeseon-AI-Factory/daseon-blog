@@ -23,7 +23,7 @@ function FilmLink({ film, children }: { film?: string; children?: React.ReactNod
   if (!film) return null;
   return (
     <a
-      href={`https://daeseon.ai/portfolio#${film}`}
+      href={`/portfolio#${film}`}
       className="text-[14px] font-semibold text-[#191f28] underline decoration-[#d1d6db] underline-offset-4 hover:decoration-[#191f28]"
     >
       {children ?? "케이스 필름 →"}
@@ -62,7 +62,7 @@ export default function KoResumeToss() {
               연락하기
             </a>
             <a
-              href="https://daeseon.ai/portfolio"
+              href="/portfolio"
               className="rounded-[14px] bg-[#f2f4f6] px-5 py-3 text-[16px] font-bold text-[#333d4b] hover:bg-[#e5e8eb]"
             >
               케이스 필름 보기
@@ -86,7 +86,7 @@ export default function KoResumeToss() {
             {STATS.map((s) => (
               <a
                 key={s.label}
-                href={`https://daeseon.ai/portfolio#${s.film}`}
+                href={`/portfolio#${s.film}`}
                 className="group rounded-[20px] bg-[#f9fafb] p-5 transition-colors hover:bg-[#f2f4f6]"
               >
                 <p className="text-[30px] font-extrabold tracking-[-0.02em] text-[#191f28]">{s.n}</p>
