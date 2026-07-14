@@ -45,7 +45,7 @@ export default function KoResumeToss() {
       />
       <main className="mx-auto max-w-[720px] px-6">
         {/* 히어로 — 한 화면 한 메시지 */}
-        <section className="pt-28 pb-24">
+        <section className="pt-14 pb-14 sm:pt-24 sm:pb-20">
           <p className="text-[17px] font-semibold text-[#8b95a1]">Backend Engineer · Toronto (캐나다 취업 가능)</p>
           <h1 className="mt-3 text-[48px] font-extrabold leading-[1.15] tracking-[-0.02em]">
             유대선
@@ -77,7 +77,7 @@ export default function KoResumeToss() {
         </section>
 
         {/* 숫자로 보는 6년 */}
-        <section className="pb-24">
+        <section className="pb-14 sm:pb-20">
           <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">숫자로 보는 6년</h2>
           <p className="mt-2 text-[16px] text-[#6b7684]">
             전부 실제 운영 시스템에서 측정된 숫자입니다. 누르면 before/after 애니메이션으로 이어집니다.
@@ -100,7 +100,7 @@ export default function KoResumeToss() {
         </section>
 
         {/* 경력 */}
-        <section className="pb-24">
+        <section className="pb-14 sm:pb-20">
           <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">경력</h2>
           {r.experience.map((e) => (
             <div key={e.company} className="mt-10">
@@ -136,7 +136,7 @@ export default function KoResumeToss() {
         </section>
 
         {/* 프로젝트 */}
-        <section className="pb-24">
+        <section className="pb-14 sm:pb-20">
           <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">직접 만든 것들</h2>
           <div className="mt-8 space-y-5">
             {r.projects.map((p) => (
@@ -159,7 +159,7 @@ export default function KoResumeToss() {
         </section>
 
         {/* 스킬 + 학력 */}
-        <section className="pb-28">
+        <section className="pb-16 sm:pb-24">
           <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">기술</h2>
           <div className="mt-6 space-y-3">
             {r.skillGroups.map((g) => (
