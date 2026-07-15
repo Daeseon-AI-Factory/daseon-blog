@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { RESUME_KO } from "@/lib/resumeDataKo";
+import { RESUME_TARGETS } from "@/lib/resumeTargets";
 
 export const metadata: Metadata = {
   title: "유대선 — 이력서 (토스풍)",
@@ -31,8 +32,14 @@ function FilmLink({ film, children }: { film?: string; children?: React.ReactNod
   );
 }
 
-export default function KoResumeToss() {
+export default async function KoResumeToss({
+  searchParams,
+}: {
+  searchParams: Promise<{ target?: string }>;
+}) {
   const r = RESUME_KO;
+  const targetKey = (await searchParams).target;
+  const target = targetKey ? RESUME_TARGETS[targetKey] : undefined;
   return (
     <div
       lang="ko"
@@ -98,6 +105,37 @@ export default function KoResumeToss() {
             ))}
           </div>
         </section>
+
+        {/* 이 회사에 이렇게 기여합니다 (지원 회사 지정 시에만) — 증거(숫자) 다음, 이력 앞 */}
+        {target && (
+          <section className="pb-14 sm:pb-20">
+            <div className="rounded-[24px] border border-[#eaebee] bg-[#fbfcfd] p-6 sm:p-8">
+              <p className="text-[14px] font-bold text-[#ff6f0f]">🥕 {target.company} · {target.team}</p>
+              <h2 className="mt-2 text-[24px] font-extrabold leading-[1.35] tracking-[-0.01em] sm:text-[26px]">
+                {target.headline}
+              </h2>
+              <div className="mt-6 space-y-4">
+                {target.contributions.map((c) => (
+                  <div key={c.need} className="border-l-[3px] border-[#191f28] pl-4">
+                    <p className="text-[14px] font-semibold text-[#8b95a1]">{c.need}</p>
+                    <p className="mt-1 text-[16px] font-medium leading-[1.6] text-[#191f28]">{c.how}</p>
+                    {c.film && (
+                      <a
+                        href={`/portfolio#${c.film}`}
+                        className="mt-1 inline-block text-[13.5px] font-semibold text-[#191f28] underline decoration-[#d1d6db] underline-offset-4 hover:decoration-[#191f28]"
+                      >
+                        ↓ 아래 경력 · 케이스 필름에서 확인
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-6 rounded-[14px] bg-[#f2f4f6] p-4 text-[14px] leading-[1.65] text-[#4e5968]">
+                <b className="text-[#191f28]">솔직하게</b> — {target.honestGap}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* 경력 */}
         <section className="pb-14 sm:pb-20">
