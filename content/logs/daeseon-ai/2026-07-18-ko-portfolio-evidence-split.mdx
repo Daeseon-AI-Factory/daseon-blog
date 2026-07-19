@@ -1,0 +1,131 @@
+---
+title: "Korean applications get an evidence portfolio, not a longer resume"
+date: "2026-07-18"
+kind: "decision"
+status: "accepted"
+reversibility: "two-way"
+visibility: "public"
+language: "en"
+summary: "Korean submissions split into a fixed 2-page PDF plus /ko/portfolio, a Korean evidence page sharing one showcase component with the English /portfolio. First public deploy of the whole resume system."
+tags: ["resume", "portfolio", "i18n", "deployment"]
+---
+
+## Context
+
+The resume system had been built across roughly fifteen local commits — case films,
+`resumeData.ts` / `resumeDataKo.ts`, the ATS PDF generator, a Notion-style `/ko/resume`,
+and a monochrome `/ko/resume/toss`. None of it had ever been pushed. Production was
+serving only the old `public/resume.pdf`; `curl -sL` returned 404 for `/portfolio`,
+`/ko/portfolio`, `/resume`, `/ko/resume` and `/ko/resume/toss`.
+
+The open question was what a Korean applicant actually submits. Korean hiring at service
+companies expects a compact document, while the strongest material — five animated case
+films of SK AX work — does not survive being flattened into a PDF.
+
+## Goals (ranked)
+
+1. A submittable Korean document that reads in ten seconds and does not depend on assets
+   that cannot be deployed.
+2. Real evidence reachable from that document without inflating it.
+3. One source of truth per language, so a number changed once does not disagree across surfaces.
+4. No fabrication — status stated as-is, no invented metrics.
+
+## Options considered
+
+**A. One long Korean resume (Notion-style `/ko/resume`) as the submission.**
+Pros: already built; toggles embed case-film GIFs inline; single URL to send.
+Cons: depends on `public/films/*.gif`, which is gitignored (`.gitignore:45`, added in `28f3b3a`)
+and therefore 404s in production — five broken images on the primary submission surface.
+A scrolling web page is also not what a Korean submission portal accepts.
+Cost: zero. Reversibility: two-way. Evidence: `git ls-files public/films` → 0 files.
+
+**B. Reuse the English `/portfolio` for Korean applicants.**
+Pros: no new route; the five case films already exist there.
+Cons: a Korean recruiter lands on English prose. The English page is a film archive, not
+an evidence page — it leads with mechanism rather than result.
+Cost: zero. Reversibility: two-way. Evidence: existing `/portfolio` copy is English-only.
+
+**C. Fixed 2-page PDF for submission + `/ko/portfolio` as the evidence surface.** — chosen
+Pros: the PDF uses tracked JPGs only, so it never depends on ignored assets; the web page
+carries the animation the PDF cannot. Both render from `lib/resumeDataKo.ts`.
+Cons: two surfaces to keep in sync; a second portfolio route to maintain.
+Cost: one new route + one shared component. Reversibility: two-way.
+Evidence: `output/pdf/유대선_이력서_서비스기업_2p.pdf` renders; build prerenders `ko/portfolio.html`.
+
+**D. Do nothing — keep serving the old `public/resume.pdf`.**
+Pros: no work.
+Cons: the live PDF is from June, contains a phone number, and links nowhere. Every new
+route stays 404, so no new submission can reference the site at all.
+Cost: zero. Reversibility: two-way.
+
+## Chosen + why
+
+Option C. The deciding constraint was asset deployability: the one option that put the
+strongest material on the submission path (A) was also the only one that would ship broken.
+Splitting the surfaces lets the PDF stay dependency-free while the web page carries the films.
+
+`components/casefilm/portfolio-showcase.tsx` is shared: English renders all five case films,
+Korean renders three (ERP↔MES, row-level lock, HTTP 413) plus links for the rest. One component,
+two locale-specific case lists.
+
+## Trade-off accepted
+
+`lib/resumeData.ts` and `lib/resumeDataKo.ts` are independent objects, not a translation layer.
+Changing a figure requires editing both and cross-checking. This was accepted deliberately —
+the two languages emphasise different achievements, so a shared schema would have forced
+artificial symmetry.
+
+## Pre-mortem (six months out)
+
+1. The two resume data files drift and a recruiter sees different numbers on the Korean page
+   and the English PDF.
+2. `/ko/resume` stays orphaned with five broken GIFs and someone finds it via search.
+3. Neither portfolio route is in `app/sitemap.ts`, so the evidence page is never indexed and
+   only ever reached by a link pasted into an application.
+
+## Second-order effects
+
+Enables: submitting the new Korean PDF, which was explicitly blocked on the portfolio being
+publicly reachable. Forecloses: nothing — the old PDF stays served until a separate decision.
+
+## Decision criteria to flip
+
+If a Korean submission portal rejects the 2-page PDF, or if GIF hosting is solved (Vercel Blob
+or committing the ~8.8MB of GIFs), option A becomes viable again.
+
+## Success measure
+
+The three submission-path routes return 200 in production and the PDF's internal links resolve
+to real pages rather than 404s.
+
+## Verified by
+
+- `curl -sL -o /dev/null -w "%{http_code}"` before the deploy: `/portfolio` 404, `/ko/portfolio` 404,
+  `/ko/resume/toss` 404, `/` 200. The apex issues a 308 to `www`, so `-L` is required or every
+  route reports 308 and hides its real status.
+- Production build of the working tree, run in an isolated copy with symlinked `node_modules`
+  to avoid touching a shared `.next`: exit 0. `app-paths-manifest.json` contains
+  `/(public)/ko/portfolio/page` and `/(public)/portfolio/page`; both `portfolio.html` and
+  `ko/portfolio.html` were prerendered.
+- `tsc --noEmit` and `next lint` exit 0. No `lib/source.ts` or `lib/storage.ts` in any
+  `"use client"` import graph.
+- No credentials, tokens, phone numbers, or addresses in the pushed range. The phone number
+  stays in the `RESUME_PHONE` env var and never enters the repo.
+
+## Known gaps at deploy time
+
+- `/portfolio` and `/ko/portfolio` are absent from `app/sitemap.ts`.
+- `app/(public)/ko/resume/page.tsx:194` and `lib/resumeDataKo.ts:65` still point Korean readers
+  at the English `/portfolio`; the latter also hardcodes an absolute `https://daeseon.ai` origin,
+  which contradicts `7be80a9`'s move to relative links.
+- `/ko/resume` renders five `/films/*.gif` that are gitignored and will 404. The route is
+  effectively orphaned — the header sends Korean readers to `/ko/resume/toss`.
+- The old `public/resume.pdf` is still served and still contains a phone number.
+
+## Discussion artifacts
+
+`docs/HANDOFF-resume-portfolio.md` — sections 2 (locked decisions) and 3.5 (deferred GIF delivery).
+
+## Commit
+
+(this commit)

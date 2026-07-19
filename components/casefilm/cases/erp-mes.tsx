@@ -6,7 +6,7 @@
 
 import NumberFlow from "@number-flow/react";
 import { At, Boundary, Chip, Edge, Packet, PersonNode, SysNode, Zone } from "../primitives";
-import { CaseFilmPlayer, type Scene } from "../player";
+import { CaseFilmPlayer, type CaseFilmLocale, type Scene } from "../player";
 
 const SCENES: Scene[] = [
   {
@@ -80,12 +80,19 @@ function Metric({
   );
 }
 
-export function ErpMesFilm() {
+export function ErpMesFilm({ locale = "en" }: { locale?: CaseFilmLocale }) {
   return (
     <CaseFilmPlayer
-      title="Case 01 · Don't let ERP roll back the factory"
-      subtitle="MES↔ERP integration — transactional-outbox redesign at SK AX"
+      title={{
+        en: "Case 01 · Don't let ERP roll back the factory",
+        ko: "Case 01 · ERP 장애가 공장 기록을 되돌리지 않게",
+      }}
+      subtitle={{
+        en: "MES↔ERP integration - transactional-outbox redesign at SK AX",
+        ko: "MES↔ERP 연동 - 트랜잭션 경계 재설계",
+      }}
       scenes={SCENES}
+      locale={locale}
     >
       {(s) => {
         const before = s === 1 || s === 2;

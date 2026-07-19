@@ -85,7 +85,7 @@ export const RESUME = {
       period: "Jun. 2020 – Sep. 2021",
       bullets: [
         {
-          text: "Built and supported TCP socket server workflows for PC, PDA, and kiosk clients using .NET, enabling server-side stored procedure execution, DB credential isolation, and application-level message framing for partial TCP reads, which improved system reliability and reduced client-side connection errors.",
+          text: "Built and supported TCP socket server workflows for PC, PDA, and kiosk clients using .NET, with server-side stored procedure execution, DB credential isolation, and application-level message framing for partial TCP reads.",
           deepDive: "dure-tcp",
         },
       ] as Bullet[],
@@ -111,7 +111,7 @@ export const RESUME = {
       stack: "Spring Boot · Next.js · PostgreSQL · AWS",
       bullets: [
         {
-          text: "Built an event-driven async LLM pipeline using Spring AFTER_COMMIT and bounded @Async so provider calls run outside DB transactions, eliminating connection-pool exhaustion with PENDING to READY/FAILED states.",
+          text: "Built an event-driven async LLM pipeline using Spring AFTER_COMMIT and bounded @Async so provider calls run outside DB transactions, with short transactions recording PENDING to READY/FAILED states.",
         },
         {
           text: "Implemented multi-provider fallback with retry/backoff for 429/5xx failures, isolating provider throttling from workflows.",
@@ -124,7 +124,7 @@ export const RESUME = {
       stack: "Go · PostgreSQL · Windows Agent",
       bullets: [
         {
-          text: "In active use by a 40-person team; built Windows agent onboarding with single-use install tokens, server-side token provisioning, automatic host-user mapping, heartbeat checks, and telemetry self-tests.",
+          text: "Built Windows agent onboarding with single-use install tokens, server-side token provisioning, automatic host-user mapping, heartbeat checks, and telemetry self-tests.",
         },
         {
           text: "Implemented tamper-evident endpoint audit workflows using osquery and custom endpoint telemetry, PostgreSQL hash-chained logs, RBAC file-vault access, alert rules, and admin views for offline, unassigned, and unverified PCs.",

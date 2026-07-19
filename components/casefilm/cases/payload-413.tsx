@@ -6,7 +6,7 @@
 
 import NumberFlow from "@number-flow/react";
 import { At, Chip, Edge, Packet, PersonNode, SysNode, Zone } from "../primitives";
-import { CaseFilmPlayer, type Scene } from "../player";
+import { CaseFilmPlayer, type CaseFilmLocale, type Scene } from "../player";
 
 const SCENES: Scene[] = [
   {
@@ -71,12 +71,19 @@ function Metric({
   );
 }
 
-export function Payload413Film() {
+export function Payload413Film({ locale = "en" }: { locale?: CaseFilmLocale }) {
   return (
     <CaseFilmPlayer
-      title="Case 03 · Send the key, not the truck"
-      subtitle="HTTP 413 on mobile scans → PK-only payloads — batch 30 → 80"
+      title={{
+        en: "Case 03 · Send the key, not the truck",
+        ko: "Case 03 · 상태 대신 식별자를 전송",
+      }}
+      subtitle={{
+        en: "HTTP 413 on mobile scans → PK-only payloads - batch 30 → 80",
+        ko: "모바일 스캔 HTTP 413 - PK-only 요청과 서버 최신 조회",
+      }}
       scenes={SCENES}
+      locale={locale}
     >
       {(s) => {
         const before = s === 1 || s === 2;

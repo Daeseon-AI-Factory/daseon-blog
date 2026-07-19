@@ -44,3 +44,8 @@ next-env.d.ts
 .idea/
 public/films/
 public/phone-preview.html
+
+# local work artifacts — generated resume PDFs and page-capture PNGs.
+# These contain personal contact data and are rebuilt by scripts/build-*-pdf.mjs.
+/output/
+/tmp/

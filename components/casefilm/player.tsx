@@ -15,6 +15,14 @@ export interface Scene {
   ko: string;
 }
 
+export type CaseFilmLocale = "en" | "ko";
+
+type LocalizedText = string | Record<CaseFilmLocale, string>;
+
+function localize(text: LocalizedText, locale: CaseFilmLocale) {
+  return typeof text === "string" ? text : text[locale];
+}
+
 const TAG_STYLE: Record<string, string> = {
   BEFORE: "bg-amber-100 text-amber-800 border-amber-300",
   FAILURE: "bg-red-100 text-red-700 border-red-300",
@@ -28,12 +36,14 @@ export function CaseFilmPlayer({
   subtitle,
   scenes,
   autoMs = 5200,
+  locale = "en",
   children,
 }: {
-  title: string;
-  subtitle: string;
+  title: LocalizedText;
+  subtitle: LocalizedText;
   scenes: Scene[];
   autoMs?: number;
+  locale?: CaseFilmLocale;
   children: (scene: number) => React.ReactNode;
 }) {
   const [scene, setScene] = useState(0);
@@ -88,8 +98,8 @@ export function CaseFilmPlayer({
 
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h3 className="text-lg font-bold">{title}</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+          <h3 className="text-lg font-bold">{localize(title, locale)}</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{localize(subtitle, locale)}</p>
         </div>
         <span
           className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold tracking-wide ${TAG_STYLE[cur.tag] ?? "bg-slate-100 text-slate-600 border-slate-300"}`}
@@ -105,8 +115,7 @@ export function CaseFilmPlayer({
 
       {/* Caption */}
       <figcaption className="mt-3 min-h-[3.2rem] text-center">
-        <p className="text-[15px] font-semibold leading-snug">{cur.en}</p>
-        <p className="mt-0.5 text-[13px] text-slate-500 dark:text-slate-400">{cur.ko}</p>
+        <p className="text-[15px] font-semibold leading-snug">{cur[locale]}</p>
       </figcaption>
 
       {/* Controls */}
@@ -116,7 +125,7 @@ export function CaseFilmPlayer({
           onClick={() => go(scene - 1)}
           disabled={scene === 0}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-sm disabled:opacity-30 dark:border-slate-600"
-          aria-label="Previous scene"
+          aria-label={locale === "ko" ? "이전 장면" : "Previous scene"}
         >
           ◀
         </button>
@@ -126,7 +135,7 @@ export function CaseFilmPlayer({
               key={s.id}
               type="button"
               onClick={() => go(i)}
-              aria-label={`Scene ${i + 1}`}
+              aria-label={locale === "ko" ? `${i + 1}번째 장면` : `Scene ${i + 1}`}
               className={`h-2.5 rounded-full transition-all ${
                 i === scene ? "w-6 bg-sky-500" : "w-2.5 bg-slate-300 hover:bg-slate-400 dark:bg-slate-600"
               }`}
@@ -138,7 +147,7 @@ export function CaseFilmPlayer({
           onClick={() => go(scene + 1)}
           disabled={scene === scenes.length - 1}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-sm disabled:opacity-30 dark:border-slate-600"
-          aria-label="Next scene"
+          aria-label={locale === "ko" ? "다음 장면" : "Next scene"}
         >
           ▶
         </button>
@@ -149,9 +158,9 @@ export function CaseFilmPlayer({
             setPlaying((p) => !p);
           }}
           className="rounded-md border border-slate-300 px-2.5 py-1 text-sm dark:border-slate-600"
-          aria-label={playing ? "Pause" : "Play"}
+          aria-label={playing ? (locale === "ko" ? "일시 정지" : "Pause") : (locale === "ko" ? "재생" : "Play")}
         >
-          {playing ? "⏸" : "▶︎ replay"}
+          {playing ? "⏸" : locale === "ko" ? "▶︎ 다시 보기" : "▶︎ replay"}
         </button>
       </div>
     </figure>

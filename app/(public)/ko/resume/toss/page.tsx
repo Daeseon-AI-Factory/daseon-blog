@@ -1,224 +1,337 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { RESUME_KO } from "@/lib/resumeDataKo";
+import type { ReactNode } from "react";
+import { RESUME_KO, type KoBullet } from "@/lib/resumeDataKo";
 import { RESUME_TARGETS } from "@/lib/resumeTargets";
 
 export const metadata: Metadata = {
-  title: "유대선 — 이력서 (토스풍)",
-  description: "Backend Engineer 유대선 — 숫자로 증명하는 6년. 케이스 필름 포함.",
+  title: "유대선 - 백엔드 엔지니어 이력서",
+  description: "트랜잭션 경계, 동시성 제어, 외부 연동 신뢰성을 다뤄 온 백엔드 엔지니어 유대선의 이력서.",
 };
 
-/** 토스풍 스킨 — 같은 resumeDataKo에서 생성되는 두 번째 디자인.
- *  토스 문법: Pretendard, 큰 볼드 숫자, 여백이 구획을 대신함,
- *  #191f28/#4e5968/#3182f6, 라운드 스탯 카드, 한 화면 한 메시지. */
+const externalLinkClass =
+  "font-semibold underline decoration-[#c9ced6] underline-offset-[3px] hover:decoration-[#111827]";
 
-const STATS = [
-  { n: "−60%", label: "MES↔ERP 평균 처리시간", film: "case-01" },
-  { n: "46 → 1", label: "미들웨어 엔드포인트 통합", film: "case-02" },
-  { n: "30 → 80", label: "모바일 배치 처리량 (413 해결)", film: "case-03" },
-  { n: "중복 0", label: "다중 인스턴스 ID 발급 (행 잠금)", film: "case-04" },
-  { n: "−57%", label: "7.7K줄 PL/SQL → 공정별 CTE", film: "case-05" },
-  { n: "4 → 7", label: "주간 원가 티켓 처리량", film: "case-05" },
-] as const;
-
-function FilmLink({ film, children }: { film?: string; children?: React.ReactNode }) {
-  if (!film) return null;
+function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a
-      href={`/portfolio#${film}`}
-      className="text-[14px] font-semibold text-[#191f28] underline decoration-[#d1d6db] underline-offset-4 hover:decoration-[#191f28]"
-    >
-      {children ?? "케이스 필름 →"}
+    <a href={href} target="_blank" rel="noreferrer" className={externalLinkClass}>
+      {children} ↗
     </a>
+  );
+}
+
+function CaseLink({ filmId }: { filmId?: string }) {
+  if (!filmId) return null;
+  return (
+    <Link
+      href={`/ko/portfolio#${filmId}`}
+      className="case-link shrink-0 text-[10px] font-extrabold tracking-[0.08em] text-[#6b7280] underline decoration-[#d1d5db] underline-offset-[3px] hover:text-[#111827]"
+    >
+      {filmId.replace("case-", "CASE ")} ↗
+    </Link>
+  );
+}
+
+function CareerBullet({ bullet, index }: { bullet: KoBullet; index: number }) {
+  return (
+    <li className="career-bullet grid grid-cols-[22px_1fr] gap-3">
+      <span className="pt-[2px] font-mono text-[10px] font-bold tabular-nums text-[#9ca3af]">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-[13.5px] font-medium leading-[1.58] text-[#303846]">
+            {bullet.label && <strong className="font-extrabold text-[#111827]">{bullet.label}. </strong>}
+            {bullet.text}
+          </p>
+          <CaseLink filmId={bullet.filmId} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function RunningHeader({ page }: { page: number }) {
+  return (
+    <div className="running-header flex items-center justify-between border-b border-[#d9dde3] pb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#7b8491]">
+      <span>유대선 · Backend Engineer</span>
+      <span>{String(page).padStart(2, "0")} / 02</span>
+    </div>
   );
 }
 
 export default async function KoResumeToss({
   searchParams,
 }: {
-  searchParams: Promise<{ target?: string }>;
+  searchParams: Promise<{ target?: string; pdf?: string }>;
 }) {
   const r = RESUME_KO;
-  const targetKey = (await searchParams).target;
-  const target = targetKey ? RESUME_TARGETS[targetKey] : undefined;
+  const params = await searchParams;
+  const target = params.target ? RESUME_TARGETS[params.target] : undefined;
+  const pdfMode = params.pdf === "1";
+  const [primaryCareer, earlierCareer] = r.experience;
+  const primaryBullets = primaryCareer.bullets.slice(0, 5);
+  const additionalBullets = primaryCareer.bullets.slice(5);
+  const resumeProjects = r.projects.filter((project) => project.showInResume);
+
   return (
     <div
       lang="ko"
-      className="min-h-screen bg-white text-[#191f28]"
+      className="min-h-screen bg-[#eef1f4] text-[#111827]"
       style={{ fontFamily: "'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif" }}
     >
       <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
       />
-      <main className="mx-auto max-w-[720px] px-6">
-        {/* 히어로 — 한 화면 한 메시지 */}
-        <section className="pt-14 pb-14 sm:pt-24 sm:pb-20">
-          <p className="text-[17px] font-semibold text-[#8b95a1]">Backend Engineer · Toronto (캐나다 취업 가능)</p>
-          <h1 className="mt-3 text-[48px] font-extrabold leading-[1.15] tracking-[-0.02em]">
-            유대선
-          </h1>
-          <p className="mt-5 max-w-[560px] text-[19px] font-medium leading-[1.6] text-[#4e5968]">
-            외부 시스템이 실패해도 제 시스템의 핵심 상태는 무너지지 않게 —{" "}
-            제조 현장의 트랜잭션·동시성·신뢰성을 6년간 책임졌습니다.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href="mailto:showep12@gmail.com"
-              className="rounded-[14px] bg-[#191f28] px-5 py-3 text-[16px] font-bold text-white hover:bg-[#333d4b]"
-            >
-              연락하기
-            </a>
-            <a
-              href="/portfolio"
-              className="rounded-[14px] bg-[#f2f4f6] px-5 py-3 text-[16px] font-bold text-[#333d4b] hover:bg-[#e5e8eb]"
-            >
-              케이스 필름 보기
-            </a>
-            <a
-              href="https://github.com/Daeseon-AI-Factory"
-              className="rounded-[14px] bg-[#f2f4f6] px-5 py-3 text-[16px] font-bold text-[#333d4b] hover:bg-[#e5e8eb]"
-            >
-              GitHub
-            </a>
-          </div>
-        </section>
+      <style>{`
+        * { box-sizing: border-box; }
+        .resume-sheet { width: 100%; max-width: 210mm; min-height: 297mm; }
+        .resume-copy { word-break: keep-all; overflow-wrap: break-word; }
+        @page { size: A4; margin: 0; }
+        @media print {
+          html, body { width: 210mm; background: #fff !important; }
+          .screen-only { display: none !important; }
+          .resume-shell { display: block !important; padding: 0 !important; }
+          .resume-sheet {
+            width: 210mm !important;
+            max-width: none !important;
+            height: 297mm !important;
+            min-height: 297mm !important;
+            margin: 0 !important;
+            padding: 11mm 13mm 10mm !important;
+            overflow: hidden !important;
+            box-shadow: none !important;
+            break-after: page;
+            page-break-after: always;
+          }
+          .resume-sheet:last-child { break-after: auto; page-break-after: auto; }
+          .resume-page-two {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+          }
+          .resume-page-two > * { margin-top: 0 !important; flex-shrink: 0 !important; }
+          .career-bullet, .project-proof, .additional-proof, .education-block {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          h1, h2, h3, .company-heading { break-after: avoid; page-break-after: avoid; }
+          p, li { orphans: 3; widows: 3; }
+          a { color: #111827 !important; }
+        }
+        @media screen and (max-width: 767px) {
+          .resume-sheet { min-height: auto; }
+          .case-link { display: none; }
+        }
+      `}</style>
 
-        {/* 숫자로 보는 6년 */}
-        <section className="pb-14 sm:pb-20">
-          <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">숫자로 보는 6년</h2>
-          <p className="mt-2 text-[16px] text-[#6b7684]">
-            전부 실제 운영 시스템에서 측정된 숫자입니다. 누르면 before/after 애니메이션으로 이어집니다.
-          </p>
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {STATS.map((s) => (
-              <a
-                key={s.label}
-                href={`/portfolio#${s.film}`}
-                className="group rounded-[20px] bg-[#f9fafb] p-5 transition-colors hover:bg-[#f2f4f6]"
-              >
-                <p className="text-[30px] font-extrabold tracking-[-0.02em] text-[#191f28]">{s.n}</p>
-                <p className="mt-1 text-[14px] font-medium leading-snug text-[#6b7684]">{s.label}</p>
-                <p className="mt-2 text-[13px] font-semibold text-[#191f28] opacity-0 transition-opacity group-hover:opacity-100">
-                  필름 보기 →
+      {!pdfMode && (
+        <nav className="screen-only border-b border-[#dfe3e8] bg-white" aria-label="이력서 탐색">
+          <div className="mx-auto flex max-w-[900px] flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8">
+            <Link href="/ko/resume/toss" className="text-[14px] font-extrabold tracking-[-0.01em]">
+              유대선 · Backend Engineer
+            </Link>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-semibold text-[#667085]">
+              <Link href="/ko/portfolio" className="hover:text-[#111827]">포트폴리오</Link>
+              <Link href="/ko/projects" className="hover:text-[#111827]">프로젝트</Link>
+              <Link href="/resume" className="hover:text-[#111827]">English resume</Link>
+            </div>
+          </div>
+        </nav>
+      )}
+
+      <main className="resume-shell resume-copy grid gap-8 px-0 py-0 md:px-6 md:py-10 print:block">
+        <section className="resume-sheet mx-auto bg-white px-5 py-8 shadow-none md:px-[13mm] md:py-[11mm] md:shadow-[0_16px_60px_rgba(15,23,42,0.12)]" aria-label="이력서 1쪽">
+          <header>
+            <div className="flex flex-col gap-5 border-b-2 border-[#111827] pb-5 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#7b8491]">
+                  Backend Engineer · 6 years
                 </p>
-              </a>
-            ))}
-          </div>
-        </section>
+                <h1 className="mt-2 text-[42px] font-black leading-none tracking-[-0.045em]">{r.name}</h1>
+              </div>
+              <div className="text-[11.5px] font-medium leading-[1.75] text-[#4b5563] sm:text-right">
+                <p><a href={r.links.email} className={externalLinkClass}>showep12@gmail.com</a></p>
+                <p><ExternalLink href={r.links.linkedin}>LinkedIn</ExternalLink> · <ExternalLink href={r.links.github}>GitHub</ExternalLink></p>
+                <p><Link href={r.links.portfolio} className={externalLinkClass}>daeseon.ai/ko/portfolio ↗</Link></p>
+              </div>
+            </div>
 
-        {/* 이 회사에 이렇게 기여합니다 (지원 회사 지정 시에만) — 증거(숫자) 다음, 이력 앞 */}
-        {target && (
-          <section className="pb-14 sm:pb-20">
-            <div className="rounded-[24px] border border-[#eaebee] bg-[#fbfcfd] p-6 sm:p-8">
-              <p className="text-[14px] font-bold text-[#ff6f0f]">🥕 {target.company} · {target.team}</p>
-              <h2 className="mt-2 text-[24px] font-extrabold leading-[1.35] tracking-[-0.01em] sm:text-[26px]">
-                {target.headline}
-              </h2>
-              <div className="mt-6 space-y-4">
-                {target.contributions.map((c) => (
-                  <div key={c.need} className="border-l-[3px] border-[#191f28] pl-4">
-                    <p className="text-[14px] font-semibold text-[#8b95a1]">{c.need}</p>
-                    <p className="mt-1 text-[16px] font-medium leading-[1.6] text-[#191f28]">{c.how}</p>
-                    {c.film && (
-                      <a
-                        href={`/portfolio#${c.film}`}
-                        className="mt-1 inline-block text-[13.5px] font-semibold text-[#191f28] underline decoration-[#d1d6db] underline-offset-4 hover:decoration-[#191f28]"
-                      >
-                        ↓ 아래 경력 · 케이스 필름에서 확인
-                      </a>
-                    )}
+            <p className="mt-5 max-w-[690px] text-[24px] font-black leading-[1.36] tracking-[-0.028em]">
+              {r.tagline}
+            </p>
+            <p className="mt-3 max-w-[720px] text-[13.5px] font-medium leading-[1.7] text-[#4b5563]">
+              {r.summary}
+            </p>
+          </header>
+
+          <section className="mt-6" aria-labelledby="proof-heading">
+            <div className="flex items-end justify-between gap-4">
+              <h2 id="proof-heading" className="text-[11px] font-black uppercase tracking-[0.14em] text-[#111827]">대표 결과</h2>
+              <p className="text-[9.5px] font-medium text-[#7b8491]">각 항목은 포트폴리오의 운영 사례로 연결됩니다.</p>
+            </div>
+            <div className="mt-3 grid gap-px overflow-hidden border-y border-[#111827] bg-[#d9dde3] sm:grid-cols-3">
+              {r.outcomes.map((outcome) => (
+                <Link key={outcome.filmId} href={`/ko/portfolio#${outcome.filmId}`} className="bg-white px-3 py-3.5 hover:bg-[#f8fafc]">
+                  <p className="text-[14px] font-black leading-tight tracking-[-0.01em]">{outcome.value}</p>
+                  <p className="mt-1.5 text-[10.5px] font-medium leading-[1.45] text-[#667085]">{outcome.label}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {target && (
+            <aside className="screen-only mt-6 border-l-4 border-[#111827] bg-[#f7f8fa] p-5" aria-label={`${target.company} 지원 매핑`}>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#667085]">{target.company} · {target.team}</p>
+              <p className="mt-2 text-[17px] font-extrabold leading-[1.5]">{target.headline}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {target.contributions.map((contribution) => (
+                  <div key={contribution.need}>
+                    <p className="text-[11px] font-bold text-[#667085]">{contribution.need}</p>
+                    <p className="mt-1 text-[12.5px] leading-[1.6] text-[#303846]">{contribution.how}</p>
                   </div>
                 ))}
               </div>
-              <p className="mt-6 rounded-[14px] bg-[#f2f4f6] p-4 text-[14px] leading-[1.65] text-[#4e5968]">
-                <b className="text-[#191f28]">솔직하게</b> — {target.honestGap}
-              </p>
+              <p className="mt-4 text-[11.5px] leading-[1.6] text-[#667085]"><strong className="text-[#111827]">경험의 경계.</strong> {target.honestGap}</p>
+            </aside>
+          )}
+
+          <section className="mt-7" aria-labelledby="career-heading">
+            <div className="flex items-end justify-between border-b border-[#111827] pb-2.5">
+              <h2 id="career-heading" className="text-[22px] font-black tracking-[-0.025em]">경력</h2>
+              <span className="font-mono text-[10px] font-bold tracking-[0.08em] text-[#7b8491]">2020.06 - 2026.05</span>
+            </div>
+
+            <article className="mt-5">
+              <div className="company-heading flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                <div>
+                  <h3 className="text-[18px] font-black tracking-[-0.02em]">{primaryCareer.company}</h3>
+                  <p className="mt-1 text-[11.5px] font-medium text-[#667085]">{primaryCareer.summary}</p>
+                </div>
+                <p className="text-[11.5px] font-bold text-[#4b5563]">{primaryCareer.role} · {primaryCareer.period}</p>
+              </div>
+              <ol className="mt-4 space-y-3">
+                {primaryBullets.map((bullet, index) => (
+                  <CareerBullet key={`${bullet.label}-${bullet.text}`} bullet={bullet} index={index} />
+                ))}
+              </ol>
+            </article>
+
+            <article className="mt-5 border-t border-[#d9dde3] pt-4">
+              <div className="company-heading flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                <div>
+                  <h3 className="text-[15px] font-black">{earlierCareer.company}</h3>
+                  <p className="mt-0.5 text-[10.5px] font-medium text-[#667085]">{earlierCareer.summary}</p>
+                </div>
+                <p className="text-[10.5px] font-bold text-[#4b5563]">{earlierCareer.role} · {earlierCareer.period}</p>
+              </div>
+              <div className="mt-2.5">
+                <CareerBullet bullet={earlierCareer.bullets[0]} index={0} />
+              </div>
+            </article>
+          </section>
+
+          <footer className="mt-5 flex items-center justify-between border-t border-[#d9dde3] pt-3 text-[9px] font-medium text-[#8a93a0]">
+            <span>상세 구현과 트레이드오프: daeseon.ai/ko/portfolio</span>
+            <span>01 / 02</span>
+          </footer>
+        </section>
+
+        <section className="resume-sheet resume-page-two mx-auto flex flex-col bg-white px-5 py-8 shadow-none md:px-[13mm] md:py-[11mm] md:shadow-[0_16px_60px_rgba(15,23,42,0.12)]" aria-label="이력서 2쪽">
+          <RunningHeader page={2} />
+
+          <section className="mt-6" aria-labelledby="products-heading">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#7b8491]">Applied beyond manufacturing</p>
+            <h2 id="products-heading" className="mt-2 text-[24px] font-black tracking-[-0.03em]">제품에서 다시 검증한 설계</h2>
+            <p className="mt-2 max-w-[720px] text-[12.5px] font-medium leading-[1.65] text-[#4b5563]">{r.callout}</p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {resumeProjects.map((project) => (
+                <article key={project.name} className="project-proof border-t-2 border-[#111827] pt-4">
+                  <div>
+                    <div>
+                      <p className="text-[9.5px] font-black uppercase tracking-[0.1em] text-[#7b8491]">{project.signal}</p>
+                      <h3 className="mt-1 text-[18px] font-black tracking-[-0.02em]">{project.name}</h3>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-[12px] font-bold leading-[1.5] text-[#303846]">{project.tagline}</p>
+                  <ul className="mt-3 space-y-2 text-[11.5px] font-medium leading-[1.58] text-[#4b5563]">
+                    {project.lines.map((line) => (
+                      <li key={line} className="grid grid-cols-[7px_1fr] gap-2">
+                        <span aria-hidden className="mt-[7px] h-[3px] w-[3px] rounded-full bg-[#111827]" />
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-[10px] font-bold leading-[1.5] text-[#7b8491]">{project.stack.join(" · ")}</p>
+                  <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10.5px]">
+                    <ExternalLink href={project.liveUrl}>{project.liveLabel}</ExternalLink>
+                    {project.repoUrl && <ExternalLink href={project.repoUrl}>GitHub</ExternalLink>}
+                    <Link href={project.detailPath} className={externalLinkClass}>상세 기록 ↗</Link>
+                  </p>
+                </article>
+              ))}
             </div>
           </section>
-        )}
 
-        {/* 경력 */}
-        <section className="pb-14 sm:pb-20">
-          <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">경력</h2>
-          {r.experience.map((e) => (
-            <div key={e.company} className="mt-10">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="text-[21px] font-bold">{e.company}</h3>
-                <span className="text-[15px] font-medium text-[#8b95a1]">
-                  {e.role} · {e.period}
-                </span>
-              </div>
-              <p className="mt-1 text-[15.5px] text-[#6b7684]">{e.summary}</p>
-              <ul className="mt-5 space-y-5">
-                {e.bullets.map((b) => (
-                  <li key={b.text.slice(0, 30)} className="border-l-2 border-[#e5e8eb] pl-5">
-                    <p className="text-[16.5px] font-medium leading-[1.65] text-[#333d4b]">{b.text}</p>
-                    {(b.filmId || b.deepDive) && (
-                      <p className="mt-1.5 flex gap-4">
-                        <FilmLink film={b.filmId} />
-                        {b.deepDive && (
-                          <a
-                            href={`https://faangforge.daeseon.ai/story/${b.deepDive}`}
-                            className="text-[14px] font-semibold text-[#8b95a1] hover:text-[#4e5968] hover:underline"
-                          >
-                            딥다이브
-                          </a>
-                        )}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
+          <section className="mt-7" aria-labelledby="additional-heading">
+            <div className="flex items-end justify-between border-b border-[#111827] pb-2.5">
+              <h2 id="additional-heading" className="text-[18px] font-black tracking-[-0.02em]">추가 운영·전달 성과</h2>
+              <span className="text-[9.5px] font-medium text-[#7b8491]">SK AX</span>
             </div>
-          ))}
-        </section>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {additionalBullets.map((bullet, index) => (
+                <article key={bullet.text} className="additional-proof border-l-2 border-[#d9dde3] pl-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[12px] font-medium leading-[1.58] text-[#303846]">
+                      {bullet.label && <strong className="font-black text-[#111827]">{bullet.label}. </strong>}
+                      {bullet.text}
+                    </p>
+                    <CaseLink filmId={bullet.filmId} />
+                  </div>
+                  <span className="sr-only">추가 성과 {index + 1}</span>
+                </article>
+              ))}
+            </div>
+          </section>
 
-        {/* 프로젝트 */}
-        <section className="pb-14 sm:pb-20">
-          <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">직접 만든 것들</h2>
-          <div className="mt-8 space-y-5">
-            {r.projects.map((p) => (
-              <div key={p.name} className="rounded-[20px] bg-[#f9fafb] p-6">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="text-[18px] font-bold">
-                    {p.emoji} {p.name}
-                  </h3>
-                  <span className="text-[13.5px] font-medium text-[#8b95a1]">{p.stack.join(" · ")}</span>
-                </div>
-                <p className="mt-1 text-[15px] font-medium text-[#4e5968]">{p.tagline}</p>
-                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[15px] leading-[1.6] text-[#6b7684] marker:text-[#d1d6db]">
-                  {p.lines.map((l) => (
-                    <li key={l.slice(0, 30)}>{l}</li>
-                  ))}
-                </ul>
+          <section className="mt-7 grid gap-6 border-t-2 border-[#111827] pt-5 sm:grid-cols-[1.55fr_0.9fr]" aria-label="기술과 학력">
+            <div>
+              <h2 className="text-[17px] font-black tracking-[-0.02em]">기술</h2>
+              <dl className="mt-3 border-t border-[#d9dde3]">
+                {r.skillGroups.map((group) => (
+                  <div key={group.group} className="grid grid-cols-[78px_1fr] gap-3 border-b border-[#e5e7eb] py-2 text-[10.5px] leading-[1.5]">
+                    <dt className="font-black text-[#667085]">{group.group}</dt>
+                    <dd className="font-medium text-[#303846]">{group.tags.join(" · ")}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+            <div className="education-block">
+              <h2 className="text-[17px] font-black tracking-[-0.02em]">학력</h2>
+              <div className="mt-3 border-t border-[#d9dde3] pt-3">
+                <p className="text-[12.5px] font-black">{r.education.school}</p>
+                <p className="mt-1 text-[11px] font-medium text-[#4b5563]">{r.education.degree}</p>
+                <p className="mt-2 font-mono text-[9.5px] font-bold text-[#7b8491]">{r.education.period}</p>
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          </section>
 
-        {/* 스킬 + 학력 */}
-        <section className="pb-16 sm:pb-24">
-          <h2 className="text-[28px] font-extrabold tracking-[-0.01em]">기술</h2>
-          <div className="mt-6 space-y-3">
-            {r.skillGroups.map((g) => (
-              <div key={g.group} className="flex items-start gap-3 text-[15px]">
-                <span className="w-[110px] shrink-0 pt-1 font-semibold text-[#8b95a1]">{g.group}</span>
-                <span className="flex flex-wrap gap-2">
-                  {g.tags.map((t) => (
-                    <span key={t} className="rounded-full bg-[#f2f4f6] px-3 py-1 text-[13.5px] font-semibold text-[#4e5968]">
-                      {t}
-                    </span>
-                  ))}
-                </span>
+          <aside className="mt-7 border border-[#cfd5dd] bg-[#f8fafc] px-4 py-3.5" aria-label="웹 포트폴리오 안내">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[11.5px] font-black">실제 화면과 before/after 케이스 필름은 웹 포트폴리오에서 확인할 수 있습니다.</p>
+                <p className="mt-1 text-[9.5px] font-medium text-[#667085]">Talkak macOS 화면 · Mimi App Store · DocVault 데모 · 제조 운영 사례</p>
               </div>
-            ))}
-          </div>
-          <div className="mt-14 flex flex-wrap items-baseline justify-between gap-2 border-t border-[#f2f4f6] pt-8">
-            <p className="text-[16px] font-bold">
-              {r.education.school} <span className="font-medium text-[#6b7684]">— {r.education.degree}</span>
-            </p>
-            <span className="text-[14px] font-medium text-[#8b95a1]">{r.education.period}</span>
-          </div>
+              <Link href="/ko/portfolio" className="shrink-0 text-[11px] font-black underline decoration-[#9ca3af] underline-offset-4">daeseon.ai/ko/portfolio ↗</Link>
+            </div>
+          </aside>
+
+          <footer className="mt-6 flex flex-col gap-2 border-t border-[#111827] pt-4 text-[10px] font-medium text-[#4b5563] sm:flex-row sm:items-center sm:justify-between">
+            <p>showep12@gmail.com · linkedin.com/in/daeseon-yoo · github.com/Daeseon-AI-Factory</p>
+            <p className="font-mono font-bold text-[#7b8491]">02 / 02</p>
+          </footer>
         </section>
       </main>
     </div>

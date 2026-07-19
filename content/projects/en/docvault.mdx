@@ -7,7 +7,7 @@ translationKey: "docvault"
 status: "active"
 featured: true
 featuredOrder: 3
-metrics: ["In active use by a 40-person team", "17,783 LOC", "23 tables · 102 routes", "Postgres-trigger audit chain"]
+metrics: ["Postgres-trigger audit chain", "17,783 LOC", "23 tables · 102 routes", "Single-use install tokens"]
 url: "https://docvault.daeseon.ai"
 image: "/images/projects/docvault.jpg"
 repo: "https://github.com/Daeseon-AI-Factory/docvault"
@@ -17,7 +17,7 @@ stack: ["Go 1.26.1", "PostgreSQL 16", "chi", "pgx", "htmx", "osquery", "AES-256-
 role: "Solo (AI-pair-programmed with Claude Code)"
 ---
 
-DocVault is a self-hosted insider-threat and endpoint-audit platform — **in active use by a 40-person team**. osquery and a custom Windows clipboard agent feed endpoint activity into a Go server; PostgreSQL stores the event stream behind a database-trigger hash chain that makes audit tampering detectable; an htmx web UI exposes audit, endpoint, alert, vault, and operator workflows. Windows agents onboard through single-use install tokens with automatic host-user mapping and heartbeat checks.
+DocVault is a self-hosted insider-threat and endpoint-audit platform. osquery and a custom Windows clipboard agent feed endpoint activity into a Go server; PostgreSQL stores the event stream behind a database-trigger hash chain that makes audit tampering detectable; an htmx web UI exposes audit, endpoint, alert, vault, and operator workflows. Windows agents onboard through single-use install tokens with automatic host-user mapping and heartbeat checks.
 
 It is live at [docvault.daeseon.ai](https://docvault.daeseon.ai), with source at [Daeseon-AI-Factory/docvault](https://github.com/Daeseon-AI-Factory/docvault).
 

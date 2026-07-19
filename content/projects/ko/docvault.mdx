@@ -7,7 +7,7 @@ translationKey: "docvault"
 status: "active"
 featured: true
 featuredOrder: 3
-metrics: ["40인 팀이 실사용 중", "17,783 LOC", "23 tables · 102 routes", "Postgres-trigger audit chain"]
+metrics: ["Postgres-trigger audit chain", "17,783 LOC", "23 tables · 102 routes", "일회용 설치 토큰"]
 url: "https://docvault.daeseon.ai"
 image: "/images/projects/docvault.jpg"
 repo: "https://github.com/Daeseon-AI-Factory/docvault"
@@ -17,7 +17,7 @@ stack: ["Go 1.26.1", "PostgreSQL 16", "chi", "pgx", "htmx", "osquery", "AES-256-
 role: "Solo (Claude Code 페어 프로그래밍)"
 ---
 
-DocVault는 자체 호스팅 내부자 위협·엔드포인트 감사 플랫폼으로, **40인 팀이 실제로 사용 중**이다. osquery와 자체 Windows 클립보드 에이전트가 엔드포인트 활동을 Go 서버로 보내고, PostgreSQL이 DB 트리거 해시 체인 뒤에서 이벤트 스트림을 저장해 감사 로그 변조를 감지 가능하게 하며, htmx 기반 웹 UI가 감사·엔드포인트·알림·파일 vault·운영자 워크플로를 보여준다. Windows 에이전트는 일회용 설치 토큰으로 온보딩되고, 호스트-사용자 매핑과 하트비트 체크가 자동으로 붙는다.
+DocVault는 자체 호스팅 내부자 위협·엔드포인트 감사 플랫폼이다. osquery와 자체 Windows 클립보드 에이전트가 엔드포인트 활동을 Go 서버로 보내고, PostgreSQL이 DB 트리거 해시 체인 뒤에서 이벤트 스트림을 저장해 감사 로그 변조를 감지 가능하게 하며, htmx 기반 웹 UI가 감사·엔드포인트·알림·파일 vault·운영자 워크플로를 보여준다. Windows 에이전트는 일회용 설치 토큰으로 온보딩되고, 호스트-사용자 매핑과 하트비트 체크가 자동으로 붙는다.
 
 서비스는 [docvault.daeseon.ai](https://docvault.daeseon.ai)에서 운영 중이고, 소스는 [Daeseon-AI-Factory/docvault](https://github.com/Daeseon-AI-Factory/docvault)에 있다.
 

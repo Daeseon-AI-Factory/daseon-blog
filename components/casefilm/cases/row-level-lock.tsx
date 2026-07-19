@@ -6,7 +6,7 @@
 
 import NumberFlow from "@number-flow/react";
 import { At, Chip, Edge, Packet, SysNode, Zone } from "../primitives";
-import { CaseFilmPlayer, type Scene } from "../player";
+import { CaseFilmPlayer, type CaseFilmLocale, type Scene } from "../player";
 
 const SCENES: Scene[] = [
   {
@@ -71,12 +71,19 @@ function Metric({
   );
 }
 
-export function RowLockFilm() {
+export function RowLockFilm({ locale = "en" }: { locale?: CaseFilmLocale }) {
   return (
     <CaseFilmPlayer
-      title="Case 04 · Two servers, one number"
-      subtitle="Duplicate LOT IDs across instances → Oracle FOR UPDATE, scoped and shrunk"
+      title={{
+        en: "Case 04 · Two servers, one number",
+        ko: "Case 04 · 두 서버가 같은 번호를 만들 때",
+      }}
+      subtitle={{
+        en: "Duplicate LOT IDs across instances → Oracle FOR UPDATE, scoped and shrunk",
+        ko: "다중 인스턴스 LOT ID 충돌 - Oracle 행 잠금으로 유일성 보장",
+      }}
       scenes={SCENES}
+      locale={locale}
     >
       {(s) => {
         const race = s === 1 || s === 2;
