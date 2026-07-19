@@ -510,7 +510,7 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Symptom**: `https://daeseon.ai/portfolio`, `/ko/portfolio`, `/resume`, `/ko/resume`, `/ko/resume/toss` and `/films/case01-film.mp4` all returned 404 in production. `/` returned 200, so the site itself was healthy. Locally every route rendered.
 - **Cause**: two independent gaps, both verified. (1) `git log --oneline origin/main..main` listed 15 commits — everything from `9a93eea` (case films v1) through `aeb7774` (handoff doc) was committed locally and never pushed, so Vercel had never seen the code. (2) `git status --porcelain` showed `app/(public)/ko/portfolio/page.tsx` and `components/casefilm/portfolio-showcase.tsx` as untracked, while the *tracked* `app/(public)/portfolio/page.tsx` already imports `@/components/casefilm/portfolio-showcase` — so pushing the 15 commits alone would have failed the Vercel build on a missing module.
 - **Fix**: added `/output/` and `/tmp/` to `.gitignore` (≈4.4MB of generated resume PDFs and page-capture PNGs, which contain contact data), committed the two untracked source files together with the 15 pending commits, and verified with a production build before pushing.
-- **Commit**: (this commit)
+- **Commit**: 0d5427d
 - **Pattern**: a green local build says nothing about deployment. Before pushing, check both directions — `git log origin/main..main` for work that never left the machine, and `git ls-files` on every import of a file you are about to push. An untracked file that a tracked file imports is a latent build break that only appears on the build server.
 
 ---
@@ -520,7 +520,7 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Symptom**: probing production routes returned `308` for every path including ones that were fine, so it was impossible to tell which routes actually existed.
 - **Cause**: `daeseon.ai` issues a permanent redirect to `www.daeseon.ai` (`curl -o /dev/null -w "%{redirect_url}"` → `https://www.daeseon.ai/portfolio`). Without `-L`, curl reports the redirect status and never requests the real target, so 404 and 200 look identical.
 - **Fix**: probe with `curl -sL -o /dev/null -w "%{http_code}"`. With redirects followed, `/portfolio` resolved to 404 and `/` to 200 — the actual signal.
-- **Commit**: (this commit)
+- **Commit**: 0d5427d
 - **Pattern**: when smoke-testing a deployment, always follow redirects. An apex→www redirect makes every route look uniformly "fine" and masks exactly the failure you are testing for.
 
 ---
@@ -530,5 +530,5 @@ Keep it concrete. Numbers, file paths, commit hashes. No "lessons learned" essay
 - **Symptom**: a guarded `npm run build` refused to run, reporting a dev server on port 3000. The handoff doc warns that a concurrent dev server and build corrupt the `.next` cache (a real past incident).
 - **Cause**: the process on :3000 was not this project. `lsof -ti:3000` → `node .../infrastructure-production-lab/node_modules/.bin/vinext dev` — an unrelated repo. This project's dev server was not running and there was no cache conflict.
 - **Fix**: rather than kill another project's process or risk the shared `.next`, rsync the working tree (excluding `.next`, `node_modules`, `.git`) to a scratch dir, symlink `node_modules`, and run `npx next build` there. Exit 0; `app-paths-manifest.json` confirmed `/(public)/ko/portfolio/page` and prerendered `ko/portfolio.html`.
-- **Commit**: (this commit)
+- **Commit**: 0d5427d
 - **Pattern**: port-based guards identify a port, not a project — resolve the actual process before acting on it. When a build must not touch shared state, build a copy of the working tree with symlinked `node_modules` instead of serializing against the other process.
